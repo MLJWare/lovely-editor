@@ -3,6 +3,7 @@ local shift_is_down           = require "util.shift_is_down"
 local Frame                   = require "Frame"
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
+local clone                   = require "pleasure.clone"
 local MouseButton             = require "const.MouseButton"
 local PropertyStore           = require "PropertyStore"
 local UndoStack               = require "UndoStack"
@@ -61,20 +62,19 @@ end
 
 function PixelFrame:clone()
   local frame = Frame.clone(self)
-  frame.data = self.data:clone()
+  frame.image = clone(self.image)
   return PixelFrame(frame)
 end
 
 function PixelFrame:draw(size, scale)
   love.graphics.setColor(1, 1, 1)
-  local packet = self._image_in
-              or self.image
+  local packet = self.image
   love.graphics.draw(packet.image, 0, 0, 0, scale, scale)
   try_invoke(self:tool(), "draw_hint", packet.data, size, scale)
 end
 
 function PixelFrame:locked()
-  return self._image_in ~= nil
+  return self.image ~= self._own_image
 end
 
 function PixelFrame:tool()

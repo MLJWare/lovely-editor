@@ -17,6 +17,12 @@ setmetatable(ImagePacket, {
   end;
 })
 
+function ImagePacket.clone(obj)
+  return ImagePacket{
+    data = obj.data:clone();
+  }
+end
+
 function ImagePacket.typecheck(obj, where)
   Packet.typecheck(obj, where)
   local data = obj.data

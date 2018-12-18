@@ -12,24 +12,35 @@ setmetatable(ImagePacket, {
     assert(type(packet) == "table", "ImagePacket constructor must be a table.")
     ImagePacket.typecheck(packet, "ImagePacket constructor")
     setmetatable(Packet(packet), ImagePacket)
-    packet.image = love.graphics.newImage(packet.data)
     return packet
   end;
 })
 
+local _pastee
+local function _paste()
+  love.graphics.clear   (0,0,0,0)
+  love.graphics.setColor(1,1,1,1)
+  love.graphics.draw(_pastee)
+end
+
 function ImagePacket.clone(obj)
+  _pastee = obj.canvas
+  local canvas = love.graphics.newCanvas(_pastee:getDimensions())
+  canvas:renderTo(_paste)
+  _pastee = nil
+
   return ImagePacket{
-    data = obj.data:clone();
+    canvas = canvas;
   }
 end
 
 function ImagePacket.typecheck(obj, where)
   Packet.typecheck(obj, where)
-  local data = obj.data
-  local test = type(data) == "userdata"
-           and type(data.type) == "function"
-           and data:type() == "ImageData"
-  assertf(test, "Error in %s: Missing/invalid property: 'data' must be an ImageData.", where)
+  local canvas = obj.canvas
+  local test = type(canvas) == "userdata"
+           and type(canvas.type) == "function"
+           and canvas:type() == "Canvas"
+  assertf(test, "Error in %s: Missing/invalid property: 'canvas' must be a Canvas.", where)
 end
 
 function ImagePacket.is(obj)

@@ -23,9 +23,14 @@ setmetatable(PixelFrame, {
     if not frame.size then
       frame.size = vec2()
     end
-    frame._own_image = frame.image
     PixelFrame.typecheck(frame, "PixelFrame constructor")
-    frame.size.x, frame.size.y = frame.image.data:getDimensions()
+    frame.image = ImagePacket{
+      canvas = love.graphics.newCanvas(frame.data:getDimensions())
+    }
+    frame._own_image = frame.image
+    frame.size.x, frame.size.y = frame.data:getDimensions()
+    frame.data_image = love.graphics.newImage(frame.data)
+
     frame._undoStack = UndoStack()
 
     setmetatable(frame, PixelFrame)
@@ -48,13 +53,16 @@ end
 
 function PixelFrame:on_disconnect(prop)
   if prop == "image" then
+    try_invoke(self.image, "unlisten", self)
     self.image = self._own_image
   end
 end
 
 function PixelFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(ImagePacket.is(obj.image), "Error in %s: Missing/invalid property: 'image' must be an ImagePacket.", where)
+  assertf(type(obj.data) == "userdata"
+      and type(obj.data.type) == "function"
+      and obj.data:type() == "ImageData", "Error in %s: Missing/invalid property: 'data' must be an ImageData.", where)
 end
 
 function PixelFrame.is(obj)
@@ -66,15 +74,14 @@ end
 
 function PixelFrame:clone()
   local frame = Frame.clone(self)
-  frame.image = clone(self.image)
+  frame.data = clone(self.data)
   return PixelFrame(frame)
 end
 
 function PixelFrame:draw(size, scale)
   love.graphics.setColor(1, 1, 1)
-  local packet = self.image
-  love.graphics.draw(packet.image, 0, 0, 0, scale, scale)
-  try_invoke(self:tool(), "draw_hint", packet.data, size, scale)
+  love.graphics.draw(self.image.canvas, 0, 0, 0, scale, scale)
+  try_invoke(self:tool(), "draw_hint", self.image.canvas, size, scale)
 end
 
 function PixelFrame:locked()
@@ -87,10 +94,19 @@ function PixelFrame:tool()
        or nil
 end
 
+local _paste_self = nil
+local function _paste()
+  love.graphics.clear   (0,0,0,0)
+  love.graphics.setColor(1,1,1,1)
+  love.graphics.draw(_paste_self.data_image)
+end
+
 function PixelFrame:refresh()
-  local packet = self.image
-  packet.image:replacePixels(packet.data)
-  packet:inform()
+  self.data_image:replacePixels(self.data)
+  _paste_self = self
+  self.image.canvas:renderTo(_paste)
+  _paste_self = nil
+  self.image:inform()
 end
 
 function PixelFrame:keypressed(key)
@@ -107,13 +123,13 @@ end
 
 function PixelFrame:undo()
   if self:locked() then return end
-  self._undoStack:undo(self.image.data)
+  self._undoStack:undo(self.data)
   self:refresh()
 end
 
 function PixelFrame:redo()
   if self:locked() then return end
-  self._undoStack:redo(self.image.data)
+  self._undoStack:redo(self.data)
   self:refresh()
 end
 
@@ -122,7 +138,7 @@ function PixelFrame:mousepressed(mx, my, button)
   local tool = self:tool()
   if not tool then return end
 
-  try_invoke(tool, "on_press", self._undoStack, self.image.data, mx, my)
+  try_invoke(tool, "on_press", self._undoStack, self.data, mx, my)
   self:refresh()
 end
 
@@ -133,7 +149,7 @@ function PixelFrame:mousedragged1(mx, my, dx, dy)
   local mx2 = mx - dx
   local my2 = my - dy
 
-  try_invoke(tool, "on_drag", self._undoStack, self.image.data, mx, my, mx2, my2)
+  try_invoke(tool, "on_drag", self._undoStack, self.data, mx, my, mx2, my2)
   self:refresh()
 end
 
@@ -142,7 +158,7 @@ function PixelFrame:mousereleased(mx, my, button)
   local tool = self:tool()
   if not tool then return end
 
-  try_invoke(tool, "on_release", self._undoStack, self.image.data, mx, my)
+  try_invoke(tool, "on_release", self._undoStack, self.data, mx, my)
   self:refresh()
 end
 

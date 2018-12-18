@@ -1,7 +1,8 @@
 local vec2                    = require "linear-algebra.Vector2"
 local Frame                   = require "Frame"
-local ImagePacket             = require "packet.Image"
 local IOs                     = require "IOs"
+local ImagePacket             = require "packet.Image"
+local try_invoke              = require "pleasure.try".invoke
 --local assertf                 = require "assertf"
 
 local ShaderFrame = {}
@@ -34,22 +35,22 @@ ShaderFrame.gives = IOs{
 function ShaderFrame:on_connect(prop, from)
   if prop == "image" then
     self.image_in = from
-    self.image    = ImagePacket{
-      data = from.data:clone();
-    }
-    self.size:setn(from.data:getDimensions())
+    from:listen(self, self.refresh)
+    self.image    = from:clone()
+    self.size:setn(from.canvas:getDimensions())
+    self:refresh()
   elseif prop == "code" then
     local success, data = pcall(love.graphics.newShader, from())
-    print(from)
     self.shader_in = success and data or nil
   end
 end
 
 function ShaderFrame:on_disconnect(prop)
   if prop == "image" then
+    try_invoke(self.image_in, "unlisten", self)
     self.image_in = nil
   elseif prop == "code" then
-    self.shader_in = nil
+    --self.shader_in = nil
   end
 end
 
@@ -65,19 +66,32 @@ function ShaderFrame.is(obj)
      and meta._kind:find(";ShaderFrame;")
 end
 
-function ShaderFrame:draw(size, scale)
+local _paste_self = nil
+local function _paste()
+  love.graphics.clear   (0,0,0,0)
+  love.graphics.setColor(1,1,1,1)
+  local shader_in = _paste_self.shader_in
+  if shader_in then
+    love.graphics.setShader(shader_in)
+  end
+  love.graphics.draw(_paste_self.image_in.canvas)
+  love.graphics.setShader()
+end
+
+function ShaderFrame:refresh()
+  _paste_self = self
+  self.image.canvas:renderTo(_paste)
+  _paste_self = nil
+  self.image:inform()
+end
+
+function ShaderFrame:draw(_, scale)
   local packet = self.image_in
   if not packet then return end
 
+  if not self.image then return end
   love.graphics.setColor(1, 1, 1)
-  if self.shader_in then
-    local shader = love.graphics.getShader()
-    love.graphics.setShader(self.shader_in)
-    love.graphics.draw(packet.image, 0, 0, 0, scale, scale)
-    love.graphics.setShader(shader)
-  else
-    love.graphics.draw(packet.image, 0, 0, 0, scale, scale)
-  end
+  love.graphics.draw(self.image.canvas, 0, 0, 0, scale, scale)
 end
 
 function ShaderFrame.mousepressed(_, mx, my)

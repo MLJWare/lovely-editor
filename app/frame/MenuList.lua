@@ -93,6 +93,17 @@ function MenuListFrame:mousepressed(mx, my, button)
   self:close()
 end
 
+function MenuListFrame:keypressed(key)
+  local index = tonumber(key)
+  if not index then return end
+  index = (index - 1)%10 + 1
+  local option = self.options[index]
+  if option then
+    try_invoke(option, "action", self)
+    self:close()
+  end
+end
+
 function MenuListFrame:draw(_, _, mx, my)
   local size = self.size
   local row_size = self.row_size

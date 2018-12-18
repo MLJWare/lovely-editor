@@ -57,9 +57,7 @@ local popups = {}
 function love.load()
   app.add_view (1, {
     frame = PixelFrame {
-      image = ImagePacket {
-        data = love.image.newImageData(64, 64);
-      };
+      data = love.image.newImageData(64, 64);
     };
     pos   = vec2(100, 200);
     scale = 1;
@@ -67,9 +65,7 @@ function love.load()
 
   app.add_view (1, {
     frame = PixelFrame {
-      image = ImagePacket {
-        data = love.image.newImageData(64, 64);
-      };
+      data = love.image.newImageData(64, 64);
     };
     pos   = vec2(300, 300);
     scale = 1;

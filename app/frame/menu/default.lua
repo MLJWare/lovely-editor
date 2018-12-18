@@ -3,7 +3,6 @@ local vec2                    = require "linear-algebra.Vector2"
 local MenuListFrame           = require "frame.MenuList"
 local LoadFileFrame           = require "frame.LoadFile"
 local PixelFrame              = require "frame.Pixel"
-local ImagePacket             = require "packet.Image"
 local TextFrame               = require "frame.Text"
 local new_view_menu           = require "frame.menu.new_view"
 
@@ -12,9 +11,7 @@ local load_as_view = LoadFileFrame{
     local frame
     if format == "image" then
       frame = PixelFrame {
-        image = ImagePacket {
-          data = data;
-        };
+        data = data;
       };
     else
       frame = TextFrame{

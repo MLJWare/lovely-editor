@@ -6,7 +6,6 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local PixelFrame              = require "frame.Pixel"
 local Images                  = require "Images"
-local ImagePacket             = require "packet.Image"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
 local vec2                    = require "linear-algebra.Vector2"
@@ -61,9 +60,7 @@ setmetatable(NewPixelViewFrame, {
         local height = tonumber(edit_height.text) or DEFAULT_VIEW_HEIGHT
         app.add_view (1, {
           frame = PixelFrame {
-            image = ImagePacket {
-              data = love.image.newImageData(width, height);
-            };
+            data = love.image.newImageData(width, height);
           };
           pos   = frame.create_pos or app.popup_position();
           scale = 1;

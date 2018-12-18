@@ -33,7 +33,7 @@ function Packet:unlisten(listener)
 end
 
 function Packet:inform()
-  for listener, callback in ipairs(self.listeners) do
+  for listener, callback in pairs(self.listeners) do
     callback(listener, self)
   end
 end

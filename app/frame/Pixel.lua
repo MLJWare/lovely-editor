@@ -33,8 +33,12 @@ setmetatable(PixelFrame, {
   end;
 })
 
-PixelFrame.gives = IOs{"image"}
-PixelFrame.takes = IOs{"image"}
+PixelFrame.gives = IOs{
+  {id = "image", kind = ImagePacket};
+}
+PixelFrame.takes = IOs{
+  {id = "image", kind = ImagePacket};
+}
 
 function PixelFrame:on_connect(prop, from)
   if prop == "image" then

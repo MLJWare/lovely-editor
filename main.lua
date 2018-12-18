@@ -1,5 +1,9 @@
 package.path = "lib/?.lua;lib/?/init.lua;app/?.lua;app/?/init.lua;"..package.path
 
+function string.is (v)
+  return type(v) == "string"
+end
+
 love.graphics.setDefaultFilter("nearest", "nearest", 0)
 love.keyboard.setKeyRepeat(true)
 
@@ -13,6 +17,7 @@ local Popup                   = require "Popup"
 local Ref                     = require "Ref"
 local PixelFrame              = require "frame.Pixel"
 local YesNoFrame              = require "frame.YesNo"
+local TextFrame               = require "frame.Text"
 local ImagePacket             = require "packet.Image"
 local MouseButton             = require "const.MouseButton"
 local checker_pattern         = require "checker_pattern"
@@ -67,6 +72,20 @@ function love.load()
       };
     };
     pos   = vec2(300, 300);
+    scale = 1;
+  })
+
+  app.add_view (1, {
+    frame = TextFrame {
+      text = [[
+vec4 effect(vec4 color, Image texture, vec2 tex_pos, vec2 screen_coords)
+{
+  vec4 pixel = Texel(texture, tex_pos);
+  return vec4(1 - pixel.rgb, pixel.a);
+}]];
+      size = vec2(128, 128);
+    };
+    pos   = vec2(400, 100);
     scale = 1;
   })
 end
@@ -327,14 +346,24 @@ function love.mousepressed(mx, my, button)
   end
 end
 
+local function compatible(give_kind, take_kind)
+  return give_kind == take_kind
+end
+
 function love.mousereleased(mx, my, button)
   if pin_dragged.view then
     local to_view, to_index = _pin_takes_at(mx, my)
     if to_view then
       local from_view = pin_dragged.view
-      local from = Ref(from_view, from_view.frame.gives[pin_dragged.index])
-      local to   = Ref(to_view, to_view.frame.gives[to_index])
-      app.connect(from, to)
+
+      local give = from_view.frame.gives[pin_dragged.index]
+      local take =   to_view.frame.takes[to_index]
+
+      if compatible(give.kind, take.kind) then
+        local from = Ref(from_view, give.id)
+        local to   = Ref(to_view, take.id)
+        app.connect(from, to)
+      end
     end
     pin_dragged.view = nil
     return
@@ -485,7 +514,7 @@ function app.disconnect_raw(view, prop)
   if not takes then return end
 
   if type(prop) == "number" then
-    prop = takes[prop]
+    prop = takes[prop].id
   end
 
   if not (prop and takes[prop]) then return end
@@ -523,11 +552,17 @@ local function draw_transparency_pattern(width, height)
   end
 end
 
+local function pin_color(kind)
+  if kind == string          then return 0.80, 0.90, 0.20, 1
+  elseif kind == ImagePacket then return 0.80, 0.30, 0.20, 1
+  else                            return 0.75, 0.75, 0.75, 1
+  end
+end
+
 local function draw_connectors(view, frame)
   love.graphics.push()
   love.graphics.setLineStyle("smooth")
   love.graphics.setLineWidth(1)
-  love.graphics.setColor(0.75, 0.75, 0.75)
 
   local clickable = global_mode()
   local pin_view, pin_index
@@ -541,6 +576,7 @@ local function draw_connectors(view, frame)
   local gives = frame.gives
   for index = 1, #(gives or EMPTY) do
     local x, y = _io_gives_pos(view, index)
+    love.graphics.setColor(pin_color(gives[index].kind))
     if  clickable
     and pin_view  == view
     and pin_index == index then
@@ -553,6 +589,7 @@ local function draw_connectors(view, frame)
   local takes = frame.takes
   for index = 1, #(takes or EMPTY) do
     local x, y = _io_takes_pos(view, index)
+    love.graphics.setColor(pin_color(takes[index].kind))
     if  clickable
     and pin_view2  == view
     and pin_index2 == index then
@@ -609,11 +646,11 @@ function love.draw()
     love.graphics.print(frame_id, x1, y1 - h)
 
     if type(frame) == "table" and type(frame.draw) == "function" then
-      love.graphics.push()
-      love.graphics.translate(pos.x, pos.y)
+      pleasure.push_region()
+      pleasure.translate(pos.x, pos.y)
       love.graphics.setColor(1, 1, 1)
       frame:draw(size, scale, mx - pos.x, my - pos.y)
-      love.graphics.pop()
+      pleasure.pop_region()
     end
 
     if show_connectors then

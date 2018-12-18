@@ -23,8 +23,13 @@ setmetatable(ShaderFrame, {
   end;
 })
 
-ShaderFrame.takes = IOs{"image"}
-ShaderFrame.gives = IOs{"image"}
+ShaderFrame.takes = IOs{
+  {id = "image", kind = ImagePacket};
+  {id = "code",  kind = string};
+}
+ShaderFrame.gives = IOs{
+  {id = "image", kind = ImagePacket};
+}
 
 function ShaderFrame:on_connect(prop, from)
   if prop == "image" then
@@ -32,12 +37,19 @@ function ShaderFrame:on_connect(prop, from)
     self.image    = ImagePacket{
       data = from.data:clone();
     }
+    self.size:setn(from.data:getDimensions())
+  elseif prop == "code" then
+    local success, data = pcall(love.graphics.newShader, from())
+    print(from)
+    self.shader_in = success and data or nil
   end
 end
 
 function ShaderFrame:on_disconnect(prop)
   if prop == "image" then
     self.image_in = nil
+  elseif prop == "code" then
+    self.shader_in = nil
   end
 end
 
@@ -53,9 +65,19 @@ function ShaderFrame.is(obj)
      and meta._kind:find(";ShaderFrame;")
 end
 
-function ShaderFrame:draw(size)
-  love.graphics.setShader(self.color)
-  love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+function ShaderFrame:draw(size, scale)
+  local packet = self.image_in
+  if not packet then return end
+
+  love.graphics.setColor(1, 1, 1)
+  if self.shader_in then
+    local shader = love.graphics.getShader()
+    love.graphics.setShader(self.shader_in)
+    love.graphics.draw(packet.image, 0, 0, 0, scale, scale)
+    love.graphics.setShader(shader)
+  else
+    love.graphics.draw(packet.image, 0, 0, 0, scale, scale)
+  end
 end
 
 function ShaderFrame.mousepressed(_, mx, my)

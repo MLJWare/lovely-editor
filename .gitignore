@@ -1,3 +1,7 @@
 .luacheckrc
 .vscode
 Notes.md
+app/frame/CodeText.lua
+app/CodeBuffer.lua
+app/CodeCaret.lua
+app/EditableTextArea.lua

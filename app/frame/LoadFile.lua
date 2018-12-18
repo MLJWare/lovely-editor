@@ -5,7 +5,7 @@ local EditableText            = require "EditableText"
 local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
-local load_image_data         = require "util.file.load_image_data"
+local load_data               = require "util.file.load_data"
 local MessageFrame            = require "frame.Message"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
@@ -59,7 +59,7 @@ setmetatable(LoadFileFrame, {
       size = btn_size:copy();
       text_color = btn_text_color;
       mouseclicked = function ()
-        local filename = edit.text..".png"
+        local filename = edit.text
         if not love.filesystem.getInfo(filename, _info_) then
           app.show_popup(MessageFrame {
             title = "No such file";
@@ -104,12 +104,12 @@ function LoadFileFrame.is(obj)
 end
 
 function LoadFileFrame:_try_load(filename)
-  local data = load_image_data(love.filesystem.newFile(filename))
+  local data, format = load_data(love.filesystem.newFile(filename))
   if not data then
-    error_loading.text = ("Couldn't load file %q; perhaps it isn't an image?"):format(filename)
+    error_loading.text = ("Couldn't load file %q; perhaps it isn't an image/text file?"):format(filename)
     app.show_popup(error_loading)
   else
-    try_invoke(self, "on_load", data)
+    try_invoke(self, "on_load", format, data)
     self:close()
   end
 end

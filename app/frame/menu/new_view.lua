@@ -4,6 +4,7 @@ local MenuListFrame           = require "frame.MenuList"
 local NewPixelViewFrame       = require "frame.NewPixelView"
 local ColorPickerFrame        = require "frame.ColorPicker"
 local ToolboxFrame            = require "frame.Toolbox"
+local ShaderFrame             = require "frame.Shader"
 
 return MenuListFrame {
   options = {
@@ -12,6 +13,15 @@ return MenuListFrame {
       action = function (_, _)
         app.show_popup(NewPixelViewFrame{
           create_pos = app.popup_position();
+        })
+      end;
+    };
+    {
+      text   = "New Shader View";
+      action = function (_, _)
+        app.add_view(View{
+          frame = ShaderFrame {};
+          pos = app.popup_position();
         })
       end;
     };

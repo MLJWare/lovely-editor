@@ -51,6 +51,7 @@ return MenuListFrame {
           scale = menu.view.scale;
         })
       end;
+      condition = is_pixelframe;
     };
     {
       text   = "Clone View and Frame";

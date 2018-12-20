@@ -42,15 +42,6 @@ setmetatable(LoadFileFrame, {
       text = "";
       size = vec2(frame.size.x - OFFSET_X*2, 20);
       hint = "filename";
-      draw = function (self)
-        love.graphics.setColor(0.9, 0.9, 0.9)
-        love.graphics.rectangle("fill", 0, 0, self.size.x, self.size.y)
-        if self.focused and frame:has_focus() then
-          self:draw_active()
-        else
-          self:draw_default()
-        end
-      end;
     }
     frame._edit = edit
 
@@ -122,7 +113,7 @@ function LoadFileFrame:draw(size)
   for i, element in ipairs(self._ui) do
     pleasure.push_region(self:_element_bounds(i))
     love.graphics.setColor(1, 1, 1)
-    try_invoke(element, "draw")
+    try_invoke(element, "draw", self)
     pleasure.pop_region()
   end
 end
@@ -210,7 +201,7 @@ function LoadFileFrame:keypressed(key, scancode, isrepeat)
   elseif key == "return" then
     try_invoke(self._btn_yes, "mouseclicked")
   elseif key == "escape" then
-    try_invoke(self.__btn_no, "mouseclicked")
+    try_invoke(self._btn_no, "mouseclicked")
   elseif self._edit.focused then
     self._edit:keypressed(key, scancode, isrepeat)
   end

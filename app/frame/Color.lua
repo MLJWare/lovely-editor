@@ -35,8 +35,4 @@ function ColorFrame:draw(size)
   love.graphics.rectangle("fill", 0, 0, size.x, size.y)
 end
 
-function ColorFrame.mousepressed(_, mx, my)
-  print(mx, my)
-end
-
 return ColorFrame

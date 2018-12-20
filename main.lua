@@ -8,16 +8,17 @@ love.graphics.setDefaultFilter("nearest", "nearest", 0)
 love.keyboard.setKeyRepeat(true)
 
 local app                     = require "app"
+local alt_is_down             = require "util.alt_is_down"
 local ctrl_is_down            = require "util.ctrl_is_down"
 local shift_is_down           = require "util.shift_is_down"
 local vec2                    = require "linear-algebra.Vector2"
 local pleasure                = require "pleasure"
 local View                    = require "View"
 local Popup                   = require "Popup"
+local Integer                 = require "packet.Integer"
 local Ref                     = require "Ref"
 local PixelFrame              = require "frame.Pixel"
 local YesNoFrame              = require "frame.YesNo"
-local TextFrame               = require "frame.Text"
 local ImagePacket             = require "packet.Image"
 local MouseButton             = require "const.MouseButton"
 local checker_pattern         = require "checker_pattern"
@@ -36,6 +37,8 @@ local pin_dragged = {
 
 local EMPTY = {}
 
+local _links = {}
+
 local global_show_connections = true
 
 local focus_handler  = FocusHandler ()
@@ -46,7 +49,8 @@ local  view_pressed3 = nil
 local popup_pressed1 = nil
 
 local function global_mode()
-  return    shift_is_down()
+  return      alt_is_down()
+     and not shift_is_down()
      and not ctrl_is_down()
 end
 
@@ -55,35 +59,12 @@ local _delta_ = vec2(0)
 local popups = {}
 
 function love.load()
-  app.add_view (1, {
-    frame = PixelFrame {
-      data = love.image.newImageData(64, 64);
-    };
-    pos   = vec2(100, 200);
-    scale = 1;
-  })
+end
 
-  app.add_view (1, {
-    frame = PixelFrame {
-      data = love.image.newImageData(64, 64);
-    };
-    pos   = vec2(300, 300);
-    scale = 1;
-  })
-
-  app.add_view (1, {
-    frame = TextFrame {
-      text = [[
-vec4 effect(vec4 color, Image texture, vec2 tex_pos, vec2 screen_coords)
-{
-  vec4 pixel = Texel(texture, tex_pos);
-  return vec4(1 - pixel.rgb, pixel.a);
-}]];
-      size = vec2(128, 128);
-    };
-    pos   = vec2(400, 100);
-    scale = 1;
-  })
+function love.update(dt)
+  for _, view in ipairs(app.views) do
+  try_invoke(view.frame, "update", dt)
+end
 end
 
 function app.show_popup(frame, pos)
@@ -95,9 +76,11 @@ function app.show_popup(frame, pos)
   frame._focus_handler = focus_handler
   frame.close = function ()
     remove_once(popups, popup)
+    focus_handler:unassign(frame)
     if popup_pressed1 == popup then
       popup_pressed1 = nil
     end
+    popup.frame = nil
   end
 end
 
@@ -106,7 +89,9 @@ function app.popup_position()
   return popup and popup.pos:copy()
 end
 
-focus_handler:assign_list(app.views)
+for _, view in ipairs(app.views) do
+  focus_handler:assign(view.frame)
+end
 
 function love.keypressed(key, scancode, isrepeat)
   if #popups > 0 then
@@ -123,10 +108,13 @@ function love.keypressed(key, scancode, isrepeat)
     elseif key == "home" then
       app.viewport:set_position(0,0)
     end
+  elseif key == "menu" then
+    local w, h = love.graphics.getDimensions()
+    app.open_context_menu(w/2, h/2, nil)
   else
     local has_focus = focus_handler:has_focus()
     if has_focus then
-      try_invoke(has_focus.frame, "keypressed", key, scancode, isrepeat)
+      try_invoke(has_focus, "keypressed", key, scancode, isrepeat)
     end
   end
 end
@@ -139,21 +127,29 @@ end
 
 function app.add_view(index, view)
   if not view then
-    index, view = #app.views, index
+    index, view = #app.views + 1, index
   end
   view = View(view)
   table.insert(app.views, index, view)
-  view._focus_handler = focus_handler
+  view.frame._focus_handler = focus_handler
   return view
 end
 
 function app.remove_view(view)
   remove_once(app.views, view)
-  view._focus_handler = nil
+  focus_handler:unassign(view.frame)
+
+  for to, from in pairs(_links) do
+    if to.____view____   == view
+    or from.____view____ == view then
+      app.disconnect(to)
+    end
+  end
+  view.frame = nil
 end
 
 
-local function open_context_menu(mx, my, view)
+function app.open_context_menu(mx, my, view)
   local menu
   if view then
     menu = view_menu
@@ -297,7 +293,7 @@ function love.mousepressed(mx, my, button)
   focus_handler:request_focus(view)
 
   if global_mode() then
-    if button == 1 then
+    if button == MouseButton.LEFT then
       view_dragged = view
       push_to_top(view_dragged)
 
@@ -320,7 +316,7 @@ function love.mousepressed(mx, my, button)
           end
         end
       end
-    elseif button == 2 and view then
+    elseif button == MouseButton.RIGHT and view then
       if not view.anchored then
         app.viewport:lock_view(view)
       else
@@ -329,7 +325,7 @@ function love.mousepressed(mx, my, button)
     end
     return
   elseif button == MouseButton.RIGHT then
-    open_context_menu(mx, my, view)
+    app.open_context_menu(mx, my, view)
     return
   end
 
@@ -372,20 +368,20 @@ function love.mousereleased(mx, my, button)
     return
   end
 
-  if button == 1 then
+  if button == MouseButton.LEFT then
     view_dragged = nil
     if view_pressed1 then
       local pos, _, scale = app.viewport:view_bounds(view_pressed1)
       try_invoke(view_pressed1.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
     end
     view_pressed1 = nil
-  elseif button == 2 then
+  elseif button == MouseButton.RIGHT then
     if view_pressed2 then
       local pos, _, scale = app.viewport:view_bounds(view_pressed2)
       try_invoke(view_pressed2.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
     end
     view_pressed2 = nil
-  elseif button == 3 then
+  elseif button == MouseButton.MIDDLE then
     if view_pressed3 then
       local pos, _, scale = app.viewport:view_bounds(view_pressed3)
       try_invoke(view_pressed3.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
@@ -417,7 +413,7 @@ function love.mousemoved(mx, my, dx, dy)
   if global_mode() then
     local delta = vec2(dx, dy)
     local drag = view_dragged
-    if love.mouse.isDown(3) then
+    if love.mouse.isDown(MouseButton.MIDDLE) then
       app.viewport:pan_viewport(delta)
     elseif drag then
       app.viewport:move_view(drag, delta)
@@ -446,12 +442,10 @@ function love.wheelmoved(wx, wy)
 end
 
 function love.textinput(text)
-  if #popups > 0 then
-    local top = popups[#popups]
-    try_invoke(top.frame, "textinput", text)
-    return
+  local has_focus = focus_handler:has_focus()
+  if has_focus then
+    try_invoke(has_focus, "textinput", text)
   end
-  --TODO delegate to views
 end
 
 
@@ -479,8 +473,6 @@ local function draw_link(from, to)
 end
 
 local pad = 2
-
-local _links = {}
 
 function app.connect(from, to)
   local frame = rawget(to, "____view____").frame
@@ -551,6 +543,7 @@ end
 local function pin_color(kind)
   if kind == string          then return 0.80, 0.90, 0.20, 1
   elseif kind == ImagePacket then return 0.80, 0.30, 0.20, 1
+  elseif kind == Integer      then return 0.40, 0.30, 0.70, 1
   else                            return 0.75, 0.75, 0.75, 1
   end
 end
@@ -621,9 +614,9 @@ function love.draw()
     local frame = view.frame
 
     if view.anchored then
-      love.graphics.setColor(0.5,0,0)
+      love.graphics.setColor(0.5, 0.0, 0.0)
     else
-      love.graphics.setColor(0, 0.5, 1)
+      love.graphics.setColor(0.0, 0.5, 1.0)
     end
     love.graphics.setLineStyle("rough")
     love.graphics.setLineWidth(2*pad)
@@ -638,15 +631,24 @@ function love.draw()
     local h = font_height()
 
     love.graphics.rectangle("fill", x1 - pad, y1 - h, w + 2*pad, h)
-    love.graphics.setColor(1,1,1)
+    love.graphics.setColor(1.0, 1.0, 1.0)
     love.graphics.print(frame_id, x1, y1 - h)
 
     if type(frame) == "table" and type(frame.draw) == "function" then
       pleasure.push_region()
       pleasure.translate(pos.x, pos.y)
-      love.graphics.setColor(1, 1, 1)
+      love.graphics.setColor(1.0, 1.0, 1.0)
       frame:draw(size, scale, mx - pos.x, my - pos.y)
       pleasure.pop_region()
+    end
+
+    if frame.resize then
+      if view.anchored then
+        love.graphics.setColor(1.0, 0.5, 0.5)
+      else
+        love.graphics.setColor(0.7, 1.0, 1.0)
+      end
+      love.graphics.rectangle("fill", pos.x + size.x, pos.y + size.y, 3*pad, 3*pad)
     end
 
     if show_connectors then
@@ -667,7 +669,7 @@ function love.draw()
       local pos  = popup.pos
       local size = frame.size
       pleasure.push_region(pos.x, pos.y)
-      love.graphics.setColor(1, 1, 1)
+      love.graphics.setColor(1.0, 1.0, 1.0)
       frame:draw(size, 1, mx - pos.x, my - pos.y)
       pleasure.pop_region()
     end

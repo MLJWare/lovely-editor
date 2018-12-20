@@ -14,9 +14,11 @@ function FocusHandler:assign(item)
   item._focus_handler = self
 end
 
-function FocusHandler:assign_list(list)
-  for _, item in ipairs(list) do
-    item._focus_handler = self
+function FocusHandler:unassign(item)
+  if not item then return end
+  item._focus_handler = nil
+  if self._has_focus == item then
+    self._has_focus = nil
   end
 end
 

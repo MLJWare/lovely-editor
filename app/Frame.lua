@@ -1,8 +1,6 @@
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local try_invoke              = require "pleasure.try".invoke
-local ensure                 = require "pleasure.ensure"
-local is                     = require "pleasure.is"
 
 local Frame = {}
 Frame.__index = Frame
@@ -50,5 +48,7 @@ function Frame:has_focus()
   if not focus_handler then return false end
   return select(2, try_invoke(focus_handler, "has_focus", self))
 end
+
+function Frame.refresh() end
 
 return Frame

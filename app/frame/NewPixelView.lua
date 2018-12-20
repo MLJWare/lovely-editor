@@ -9,7 +9,7 @@ local Images                  = require "Images"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
 local vec2                    = require "linear-algebra.Vector2"
-
+local integer_filter          = require "input.filter.integer"
 local NewPixelViewFrame = {}
 NewPixelViewFrame.__index = NewPixelViewFrame
 
@@ -22,8 +22,6 @@ local OFFSET_Y = PAD_Y + 20
 
 local btn_size = vec2(100, 20)
 local btn_text_color = Color{0.2, 0.2, 0.2}
-
-local integer_filter = function (input) return input:gsub("%D+", "") end
 
 local DEFAULT_VIEW_WIDTH  = 64
 local DEFAULT_VIEW_HEIGHT = 64

@@ -65,7 +65,7 @@ function MessageFrame:draw(size)
 
   pleasure.push_region(self:_btn_bounds())
   love.graphics.setColor(1, 1, 1)
-  try_invoke(self._btn_ok, "draw")
+  try_invoke(self._btn_ok, "draw", self)
   pleasure.pop_region()
 end
 

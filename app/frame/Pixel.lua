@@ -135,6 +135,8 @@ end
 
 function PixelFrame:mousepressed(mx, my, button)
   if button ~= MouseButton.LEFT then return end
+  self:request_focus()
+
   local tool = self:tool()
   if not tool then return end
 

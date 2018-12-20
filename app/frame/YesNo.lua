@@ -80,7 +80,7 @@ function YesNoFrame:draw(size)
   for i, element in ipairs(self._ui) do
     pleasure.push_region(self:_element_bounds(i))
     love.graphics.setColor(1, 1, 1)
-    try_invoke(element, "draw")
+    try_invoke(element, "draw", self)
     pleasure.pop_region()
   end
 end

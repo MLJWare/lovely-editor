@@ -241,22 +241,26 @@ function EditableText:text_as_shown()
   return text
 end
 
-function EditableText:draw (frame)
+function EditableText:draw (frame, scale)
+  scale = scale or 1
   love.graphics.setColor(0.9, 0.9, 0.9)
-  love.graphics.rectangle("fill", 0, 0, self.size.x, self.size.y)
+  love.graphics.rectangle("fill", 0, 0, self.size.x*scale, self.size.y*scale)
   if self.focused and (not frame or frame:has_focus()) then
-    self:draw_active()
+    self:draw_active(scale)
   else
-    self:draw_default()
+    self:draw_default(scale)
   end
 end
 
-function EditableText:draw_default ()
+function EditableText:draw_default (scale)
   self:_set_caret(1, false) -- HACK resets caret & selection when not active
+
+  scale = scale or 1
 
   local size = self.size
   local text = self:text_as_shown()
-  pleasure.push_region(self.x_pad, 0, size.x - 2*self.x_pad, size.y)
+  pleasure.push_region(self.x_pad*scale, 0, (size.x - 2*self.x_pad)*scale, size.y*scale)
+  pleasure.scale(scale)
   do
     local center_y = size.y/2
 
@@ -272,9 +276,11 @@ function EditableText:draw_default ()
   pleasure.pop_region()
 end
 
-function EditableText:draw_active ()
+function EditableText:draw_active (scale)
+  scale = scale or 1
   local size = self.size
-  pleasure.push_region(self.x_pad, 0, size.x - 2*self.x_pad + 2, size.y)
+  pleasure.push_region(self.x_pad*scale, 0, (size.x - 2*self.x_pad + 2)*scale, size.y*scale)
+  pleasure.scale(scale)
   pleasure.translate(self.off_x, 0)
   do
     local text, caret = self:text_as_shown(), self.caret

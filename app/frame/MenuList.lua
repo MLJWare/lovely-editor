@@ -17,8 +17,13 @@ MenuListFrame.y = -1
 local menu_pad = 4
 local font = love.graphics.newFont(12)
 
-local function option_text_width(option)
-  return love.graphics.getFont():getWidth(option.text or "")
+local function _option_text(i, option)
+  if i > 9 then i = ".." end
+  return ("%s) %s"):format(i, option.text or "<...>")
+end
+
+local function option_text_width(option, i)
+  return love.graphics.getFont():getWidth(_option_text(i, option))
 end
 
 setmetatable(MenuListFrame, {
@@ -94,6 +99,10 @@ function MenuListFrame:mousepressed(mx, my, button)
 end
 
 function MenuListFrame:keypressed(key)
+  if key == "escape" then
+    return self:close()
+  end
+
   local index = tonumber(key)
   if not index then return end
   index = (index - 1)%10 + 1
@@ -135,7 +144,7 @@ function MenuListFrame:draw(_, _, mx, my)
     else
       love.graphics.setColor(0.0, 0.0, 0.0)
     end
-    love.graphics.print(option.text or "<...>", x2, y2)
+    love.graphics.print(_option_text(i, option), x2, y2)
   end
 end
 

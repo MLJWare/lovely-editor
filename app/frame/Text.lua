@@ -52,4 +52,12 @@ function TextFrame:draw(size)
   love.graphics.setFont(old_font)
 end
 
+function TextFrame:id()
+  local filename = self.filename
+  if filename then
+    return filename:match("[^/]*$")
+  end
+  return Frame.id(self)
+end
+
 return TextFrame

@@ -100,7 +100,7 @@ function LoadFileFrame:_try_load(filename)
     error_loading.text = ("Couldn't load file %q; perhaps it isn't an image/text file?"):format(filename)
     app.show_popup(error_loading)
   else
-    try_invoke(self, "on_load", format, data)
+    try_invoke(self, "on_load", format, data, filename)
     self:close()
   end
 end

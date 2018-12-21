@@ -34,6 +34,7 @@ setmetatable(PixelFrame, {
     frame._undoStack = UndoStack()
 
     setmetatable(frame, PixelFrame)
+    frame:refresh()
     return frame
   end;
 })
@@ -48,6 +49,7 @@ PixelFrame.takes = IOs{
 function PixelFrame:on_connect(prop, from)
   if prop == "image" then
     self.image = from
+    self:refresh()
   end
 end
 
@@ -55,6 +57,7 @@ function PixelFrame:on_disconnect(prop)
   if prop == "image" then
     try_invoke(self.image, "unlisten", self)
     self.image = self._own_image
+    self:refresh()
   end
 end
 
@@ -162,6 +165,14 @@ function PixelFrame:mousereleased(mx, my, button)
 
   try_invoke(tool, "on_release", self._undoStack, self.data, mx, my)
   self:refresh()
+end
+
+function PixelFrame:id()
+  local filename = self.filename
+  if filename then
+    return filename:match("[^/]*$")
+  end
+  return Frame.id(self)
 end
 
 return PixelFrame

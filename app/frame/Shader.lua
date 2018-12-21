@@ -42,6 +42,7 @@ function ShaderFrame:on_connect(prop, from)
   elseif prop == "code" then
     local success, data = pcall(love.graphics.newShader, from())
     self.shader_in = success and data or nil
+    self:refresh()
   end
 end
 
@@ -49,8 +50,10 @@ function ShaderFrame:on_disconnect(prop)
   if prop == "image" then
     try_invoke(self.image_in, "unlisten", self)
     self.image_in = nil
+    self:refresh()
   elseif prop == "code" then
-    --self.shader_in = nil
+    self.shader_in = nil
+    self:refresh()
   end
 end
 
@@ -79,6 +82,7 @@ local function _paste()
 end
 
 function ShaderFrame:refresh()
+  if not self.image then return end
   _paste_self = self
   self.image.canvas:renderTo(_paste)
   _paste_self = nil
@@ -92,10 +96,6 @@ function ShaderFrame:draw(_, scale)
   if not self.image then return end
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(self.image.canvas, 0, 0, 0, scale, scale)
-end
-
-function ShaderFrame.mousepressed(_, mx, my)
-  print(mx, my)
 end
 
 return ShaderFrame

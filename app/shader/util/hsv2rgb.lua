@@ -1,6 +1,6 @@
 return [[
 #ifdef GL_ES
-precision mediump floats;
+precision mediump float;
 #endif
 
 vec3 hsv2rgb(float h, float s, float v) {

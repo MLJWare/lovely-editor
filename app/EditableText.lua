@@ -213,6 +213,8 @@ function EditableText:_mouse_index (mx, _)
 end
 
 function EditableText:mousepressed (mx, my)
+  love.keyboard.setTextInput(true)
+
   local new_caret  = self:_mouse_index(mx, my)
   local last_press = self._last_press
   local timestamp  = love.timer.getTime()

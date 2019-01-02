@@ -160,6 +160,19 @@ local function font_height()
   return love.graphics.getFont():getHeight()
 end
 
+do
+  local os = love.system.getOS()
+  if os == "Android"
+  or os == "iOS" then
+    app.mouse = {
+      isDown = function (btn)
+        return btn == #love.touch.getTouches()
+      end;
+    }
+  else
+    app.mouse = love.mouse
+  end
+end
 
 function app.pin_color(kind)
   if kind == string          then return 0.80, 0.90, 0.20, 1
@@ -369,7 +382,7 @@ function app.mousemoved(mx, my, dx, dy)
   if app.global_mode() then
     local delta = vec2(dx, dy)
     local drag = app.view_dragged
-    if love.mouse.isDown(MouseButton.MIDDLE) then
+    if app.mouse.isDown(MouseButton.MIDDLE) then
       app.viewport:pan_viewport(delta)
     elseif drag then
       app.viewport:move_view(drag, delta)

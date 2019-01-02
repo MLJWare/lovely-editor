@@ -2,6 +2,7 @@ local IOs                     = require "IOs"
 local Frame                   = require "Frame"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
+local topath                  = require "topath"
 
 
 local TextFrame = {}
@@ -19,7 +20,7 @@ setmetatable(TextFrame, {
   end;
 })
 
-local monofont = love.graphics.newFont("res/font/Cousine-Regular.ttf", 12)
+local monofont = love.graphics.newFont(topath "res/font/Cousine-Regular.ttf", 12)
 
 function TextFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)

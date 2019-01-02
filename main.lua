@@ -1,4 +1,11 @@
-package.path = "lib/?.lua;lib/?/init.lua;app/?.lua;app/?/init.lua;"..package.path
+do
+  local path = ANDROID_DEV
+           and "lovely-editor/lib/?.lua;lovely-editor/lib/?/init.lua;lovely-editor/app/?.lua;lovely-editor/app/?/init.lua;"
+            or "lib/?.lua;lib/?/init.lua;app/?.lua;app/?/init.lua;"
+
+  package.path = path..package.path
+  love.filesystem.setRequirePath(path..love.filesystem.getRequirePath())
+end
 
 function string.is (v)
   return type(v) == "string"
@@ -49,7 +56,25 @@ function love.mousepressed(mx, my, button)
   app.mousepressed(mx, my, button)
 end
 
+function love.touchpressed(_, mx, my, _, _, _)
+  local button = #love.touch.getTouches()
+  if button == 1 then return end
+
+  if button == 5 then
+    love.keyboard.setTextInput(not love.keyboard.hasTextInput())
+  else
+    app.mousepressed(mx, my, button)
+  end
+end
+
 function love.mousereleased(mx, my, button)
+  app.mousereleased(mx, my, button)
+end
+
+function love.touchreleased(_, mx, my, _, _, _)
+  local button = 1 + #love.touch.getTouches()
+  if button == 1 then return end
+
   app.mousereleased(mx, my, button)
 end
 

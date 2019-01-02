@@ -1,4 +1,6 @@
-local atlas  = love.graphics.newImage("res/atlas.png")
+local topath                  = require "topath"
+
+local atlas  = love.graphics.newImage(topath "res/atlas.png")
 local atlas_w, atlas_h = atlas:getDimensions()
 local lookup = require "res.atlas"
 

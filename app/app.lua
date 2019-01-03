@@ -8,7 +8,7 @@ local pleasure                = require "pleasure"
 local Popup                   = require "Popup"
 local Ref                     = require "Ref"
 local remove_once             = require "util.list.remove_once"
-local TextFrame               = require "frame.Text"
+local TextBufferFrame         = require "frame.TextBuffer"
 local vec2                    = require "linear-algebra.Vector2"
 local View                    = require "View"
 local Viewport                = require "Viewport"
@@ -458,8 +458,8 @@ function app.try_create_frame(format, data)
       data = data;
     };
   elseif format == "text" then
-    return TextFrame{
-      text = data;
+    return TextBufferFrame {
+      data = data;
       size = vec2(256, 256);
     };
   end

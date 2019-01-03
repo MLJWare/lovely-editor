@@ -2,6 +2,7 @@ local vec2                    = require "linear-algebra.Vector2"
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
 local ImagePacket             = require "packet.Image"
+local StringPacket            = require "packet.String"
 local try_invoke              = require "pleasure.try".invoke
 --local assertf                 = require "assertf"
 
@@ -26,7 +27,7 @@ setmetatable(ShaderFrame, {
 
 ShaderFrame.takes = IOs{
   {id = "image", kind = ImagePacket};
-  {id = "code",  kind = string};
+  {id = "code",  kind = StringPacket};
 }
 ShaderFrame.gives = IOs{
   {id = "image", kind = ImagePacket};
@@ -40,9 +41,9 @@ function ShaderFrame:on_connect(prop, from)
     self.size:setn(from.canvas:getDimensions())
     self:refresh()
   elseif prop == "code" then
-    local success, data = pcall(love.graphics.newShader, from())
-    self.shader_in = success and data or nil
-    self:refresh()
+    self.code_in = from
+    from:listen(self, self.refresh_shader)
+    self:refresh_shader()
   end
 end
 
@@ -52,6 +53,8 @@ function ShaderFrame:on_disconnect(prop)
     self.image_in = nil
     self:refresh()
   elseif prop == "code" then
+    try_invoke(self.code_in, "unlisten", self)
+    self.code_in   = nil
     self.shader_in = nil
     self:refresh()
   end
@@ -69,24 +72,32 @@ function ShaderFrame.is(obj)
      and meta._kind:find(";ShaderFrame;")
 end
 
-local _paste_self = nil
-local function _paste()
+function ShaderFrame:refresh()
+  if not self.image then return end
+  local cv = love.graphics.getCanvas()
+
+  love.graphics.setCanvas(self.image.canvas)
   love.graphics.clear   (0,0,0,0)
   love.graphics.setColor(1,1,1,1)
-  local shader_in = _paste_self.shader_in
+  local shader_in = self.shader_in
   if shader_in then
     love.graphics.setShader(shader_in)
   end
-  love.graphics.draw(_paste_self.image_in.canvas)
+  local image = self.image_in
+  if image then
+    love.graphics.draw(image.canvas)
+  end
   love.graphics.setShader()
+  love.graphics.setCanvas(cv)
+  self.image:inform()
 end
 
-function ShaderFrame:refresh()
-  if not self.image then return end
-  _paste_self = self
-  self.image.canvas:renderTo(_paste)
-  _paste_self = nil
-  self.image:inform()
+function ShaderFrame:refresh_shader()
+  local code = self.code_in
+  if not code then return end
+  local success, data = pcall(love.graphics.newShader, code.value)
+  self.shader_in = success and data or nil
+  self:refresh()
 end
 
 function ShaderFrame:draw(_, scale)
@@ -94,6 +105,7 @@ function ShaderFrame:draw(_, scale)
   if not packet then return end
 
   if not self.image then return end
+
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(self.image.canvas, 0, 0, 0, scale, scale)
 end

@@ -44,7 +44,7 @@ setmetatable(SaveFileFrame, {
       size = btn_size:copy();
       text_color = btn_text_color;
       mouseclicked = function ()
-        local filename = edit.text..".png"
+        local filename = edit.text
         if love.filesystem.getInfo(filename, _info_) then
           app.show_popup(YesNoFrame {
             title = "Override?";
@@ -92,7 +92,11 @@ function SaveFileFrame.is(obj)
 end
 
 function SaveFileFrame:_save_and_close(filename)
-  love.filesystem.write(filename, self.data:encode("png"))
+  if self.kind == "image" then
+    love.filesystem.write(filename, self.data:encode("png"))
+  elseif self.kind == "text" then
+    love.filesystem.write(filename, self.data)
+  end
   self.data = nil
   self:close()
 end

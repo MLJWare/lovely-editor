@@ -4,9 +4,27 @@ local SaveFileFrame           = require "frame.SaveFile"
 local YesNoFrame              = require "frame.YesNo"
 local MenuListFrame           = require "frame.MenuList"
 local PixelFrame              = require "frame.Pixel"
+local TextBufferFrame         = require "frame.TextBuffer"
+local StringPacket            = require "packet.String"
+
+local function any (...)
+  local list = {...}
+  return function (_, menu)
+    for i = 1, #list do
+      if list[i](_, menu) then
+        return true
+      end
+    end
+    return false
+  end
+end
 
 local function is_pixelframe (_, menu)
   return PixelFrame.is(menu.view.frame)
+end;
+
+local function is_textbufferframe (_, menu)
+  return TextBufferFrame.is(menu.view.frame)
 end;
 
 local save_file = SaveFileFrame{
@@ -33,14 +51,19 @@ return MenuListFrame {
       text   = "Save Frame to File";
       action = function (_, menu)
         local data = menu.view.frame.data
-        if  type(data) == "userdata"
+        if  StringPacket.is(data) then
+          save_file.data = data.value
+          save_file.kind = "text"
+          app.show_popup(save_file)
+        elseif type(data) == "userdata"
         and type(data.type) == "function"
         and data:type() == "ImageData" then
           save_file.data = data
+          save_file.kind = "image"
           app.show_popup(save_file)
         end
       end;
-      condition = is_pixelframe;
+      condition = any(is_pixelframe, is_textbufferframe);
     };
     {
       text   = "Clone View (using same Frame)";

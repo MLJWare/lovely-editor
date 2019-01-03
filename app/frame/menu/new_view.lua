@@ -10,6 +10,7 @@ local ColorPickerFrame        = require "frame.ColorPicker"
 local ToolboxFrame            = require "frame.Toolbox"
 local ViewGroupFrame          = require "frame.ViewGroup"
 local ShaderFrame             = require "frame.Shader"
+local TextBufferFrame         = require "frame.TextBuffer"
 
 return MenuListFrame {
   options = {
@@ -18,6 +19,17 @@ return MenuListFrame {
       action = function (_, _)
         app.show_popup (NewPixelViewFrame {
           create_pos = app.popup_position ();
+        })
+      end;
+    };
+    {
+      text   = "New Text Buffer View";
+      action = function (_, _)
+        app.add_view (View {
+          frame = TextBufferFrame {
+            size = vec2(128, 128);
+          };
+          pos = app.popup_position ();
         })
       end;
     };

@@ -72,6 +72,16 @@ function ShaderFrame.is(obj)
      and meta._kind:find(";ShaderFrame;")
 end
 
+function ShaderFrame:check_action(action_id)
+  if action_id == "core:save" then
+    return self.image and self.on_save or nil
+  end
+end
+
+function ShaderFrame:on_save()
+  return self.image.canvas:newImageData():encode("png")
+end
+
 function ShaderFrame:refresh()
   if not self.image then return end
   local cv = love.graphics.getCanvas()

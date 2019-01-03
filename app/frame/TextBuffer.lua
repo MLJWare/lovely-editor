@@ -68,6 +68,17 @@ TextBufferFrame.gives = IOs{
   {id = "data", kind = StringPacket};
 }
 
+function TextBufferFrame:check_action(action_id)
+  if action_id == "core:save" then
+    return self.on_save
+  end
+end
+
+function TextBufferFrame:on_save()
+  return self._buffer:dump()
+end
+
+
 function TextBufferFrame:draw(size)
   local old_font = love.graphics.getFont()
   love.graphics.setFont(self._font)

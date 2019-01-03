@@ -92,12 +92,10 @@ function SaveFileFrame.is(obj)
 end
 
 function SaveFileFrame:_save_and_close(filename)
-  if self.kind == "image" then
-    love.filesystem.write(filename, self.data:encode("png"))
-  elseif self.kind == "text" then
-    love.filesystem.write(filename, self.data)
-  end
-  self.data = nil
+  local data = self.action(self.frame)
+  love.filesystem.write(filename, data)
+  self.action = nil
+  self.frame  = nil
   self:close()
 end
 function SaveFileFrame:draw(size)

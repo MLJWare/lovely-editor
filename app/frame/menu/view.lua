@@ -28,7 +28,8 @@ local function is_textbufferframe (_, menu)
 end;
 
 local save_file = SaveFileFrame{
-  data = nil;
+  frame  = nil;
+  action = nil;
 }
 
 local ask_destroy = YesNoFrame{
@@ -50,20 +51,30 @@ return MenuListFrame {
     {
       text   = "Save Frame to File";
       action = function (_, menu)
-        local data = menu.view.frame.data
-        if  StringPacket.is(data) then
-          save_file.data = data.value
-          save_file.kind = "text"
-          app.show_popup(save_file)
-        elseif type(data) == "userdata"
-        and type(data.type) == "function"
-        and data:type() == "ImageData" then
-          save_file.data = data
-          save_file.kind = "image"
+        local frame = menu.view.frame;
+        local action = frame:check_action("core:save")
+        if type(action) == "function" then
+          save_file.action = action
+          save_file.frame  = frame
           app.show_popup(save_file)
         end
+        --local data = menu.view.frame.data
+        --if  StringPacket.is(data) then
+          --save_file.data = data.value
+          --save_file.kind = "text"
+          --app.show_popup(save_file)
+        --elseif type(data) == "userdata"
+        --and type(data.type) == "function"
+        --and data:type() == "ImageData" then
+          --save_file.data = data
+          --save_file.kind = "image"
+          --app.show_popup(save_file)
+        --end
       end;
-      condition = any(is_pixelframe, is_textbufferframe);
+      condition = function (_, menu)
+        return menu.view.frame:check_action("core:save");
+        --any(is_pixelframe, is_textbufferframe);
+      end
     };
     {
       text   = "Clone View (using same Frame)";

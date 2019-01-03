@@ -50,5 +50,6 @@ function Frame:has_focus()
 end
 
 function Frame.refresh() end
+function Frame.check_action() end
 
 return Frame

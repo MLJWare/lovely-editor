@@ -61,6 +61,16 @@ function PixelFrame:on_disconnect(prop)
   end
 end
 
+function PixelFrame:check_action(action_id)
+  if action_id == "core:save" then
+    return self.on_save
+  end
+end
+
+function PixelFrame:on_save()
+  return self.data:encode("png")
+end
+
 function PixelFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
   assertf(type(obj.data) == "userdata"

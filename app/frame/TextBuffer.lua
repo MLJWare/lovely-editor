@@ -92,7 +92,7 @@ function TextBufferFrame:draw(size)
     local caret_row = caret:get_row()
     local caret_column = caret:get_column()
 
-    local show_caret = love.timer.getTime()%1 < 0.5
+    local show_caret = self:has_focus() and love.timer.getTime()%1 < 0.5
 
     local selection = caret:has_selection()
     local row1, column1, row2, column2 = caret:selection_range()

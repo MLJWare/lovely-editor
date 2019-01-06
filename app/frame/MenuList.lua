@@ -18,7 +18,11 @@ local menu_pad = 4
 local font = love.graphics.newFont(12)
 
 local function _option_text(i, option)
-  if i > 9 then i = ".." end
+  if i == 10 then
+    i = "0"
+  elseif i > 9 then
+    i = ".."
+  end
   return ("%s) %s"):format(i, option.text or "<...>")
 end
 

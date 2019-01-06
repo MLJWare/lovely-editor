@@ -2,15 +2,13 @@ local app                     = require "app"
 local vec2                    = require "linear-algebra.Vector2"
 local View                    = require "View"
 local MenuListFrame           = require "frame.MenuList"
-local IntegerFrame            = require "frame.Integer"
-local SumFrame                = require "frame.Sum"
-local TimerFrame              = require "frame.Timer"
 local NewPixelViewFrame       = require "frame.NewPixelView"
 local ColorPickerFrame        = require "frame.ColorPicker"
 local ToolboxFrame            = require "frame.Toolbox"
 local ViewGroupFrame          = require "frame.ViewGroup"
 local ShaderFrame             = require "frame.Shader"
 local TextBufferFrame         = require "frame.TextBuffer"
+local new_math_view           = require "frame.menu.new_math_view"
 
 return MenuListFrame {
   options = {
@@ -43,30 +41,9 @@ return MenuListFrame {
       end;
     };
     {
-      text   = "New Integer View";
+      text   = "Math Views";
       action = function (_, _)
-        app.add_view(View{
-          frame = IntegerFrame {};
-          pos = app.popup_position();
-        })
-      end;
-    };
-    {
-      text   = "New Sum View";
-      action = function (_, _)
-        app.add_view(View{
-          frame = SumFrame {};
-          pos = app.popup_position();
-        })
-      end;
-    };
-    {
-      text   = "New Timer View";
-      action = function (_, _)
-        app.add_view(View{
-          frame = TimerFrame {};
-          pos = app.popup_position();
-        })
+        app.show_popup( new_math_view, app.popup_position())
       end;
     };
     {

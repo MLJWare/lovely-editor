@@ -28,4 +28,8 @@ function StringPacket.is(obj)
   and meta._kind:find(";StringPacket;")
 end
 
+function StringPacket.default_raw_value()
+  return ""
+end
+
 return StringPacket

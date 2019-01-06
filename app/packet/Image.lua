@@ -24,23 +24,23 @@ local function _paste()
 end
 
 function ImagePacket.clone(obj)
-  _pastee = obj.canvas
-  local canvas = love.graphics.newCanvas(_pastee:getDimensions())
-  canvas:renderTo(_paste)
+  _pastee = obj.value
+  local value = love.graphics.newCanvas(_pastee:getDimensions())
+  value:renderTo(_paste)
   _pastee = nil
 
   return ImagePacket{
-    canvas = canvas;
+    value = value;
   }
 end
 
 function ImagePacket.typecheck(obj, where)
   Packet.typecheck(obj, where)
-  local canvas = obj.canvas
-  local test = type(canvas) == "userdata"
-           and type(canvas.type) == "function"
-           and canvas:type() == "Canvas"
-  assertf(test, "Error in %s: Missing/invalid property: 'canvas' must be a Canvas.", where)
+  local value = obj.value
+  local test = type(value) == "userdata"
+           and type(value.type) == "function"
+           and value:type() == "Canvas"
+  assertf(test, "Error in %s: Missing/invalid property: 'value' must be a Canvas.", where)
 end
 
 function ImagePacket.is(obj)
@@ -48,6 +48,14 @@ function ImagePacket.is(obj)
   return type(meta) == "table"
   and type(meta._kind) == "string"
   and meta._kind:find(";ImagePacket;")
+end
+
+do
+  local pixel = love.graphics.newImage(love.image.newImageData(1, 1))
+  pixel:setWrap("repeat", "repeat")
+  function ImagePacket.default_raw_value()
+    return pixel
+  end
 end
 
 return ImagePacket

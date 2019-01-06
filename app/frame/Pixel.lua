@@ -25,7 +25,7 @@ setmetatable(PixelFrame, {
     end
     PixelFrame.typecheck(frame, "PixelFrame constructor")
     frame.image = ImagePacket{
-      canvas = love.graphics.newCanvas(frame.data:getDimensions())
+      value = love.graphics.newCanvas(frame.data:getDimensions())
     }
     frame._own_image = frame.image
     frame.size.x, frame.size.y = frame.data:getDimensions()
@@ -42,24 +42,6 @@ setmetatable(PixelFrame, {
 PixelFrame.gives = IOs{
   {id = "image", kind = ImagePacket};
 }
-PixelFrame.takes = IOs{
-  {id = "image", kind = ImagePacket};
-}
-
-function PixelFrame:on_connect(prop, from)
-  if prop == "image" then
-    self.image = from
-    self:refresh()
-  end
-end
-
-function PixelFrame:on_disconnect(prop)
-  if prop == "image" then
-    try_invoke(self.image, "unlisten", self)
-    self.image = self._own_image
-    self:refresh()
-  end
-end
 
 function PixelFrame:check_action(action_id)
   if action_id == "core:save" then
@@ -93,8 +75,8 @@ end
 
 function PixelFrame:draw(size, scale)
   love.graphics.setColor(1, 1, 1)
-  love.graphics.draw(self.image.canvas, 0, 0, 0, scale, scale)
-  try_invoke(self:tool(), "draw_hint", self.image.canvas, size, scale)
+  love.graphics.draw(self.image.value, 0, 0, 0, scale, scale)
+  try_invoke(self:tool(), "draw_hint", self.image.value, size, scale)
 end
 
 function PixelFrame:locked()
@@ -117,7 +99,7 @@ end
 function PixelFrame:refresh()
   self.data_image:replacePixels(self.data)
   _paste_self = self
-  self.image.canvas:renderTo(_paste)
+  self.image.value:renderTo(_paste)
   _paste_self = nil
   self.image:inform()
 end

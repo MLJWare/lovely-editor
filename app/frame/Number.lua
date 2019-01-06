@@ -3,33 +3,32 @@ local IOs                     = require "IOs"
 local NumberPacket            = require "packet.Number"
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
-local integer_filter          = require "input.filter.integer"
+local number_filter           = require "input.filter.number"
 local InputFrame              = require "frame.Input"
 local pleasure                = require "pleasure"
 local font_writer             = require "util.font_writer"
-local try_invoke              = pleasure.try.invoke
 
-local IntegerFrame = {}
-IntegerFrame.__index = IntegerFrame
+local NumberFrame = {}
+NumberFrame.__index = NumberFrame
 
-IntegerFrame._kind = ";IntegerFrame;InputFrame;Frame;"
+NumberFrame._kind = ";NumberFrame;InputFrame;Frame;"
 
-setmetatable(IntegerFrame, {
+setmetatable(NumberFrame, {
   __index = InputFrame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "IntegerFrame constructor must be a table.")
+    assert(type(frame) == "table", "NumberFrame constructor must be a table.")
 
     if not frame.size then frame.size = vec2(64, 20) end
-    IntegerFrame.typecheck(frame, "IntegerFrame constructor")
+    NumberFrame.typecheck(frame, "NumberFrame constructor")
 
-    frame.filter = integer_filter
+    frame.filter = number_filter
     if not frame.value then
       frame.value = NumberPacket{ value = 0 }
     end
 
-    frame.value.value = math.floor(frame.value.value)
+    frame._own_value = frame.value
 
-    setmetatable(InputFrame(frame), IntegerFrame)
+    setmetatable(InputFrame(frame), NumberFrame)
     frame._edit.hint_color = frame._edit.text_color
     frame._edit.hint = "0"
 
@@ -37,46 +36,46 @@ setmetatable(IntegerFrame, {
   end;
 })
 
-function IntegerFrame.typecheck(obj, where)
+function NumberFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
   assertf(not obj.value or NumberPacket.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a NumberPacket.", where)
 end
 
-function IntegerFrame.is(obj)
+function NumberFrame.is(obj)
   local meta = getmetatable(obj)
   return type(meta) == "table"
      and type(meta._kind) == "string"
-     and meta._kind:find(";IntegerFrame;")
+     and meta._kind:find(";NumberFrame;")
 end
 
-IntegerFrame.gives = IOs{
+NumberFrame.gives = IOs{
   {id = "value", kind = NumberPacket};
 }
 
-IntegerFrame.takes = IOs{
+NumberFrame.takes = IOs{
   {id = "value", kind = NumberPacket};
 }
 
-function IntegerFrame:on_connect(prop, from)
+function NumberFrame:on_connect(prop, from)
   if prop == "value" then
-    self.value_in = from
+    self.value = from
     from:listen(self, self.refresh)
     self:refresh()
   end
 end
 
-function IntegerFrame:on_disconnect(prop)
+function NumberFrame:on_disconnect(prop)
   if prop == "value" then
-    try_invoke(self.value_in, "unlisten", self, self.refresh)
-    self.value_in = nil
+    self.value:unlisten(self, self.refresh)
+    self.value = self._own_value
   end
 end
 
-function IntegerFrame:locked()
-  return self.value_in ~= nil
+function NumberFrame:locked()
+  return self.value ~= self._own_value
 end
 
-function IntegerFrame:draw(size, scale)
+function NumberFrame:draw(size, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)
   love.graphics.rectangle("fill", 0, 0, size.x, size.y)
   if self:locked() then
@@ -95,22 +94,14 @@ function IntegerFrame:draw(size, scale)
   end
 end
 
-function IntegerFrame:refresh()
-  local data = self.value
-  local data_in = self.value_in
-  if data_in then
-    local new_value = math.floor(data_in.value)
-    if data.value == new_value then return end
-    data.value = new_value
-    data:inform()
-  else
-    data.value = math.floor(tonumber(self._edit.text) or 0)
-    data:inform()
-  end
+function NumberFrame:refresh()
+  if self:locked() then return end
+  self.value.value = tonumber(self._edit.text) or 0
+  self.value:inform()
 end
 
-function IntegerFrame.id()
-  return "Integer"
+function NumberFrame.id()
+  return "Number"
 end
 
-return IntegerFrame
+return NumberFrame

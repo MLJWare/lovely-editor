@@ -37,6 +37,30 @@ function Frame:clone()
   }
 end
 
+function Frame:takes_count()
+  local takes = self.takes
+  return type(takes) == "table" and #takes or 0
+end
+
+function Frame:take_by_index(index)
+  local takes = self.takes
+  if type(takes) ~= "table" then return end
+  local take = takes[index]
+  if not take then return end
+  return take.id, take.kind
+end
+
+function Frame:take_by_id(id)
+  local takes = self.takes
+  if type(takes) ~= "table" then return end
+  for index = 1, #takes do
+    local take = takes[index]
+    if take.id == id then
+      return index, take.kind
+    end
+  end
+end
+
 function Frame:request_focus()
   local focus_handler = self._focus_handler
   if not focus_handler then return false end

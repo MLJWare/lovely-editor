@@ -14,7 +14,6 @@ setmetatable(Packet, {
 })
 
 function Packet.typecheck(obj, where)
-  -- assertf(???, "Error in %s: Missing/invalid property: '???' must be a ???.", where)
 end
 
 function Packet.is(obj)
@@ -25,16 +24,32 @@ function Packet.is(obj)
 end
 
 function Packet:listen(listener, callback)
-  self.listeners[listener] = callback
+  if not (listener and callback) then return end
+  local listeners = self.listeners
+  local len = #listeners
+  listeners[len + 1] = listener
+  listeners[len + 2] = callback
 end
 
-function Packet:unlisten(listener)
-  self.listeners[listener] = nil
+function Packet:unlisten(listener, callback)
+  local listeners = self.listeners
+  for i = #listeners, 1, -2 do
+    local callback2 = listeners[i    ]
+    local listener2 = listeners[i - 1]
+
+    if listener == listener2
+    and  callback == callback2 then
+      table.remove(listeners, i)
+      table.remove(listeners, i - 1)
+      break
+    end
+  end
 end
 
 function Packet:inform()
-  for listener, callback in pairs(self.listeners) do
-    callback(listener, self)
+  local listeners = self.listeners
+  for i = 1, #listeners, 2 do
+    listeners[i + 1](listeners[i], self)
   end
 end
 

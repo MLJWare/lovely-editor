@@ -1,7 +1,8 @@
 local checker_pattern         = require "checker_pattern"
 local FocusHandler            = require "FocusHandler"
 local ImagePacket             = require "packet.Image"
-local Integer                 = require "packet.Integer"
+local StringPacket            = require "packet.String"
+local NumberPacket            = require "packet.Number"
 local MouseButton             = require "const.MouseButton"
 local PixelFrame              = require "frame.Pixel"
 local pleasure                = require "pleasure"
@@ -28,9 +29,9 @@ local EMPTY = {}
 local global_style = {
   transparency = {
     pattern = "checker";
-    color  = {0.05, 0.05, 0.05};
-    color2 = {0.15, 0.15, 0.15};
-    scale  = 8;
+    color  = {0.15, 0.15, 0.15};
+    color2 = {0.05, 0.05, 0.05};
+    scale  = 32;
   };
 }
 
@@ -70,8 +71,7 @@ local pin_offset_x = pin_radius_small + 4
 
 local function _io_takes_pos(view, index)
   local pos, size = app.viewport:view_bounds(view)
-  local takes = view.frame.takes
-  local sectors = #takes + 1
+  local sectors = view.frame:takes_count() + 1
 
   local x = pos.x - pin_offset_x
   local y = pos.y + (index/sectors)*size.y
@@ -81,8 +81,7 @@ end
 local function io_takes_pos(ref)
   local view = rawget(ref, "____view____")
   local prop = rawget(ref, "____prop____")
-  local takes = view.frame.takes
-  local index = takes[prop]
+  local index = view.frame:take_by_id(prop)
   return vec2(_io_takes_pos(view, index))
 end
 
@@ -141,7 +140,8 @@ local function _pin_takes_at(mx, my)
 
     if  0 <= dx and dx < 2*pin_radius_large
     and 0 <= dy and dy < size.y then
-      for index = 1, #(view.frame.takes or EMPTY) do
+      local frame = view.frame
+      for index = 1, frame:takes_count() do
         local x, y = _io_takes_pos(view, index)
         local dist = math.abs(x - mx) + math.abs(y - my)
         if dist < pin_radius_large then
@@ -175,10 +175,10 @@ do
 end
 
 function app.pin_color(kind)
-  if kind == string          then return 0.80, 0.90, 0.20, 1
-  elseif kind == ImagePacket then return 0.80, 0.30, 0.20, 1
-  elseif kind == Integer     then return 0.40, 0.30, 0.70, 1
-  else                            return 0.75, 0.75, 0.75, 1
+  if     kind == StringPacket  then return 0.80, 0.90, 0.20, 1
+  elseif kind == ImagePacket   then return 0.80, 0.30, 0.20, 1
+  elseif kind == NumberPacket  then return 0.40, 0.30, 0.70, 11
+  else                              return 0.75, 0.75, 0.75, 1
   end
 end
 
@@ -321,11 +321,11 @@ function app.mousereleased(mx, my, button)
       local from_view = pin_dragged.view
 
       local give = from_view.frame.gives[pin_dragged.index]
-      local take =   to_view.frame.takes[to_index]
+      local take_id, take_kind = to_view.frame:take_by_index(to_index)
 
-      if compatible(give.kind, take.kind) then
+      if compatible(give.kind, take_kind) then
         local from = Ref(from_view, give.id)
-        local to   = Ref(to_view, take.id)
+        local to   = Ref(to_view, take_id)
         app.connect(from, to)
       end
     end
@@ -513,7 +513,7 @@ function app.connect(from, to)
   local frame = rawget(to, "____view____").frame
   local prop  = rawget(to, "____prop____")
 
-  if not frame.takes[prop] then return end
+  if not frame:take_by_id(prop) then return end
 
   app.disconnect_raw(
     rawget(to, "____view____"),
@@ -532,15 +532,12 @@ end
 
 function app.disconnect_raw(view, prop)
   local frame = view.frame
-  local takes = frame.takes
-
-  if not takes then return end
 
   if type(prop) == "number" then
-    prop = takes[prop].id
+    prop = frame:take_by_index(prop)
   end
 
-  if not (prop and takes[prop]) then return end
+  if not prop then return end
 
   for to in pairs(app._links) do
     if  rawget(to, "____prop____") == prop
@@ -589,10 +586,10 @@ local function draw_connectors(view, frame)
     end
   end
 
-  local takes = frame.takes
-  for index = 1, #(takes or EMPTY) do
+  for index = 1, frame:takes_count() do
     local x, y = _io_takes_pos(view, index)
-    love.graphics.setColor(app.pin_color(takes[index].kind))
+    local _, takes_kind = frame:take_by_index(index)
+    love.graphics.setColor(app.pin_color(takes_kind))
     if  clickable
     and pin_view2  == view
     and pin_index2 == index then

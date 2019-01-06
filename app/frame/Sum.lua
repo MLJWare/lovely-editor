@@ -1,6 +1,6 @@
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
-local Integer                 = require "packet.Integer"
+local NumberPacket            = require "packet.Number"
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
@@ -22,7 +22,7 @@ setmetatable(SumFrame, {
     SumFrame.typecheck(frame, "SumFrame constructor")
 
     if not frame.value then
-      frame.value = Integer{ value = 0 }
+      frame.value = NumberPacket{ value = 0 }
     end
 
     setmetatable(Frame(frame), SumFrame)
@@ -32,7 +32,7 @@ setmetatable(SumFrame, {
 
 function SumFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or Integer.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be an Sum.", where)
+  assertf(not obj.value or NumberPacket.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a NumberPacket.", where)
 end
 
 function SumFrame.is(obj)
@@ -43,13 +43,13 @@ function SumFrame.is(obj)
 end
 
 SumFrame.takes = IOs{
-  {id = "left" , kind = Integer};
-  {id = "right", kind = Integer};
+  {id = "left" , kind = NumberPacket};
+  {id = "right", kind = NumberPacket};
 }
 
 
 SumFrame.gives = IOs{
-  {id = "value", kind = Integer};
+  {id = "value", kind = NumberPacket};
 }
 
 function SumFrame:on_connect(prop, from)
@@ -66,11 +66,11 @@ end
 
 function SumFrame:on_disconnect(prop)
   if prop == "left" then
-    self.left:unlisten(self)
+    self.left:unlisten(self, self.refresh)
     self.left = nil
     self:refresh()
   elseif prop == "right" then
-    self.right:unlisten(self)
+    self.right:unlisten(self, self.refresh)
     self.right = nil
     self:refresh()
   end

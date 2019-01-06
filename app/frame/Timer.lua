@@ -1,6 +1,6 @@
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
-local Integer                 = require "packet.Integer"
+local NumberPacket            = require "packet.Number"
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
@@ -22,7 +22,7 @@ setmetatable(TimerFrame, {
     TimerFrame.typecheck(frame, "TimerFrame constructor")
 
     if not frame.value then
-      frame.value = Integer{ value = 0 }
+      frame.value = NumberPacket{ value = 0 }
     end
 
     frame._delta = 0
@@ -34,7 +34,7 @@ setmetatable(TimerFrame, {
 
 function TimerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or Integer.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be an Timer.", where)
+  assertf(not obj.value or NumberPacket.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be an Timer.", where)
 end
 
 function TimerFrame.is(obj)
@@ -45,7 +45,7 @@ function TimerFrame.is(obj)
 end
 
 TimerFrame.gives = IOs{
-  {id = "value", kind = Integer};
+  {id = "value", kind = NumberPacket};
 }
 
 function TimerFrame:update(dt)

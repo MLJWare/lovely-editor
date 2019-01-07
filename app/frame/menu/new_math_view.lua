@@ -1,14 +1,14 @@
 local app                     = require "app"
 local View                    = require "View"
 local MenuListFrame           = require "frame.MenuList"
-local IntegerFrame            = require "frame.Integer"
-local NumberFrame             = require "frame.Number"
-local SumFrame                = require "frame.Sum"
-local MultiplyFrame           = require "frame.Multiply"
-local DivideFrame             = require "frame.Divide"
-local SubtractFrame           = require "frame.Subtract"
-local TimerFrame              = require "frame.Timer"
-local TickerFrame             = require "frame.Ticker"
+local IntegerFrame            = require "frame.math.Integer"
+local NumberFrame             = require "frame.math.Number"
+local SumFrame                = require "frame.math.Sum"
+local MultiplyFrame           = require "frame.math.Multiply"
+local DivideFrame             = require "frame.math.Divide"
+local SubtractFrame           = require "frame.math.Subtract"
+local TimerFrame              = require "frame.math.Timer"
+local TickerFrame             = require "frame.math.Ticker"
 
 return MenuListFrame {
   options = {

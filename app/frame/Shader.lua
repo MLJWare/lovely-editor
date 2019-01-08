@@ -1,3 +1,4 @@
+local app                     = require "app"
 local vec2                    = require "linear-algebra.Vector2"
 local Frame                   = require "Frame"
 local list_clear              = require "util.list.clear"
@@ -225,7 +226,7 @@ function ShaderFrame:detect_uniforms(code)
     local found_index = list_find(uniform_ids2, id)
     if not found_index
     or uniform_kinds[index] ~= uniform_kinds2[found_index] then
-      self:on_disconnect(id)
+      app.disconnect_raw(self._view_, id)
     end
   end
 

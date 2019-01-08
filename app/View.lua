@@ -18,6 +18,7 @@ setmetatable(View, {
 
     view.scale = view.scale or 1
     setmetatable(view, View)
+    view.frame._view_ = view
 
     return view
   end;

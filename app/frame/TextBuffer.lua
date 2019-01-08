@@ -314,7 +314,7 @@ function TextBufferFrame:paste(text)
   local first, rest = text:match"^([^\n]*)\n?(.*)$"
   buffer:set(row, left..first)
   if #rest > 0 then
-    for line in rest:gmatch"[^\n]*" do
+    for line in rest:gmatch"([^\n]*)\n?" do
       row = row + 1
       buffer:add(row, line)
     end

@@ -92,17 +92,16 @@ function SaveFileFrame.is(obj)
 end
 
 function SaveFileFrame:_save_and_close(filename)
-  local data = self.action(self.frame)
+  local data = self.action(self.data, filename)
   love.filesystem.write(filename, data)
-  self.action = nil
-  self.frame  = nil
   self:close()
+  try_invoke(self, "on_saved")
 end
 function SaveFileFrame:draw(size)
   local w, h = size.x, size.y
   Images.ninepatch("menu", 0, 16, w, h - 16)
   Images.ninepatch("menu", 0,  0, w, 20)
-  love.graphics.print("Save Frame As:", 6, 4)
+  love.graphics.print("Save As:", 6, 4)
 
   for i, element in ipairs(self._ui) do
     pleasure.push_region(self:_element_bounds(i))

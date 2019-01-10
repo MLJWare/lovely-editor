@@ -13,6 +13,7 @@ local TextBufferFrame         = require "frame.TextBuffer"
 local vec2                    = require "linear-algebra.Vector2"
 local View                    = require "View"
 local Viewport                = require "Viewport"
+local Project                 = require "Project"
 
 local shift_is_down           = require "util.shift_is_down"
 local  ctrl_is_down           = require "util.ctrl_is_down"
@@ -40,20 +41,21 @@ local default_transparency_color = {0.6, 0.6, 0.6}
 local default_checker_scale      = 8
 
 local app = {
-  viewport = Viewport {
-    pos    = vec2(0, 0);
-    scale  = 1;
+  project = Project{
+    viewport = Viewport {
+      pos    = vec2(0, 0);
+      scale  = 1;
+    };
+    views  = {};
+    _links = {};
   };
-  views  = {};
   popups = {};
-  _links = {};
 
   menu   = {};
 
   focus_handler = FocusHandler ();
 
   show_connections = true;
-
 
   view_dragged   = nil;
   view_pressed1  = nil;
@@ -70,11 +72,11 @@ local pin_radius_large = 9
 local pin_offset_x = pin_radius_small + 4
 
 local function _io_takes_pos(view, index)
-  local pos, size = app.viewport:view_bounds(view)
+  local pos, size = app.project.viewport:view_bounds(view)
   local sectors = view.frame:takes_count() + 1
 
   local x = pos.x - pin_offset_x
-  local y = pos.y + (index/sectors)*size.y
+  local y = pos.y + ((index or 0)/sectors)*size.y
   return x, y
 end
 
@@ -86,7 +88,7 @@ local function io_takes_pos(ref)
 end
 
 local function _io_gives_pos(view, index)
-  local pos, size = app.viewport:view_bounds(view)
+  local pos, size = app.project.viewport:view_bounds(view)
   local gives = view.frame.gives
   local sectors = #gives + 1
 
@@ -104,12 +106,13 @@ local function io_gives_pos(ref)
 end
 
 local function _pin_gives_at(mx, my)
-  local views = app.views
+  local views = app.project.views
   local pin_dx = pin_offset_x - pin_radius_small
 
+  local viewport = app.project.viewport
   for i = 1, #views do
     local view = views[i]
-    local pos, size = app.viewport:view_bounds(view)
+    local pos, size = viewport:view_bounds(view)
 
     local dx  = mx - pos.x - size.x - pin_dx
     local dy  = my - pos.y
@@ -128,12 +131,13 @@ local function _pin_gives_at(mx, my)
 end
 
 local function _pin_takes_at(mx, my)
-  local views = app.views
+  local views = app.project.views
   local pin_dx = pin_offset_x + pin_radius_small
 
+  local viewport = app.project.viewport
   for i = 1, #views do
     local view = views[i]
-    local pos, size = app.viewport:view_bounds(view)
+    local pos, size = viewport:view_bounds(view)
 
     local dx  = mx - pos.x + pin_dx
     local dy  = my - pos.y
@@ -208,11 +212,11 @@ function app.keypressed(key, scancode, isrepeat)
     if key == "s" then
       app.show_connections = not app.show_connections
     elseif key == "space" and app.view_dragged then
-      app.viewport:set_view_scale(app.view_dragged, 1)
+      app.project.viewport:set_view_scale(app.view_dragged, 1)
     elseif key == "return" then
-      app.viewport:set_viewport_scale(1)
+      app.project.viewport:set_viewport_scale(1)
     elseif key == "home" then
-      app.viewport:set_position(0,0)
+      app.project.viewport:set_position(0,0)
     end
   elseif key == "menu" then
     local w, h = love.graphics.getDimensions()
@@ -226,7 +230,7 @@ function app.keypressed(key, scancode, isrepeat)
 end
 
 local function is_above(view1, view2)
-  local views = app.views
+  local views = app.project.views
   for i = 1, #views do
     local view = views[i]
     if view == view2 then
@@ -257,7 +261,7 @@ function app.mousepressed(mx, my, button)
     return
   end
 
-  local view = app.viewport:view_at_global_pos(vec2(mx, my), app.views)
+  local view = app.project.viewport:view_at_global_pos(vec2(mx, my), app.project.views)
 
   if app.global_mode() then
     if button == MouseButton.LEFT then
@@ -289,9 +293,9 @@ function app.mousepressed(mx, my, button)
 
     elseif button == MouseButton.RIGHT and view then
       if not view.anchored then
-        app.viewport:lock_view(view)
+        app.project.viewport:lock_view(view)
       else
-        app.viewport:unlock_view(view)
+        app.project.viewport:unlock_view(view)
       end
     end
     return
@@ -304,7 +308,7 @@ function app.mousepressed(mx, my, button)
   if button == MouseButton.RIGHT  then app.view_pressed2 = view end
   if button == MouseButton.MIDDLE then app.view_pressed3 = view end
   if view then
-    local pos, _, scale = app.viewport:view_bounds(view)
+    local pos, _, scale = app.project.viewport:view_bounds(view)
     try_invoke(view.frame, "mousepressed", (mx - pos.x)/scale, (my - pos.y)/scale, button)
   end
 end
@@ -343,19 +347,19 @@ function app.mousereleased(mx, my, button)
   if button == MouseButton.LEFT then
     app.view_dragged = nil
     if app.view_pressed1 then
-      local pos, _, scale = app.viewport:view_bounds(app.view_pressed1)
+      local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed1)
       try_invoke(app.view_pressed1.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
     end
     app.view_pressed1 = nil
   elseif button == MouseButton.RIGHT then
     if app.view_pressed2 then
-      local pos, _, scale = app.viewport:view_bounds(app.view_pressed2)
+      local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed2)
       try_invoke(app.view_pressed2.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
     end
     app.view_pressed2 = nil
   elseif button == MouseButton.MIDDLE then
     if app.view_pressed3 then
-      local pos, _, scale = app.viewport:view_bounds(app.view_pressed3)
+      local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed3)
       try_invoke(app.view_pressed3.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
     end
     app.view_pressed3 = nil
@@ -378,20 +382,20 @@ function app.mousemoved(mx, my, dx, dy)
     return
   end
 
-  local view = app.viewport:view_at_global_pos(vec2(mx, my), app.views)
+  local view = app.project.viewport:view_at_global_pos(vec2(mx, my), app.project.views)
   if app.global_mode() then
     local delta = vec2(dx, dy)
     local drag = app.view_dragged
     if app.mouse.isDown(MouseButton.MIDDLE) then
-      app.viewport:pan_viewport(delta)
+      app.project.viewport:pan_viewport(delta)
     elseif drag then
-      app.viewport:move_view(drag, delta)
+      app.project.viewport:move_view(drag, delta)
     end
   elseif app.view_pressed1 then
-    local pos, _, scale = app.viewport:view_bounds(app.view_pressed1)
+    local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed1)
     try_invoke(app.view_pressed1.frame, "mousedragged1", (mx - pos.x)/scale, (my - pos.y)/scale, dx/scale, dy/scale)
   elseif view then
-    local pos, _, scale = app.viewport:view_bounds(view)
+    local pos, _, scale = app.project.viewport:view_bounds(view)
     try_invoke(view.frame, "mousemoved", (mx - pos.x)/scale, (my - pos.y)/scale, dx/scale, dy/scale)
   end
 end
@@ -405,9 +409,9 @@ function app.wheelmoved(wx, wy)
   end
 
   if app.view_dragged then
-    app.viewport:scale_view(app.view_dragged, wy/10)
+    app.project.viewport:scale_view(app.view_dragged, wy/10)
   else
-    app.viewport:scale_viewport(wy/10)
+    app.project.viewport:scale_viewport(wy/10)
   end
 end
 
@@ -425,25 +429,27 @@ end
 
 function app._push_to_top(view)
   if not view then return end
-  remove_once(app.views, view)
-  table.insert(app.views, 1, view)
+  local views = app.project.views
+  remove_once(views, view)
+  table.insert(views, 1, view)
 end
 
 function app.add_view(index, view)
+  local views = app.project.views
   if not view then
-    index, view = #app.views + 1, index
+    index, view = #views + 1, index
   end
   view = View(view)
-  table.insert(app.views, index, view)
-  view.frame._focus_handler = app.focus_handler
+  table.insert(views, index, view)
+  app.focus_handler:assign(view.frame)
   return view
 end
 
 function app.remove_view(view)
-  remove_once(app.views, view)
+  remove_once(app.project.views, view)
   app.focus_handler:unassign(view.frame)
 
-  for to, from in pairs(app._links) do
+  for to, from in pairs(app.project._links) do
     if to.____view____   == view
     or from.____view____ == view then
       app.disconnect(to)
@@ -477,7 +483,7 @@ function app.open_context_menu(mx, my, view)
 end
 
 function app.update(dt)
-  for _, view in ipairs(app.views) do
+  for _, view in ipairs(app.project.views) do
     try_invoke(view.frame, "update", dt)
   end
 end
@@ -507,20 +513,17 @@ local function draw_link(from, to)
   love.graphics.pop()
 end
 
-local pad = 2
-
-function app.connect(from, to)
-  local frame = rawget(to, "____view____").frame
+function app.connect(from, to, force)
+  local view  = rawget(to, "____view____")
   local prop  = rawget(to, "____prop____")
+  local frame = view.frame
 
-  if not frame:take_by_id(prop) then return end
+  if not (frame:take_by_id(prop) or force) then return end
 
-  app.disconnect_raw(
-    rawget(to, "____view____"),
-    rawget(to, "____prop____"))
+  app.disconnect_raw(view, prop)
 
   try_invoke(frame, "on_connect", prop, from)
-  app._links[to] = from
+  app.project._links[to] = from
 end
 
 function app.disconnect(to)
@@ -539,12 +542,13 @@ function app.disconnect_raw(view, prop)
 
   if not prop then return end
 
-  for to in pairs(app._links) do
+  local _links = app.project._links
+  for to in pairs(_links) do
     if  rawget(to, "____prop____") == prop
     and rawget(to, "____view____") == view then
       try_invoke(frame, "on_disconnect", prop)
-      local from = app._links[to]
-      app._links[to] = nil
+      local from = _links[to]
+      _links[to] = nil
       return from
     end
   end
@@ -608,6 +612,8 @@ function app.textinput(text)
   end
 end
 
+local pad = 2
+
 function app.draw()
   local display_width, display_height = love.graphics.getDimensions()
   local mx, my = love.mouse.getPosition()
@@ -618,13 +624,14 @@ function app.draw()
   local show_connectors  = show_connections
 
   if show_connections then
-    for to, from in pairs(app._links) do
+    for to, from in pairs(app.project._links) do
       draw_link(io_gives_pos(from), io_takes_pos(to))
     end
   end
 
   -- draw views
-  local views = app.views
+  local views    = app.project.views
+  local viewport = app.project.viewport
   for i = #views, 1, -1 do
     local view = views[i]
     local frame = view.frame
@@ -637,7 +644,7 @@ function app.draw()
     love.graphics.setLineStyle("rough")
     love.graphics.setLineWidth(2*pad)
 
-    local pos, size, scale = app.viewport:view_bounds(view)
+    local pos, size, scale = viewport:view_bounds(view)
 
     local x1, y1 = pos.x - pad, pos.y - pad
     love.graphics.rectangle("line", x1, y1, size.x + 2*pad, size.y + 2*pad)
@@ -697,11 +704,6 @@ function app.draw()
   if top then
     app.focus_handler:request_focus(top.frame)
   end
-end
-
-
-for _, view in ipairs(app.views) do
-  app.focus_handler:assign(view.frame)
 end
 
 return app

@@ -31,7 +31,10 @@ function ViewGroupFrame.is(obj)
 end
 
 function ViewGroupFrame:draw(size, scale)
+end
 
+function ViewGroupFrame:serialize()
+  require "app".show_popup(require "frame.Message" { text = "Cannot save projects containing ViewGroupFrames (yet)" })
 end
 
 return ViewGroupFrame

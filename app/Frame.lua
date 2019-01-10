@@ -27,6 +27,12 @@ function Frame.is(obj)
      and meta._kind:find(";Frame;")
 end
 
+function Frame:serialize()
+  return ([[Frame {
+    size = %s;
+  }]]):format(self.size:serialize())
+end
+
 function Frame:id()
   return tostring(self):match("([^%s]*)$")
 end

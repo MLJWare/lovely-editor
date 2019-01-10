@@ -21,9 +21,7 @@ setmetatable(DivideFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     DivideFrame.typecheck(frame, "DivideFrame constructor")
 
-    if not frame.value then
-      frame.value = NumberPacket{ value = 0 }
-    end
+    frame.value = NumberPacket{ value = 0 }
 
     setmetatable(Frame(frame), DivideFrame)
     return frame
@@ -98,6 +96,10 @@ function DivideFrame:refresh()
   local val = _num(self.left) / _num(self.right)
   self.value.value = (val == val) and val or 0
   self.value:inform()
+end
+
+function DivideFrame:serialize()
+  return "DivideFrame {}"
 end
 
 function DivideFrame.id()

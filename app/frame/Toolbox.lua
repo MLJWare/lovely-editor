@@ -104,4 +104,8 @@ end
 function ToolboxFrame.mousemoved(_, _, _, _, _)
 end
 
+function ToolboxFrame:serialize()
+  return "ToolboxFrame {}"
+end
+
 return ToolboxFrame

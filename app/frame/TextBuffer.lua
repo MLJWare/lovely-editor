@@ -339,6 +339,15 @@ end
 function TextBufferFrame:refresh()
   self.data.value = self._buffer:dump()
   self.data:inform()
+
+
+end
+
+function TextBufferFrame:serialize()
+  return ([[TextBufferFrame {
+    size = %s;
+    data = %q;
+  }]]):format(self.size:serialize(), self._buffer:dump())
 end
 
 function TextBufferFrame:id()

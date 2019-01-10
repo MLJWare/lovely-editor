@@ -8,7 +8,7 @@ local ToolboxFrame            = require "frame.Toolbox"
 local ViewGroupFrame          = require "frame.ViewGroup"
 local ShaderFrame             = require "frame.Shader"
 local TextBufferFrame         = require "frame.TextBuffer"
-local new_math_view           = require "frame.menu.new_math_view"
+local new_math_view           = require "menu.new_math_view"
 
 return MenuListFrame {
   options = {

@@ -19,8 +19,8 @@ local vec2                    = require "linear-algebra.Vector2"
 local YesNoFrame              = require "frame.YesNo"
 local load_data               = require "util.file.load_data"
 
-app.menu.view                 = require "frame.menu.view"
-app.menu.default              = require "frame.menu.default"
+app.menu.view                 = require "menu.view"
+app.menu.default              = require "menu.default"
 
 function love.load()
 end
@@ -41,7 +41,7 @@ function love.filedropped(file)
       frame.filename = file:getFilename()
       local mx, my = love.mouse.getPosition()
       local size = frame.size
-      local pos = app.viewport:global_to_local_pos(vec2(mx - size.x/2, my - size.y/2))
+      local pos = app.project.viewport:global_to_local_pos(vec2(mx - size.x/2, my - size.y/2))
 
       app.add_view (1, {
         frame = frame;

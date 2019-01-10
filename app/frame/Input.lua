@@ -85,4 +85,8 @@ function InputFrame:focuslost()
   self._edit.focused = false
 end
 
+function InputFrame:store(project)
+  error("Cannot save projects containing InputFrames (yet)")
+end
+
 return InputFrame

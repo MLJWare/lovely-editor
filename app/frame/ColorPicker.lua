@@ -226,4 +226,8 @@ function ColorPicker:keypressed (key, scancode, isrepeat)
 end
 --]]
 
+function ColorPickerFrame:serialize()
+  return "ColorPickerFrame {}"
+end
+
 return ColorPickerFrame

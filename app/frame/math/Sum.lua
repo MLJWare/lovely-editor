@@ -21,9 +21,7 @@ setmetatable(SumFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     SumFrame.typecheck(frame, "SumFrame constructor")
 
-    if not frame.value then
-      frame.value = NumberPacket{ value = 0 }
-    end
+    frame.value = NumberPacket{ value = 0 }
 
     setmetatable(Frame(frame), SumFrame)
     return frame
@@ -97,6 +95,10 @@ end
 function SumFrame:refresh()
   self.value.value = _num(self.left) + _num(self.right)
   self.value:inform()
+end
+
+function SumFrame:serialize()
+  return "SumFrame {}"
 end
 
 function SumFrame.id()

@@ -1,28 +1,24 @@
-local function file_extension(file)
-  return (file:getFilename() or ""):match("[^.]*$") or ""
+local unicode                 = require "unicode"
+
+local function file_extension(filename)
+  return (filename or ""):match("[^.]*$") or ""
 end
 
-local function _load_image_data (file)
-  if not file:open("r") then return end
-  local data = file:read()
-  file:close()
-  return love.image.newImageData(love.filesystem.newFileData(data, file:getFilename()))
-end
-
-local function _load_text_data (file)
-  if not file:open("r") then return end
-  local data = file:read()
-  file:close()
-  return data
+local function try_create_image_data (filedata, filename)
+  return love.image.newImageData(love.filesystem.newFileData(filedata, filename))
 end
 
 return function (file)
-  local ext = file_extension(file)
+  if not file:open("r") then return end
+  local raw_data = file:read()
+  file:close()
+
+  local filename = file:getFilename()
+  local ext = file_extension(filename)
   if ext == "png" then
-    local success, data = pcall(_load_image_data, file)
+    local success, data = pcall(try_create_image_data, raw_data, filename)
     return success and data or nil, "image"
-  else
-    local success, data = pcall(_load_text_data, file)
-    return success and data or nil, "text"
+  elseif unicode.is_valid(raw_data) then
+    return raw_data, "text"
   end
 end

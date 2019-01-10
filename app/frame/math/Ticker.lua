@@ -21,10 +21,7 @@ setmetatable(TickerFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     TickerFrame.typecheck(frame, "TickerFrame constructor")
 
-    if not frame.value then
-      frame.value = NumberPacket{ value = 0 }
-    end
-
+    frame.value = NumberPacket{ value = 0 }
     frame._delta = 0
 
     setmetatable(Frame(frame), TickerFrame)
@@ -72,6 +69,10 @@ end
 
 function TickerFrame.id()
   return "Ticker"
+end
+
+function TickerFrame:serialize()
+  return "TickerFrame {}"
 end
 
 return TickerFrame

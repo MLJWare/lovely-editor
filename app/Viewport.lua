@@ -15,6 +15,13 @@ setmetatable(Viewport, {
   end;
 })
 
+function Viewport:_serialize()
+  return ([[Viewport {
+    pos = %s;
+    scale = %s;
+  }]]):format(self.pos:serialize(), self.scale)
+end
+
 function Viewport:set_position(x, y)
   self.pos:setn(x, y)
 end

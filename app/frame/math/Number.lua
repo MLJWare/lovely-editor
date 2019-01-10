@@ -19,6 +19,11 @@ setmetatable(NumberFrame, {
     assert(type(frame) == "table", "NumberFrame constructor must be a table.")
 
     if not frame.size then frame.size = vec2(64, 20) end
+
+    if type(frame.value) == "number" then
+      frame.value = NumberPacket{ value = frame.value }
+    end
+
     NumberFrame.typecheck(frame, "NumberFrame constructor")
 
     frame.filter = number_filter
@@ -31,6 +36,7 @@ setmetatable(NumberFrame, {
     setmetatable(InputFrame(frame), NumberFrame)
     frame._edit.hint_color = frame._edit.text_color
     frame._edit.hint = "0"
+    frame._edit.text = tostring(frame.value.value)
 
     return frame
   end;
@@ -98,6 +104,12 @@ function NumberFrame:refresh()
   if self:locked() then return end
   self.value.value = tonumber(self._edit.text) or 0
   self.value:inform()
+end
+
+function NumberFrame:serialize()
+  return ([[NumberFrame {
+    value = %s;
+  }]]):format(tostring(self._own_value.value))
 end
 
 function NumberFrame.id()

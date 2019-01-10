@@ -33,8 +33,23 @@ end
 function View.is(obj)
   local meta = getmetatable(obj)
   return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";View;")
+  and type(meta._kind) == "string"
+  and meta._kind:find(";View;")
+end
+
+function View:_serialize(frame2index, frames)
+  local frame = self.frame
+  local frame_index = frame2index[frame]
+  if not frame_index then
+    frame_index = 1 + #frames
+    frame2index[frame] = frame_index
+    frames[frame_index] = frame:serialize()
+  end
+  return ([[View {
+    pos   = %s;
+    scale = %s;
+    frame = frames[%d];
+  }]]):format(self.pos:serialize(), self.scale, frame_index)
 end
 
 return View

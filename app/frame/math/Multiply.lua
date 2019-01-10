@@ -21,9 +21,7 @@ setmetatable(MultiplyFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     MultiplyFrame.typecheck(frame, "MultiplyFrame constructor")
 
-    if not frame.value then
-      frame.value = NumberPacket{ value = 0 }
-    end
+    frame.value = NumberPacket{ value = 0 }
 
     setmetatable(Frame(frame), MultiplyFrame)
     return frame
@@ -97,6 +95,10 @@ end
 function MultiplyFrame:refresh()
   self.value.value = _num(self.left) * _num(self.right)
   self.value:inform()
+end
+
+function MultiplyFrame:serialize()
+  return "MultiplyFrame {}"
 end
 
 function MultiplyFrame.id()

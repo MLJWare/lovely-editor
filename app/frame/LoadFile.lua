@@ -5,7 +5,6 @@ local EditableText            = require "EditableText"
 local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
-local load_data               = require "util.file.load_data"
 local MessageFrame            = require "frame.Message"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
@@ -95,20 +94,20 @@ function LoadFileFrame.is(obj)
 end
 
 function LoadFileFrame:_try_load(filename)
-  local data, format = load_data(love.filesystem.newFile(filename))
-  if not data then
-    error_loading.text = ("Couldn't load file %q; perhaps it isn't an image/text file?"):format(filename)
+  local success, message = pcall(try_invoke, self, "on_load", love.filesystem.newFile(filename), filename)
+  if not success then
+    error_loading.text = message
     app.show_popup(error_loading)
   else
-    try_invoke(self, "on_load", format, data, filename)
     self:close()
   end
 end
+
 function LoadFileFrame:draw(size)
   local w, h = size.x, size.y
   Images.ninepatch("menu", 0, 16, w, h - 16)
   Images.ninepatch("menu", 0,  0, w, 20)
-  love.graphics.print("Load Frame As:", 6, 4)
+  love.graphics.print("Load From:", 6, 4)
 
   for i, element in ipairs(self._ui) do
     pleasure.push_region(self:_element_bounds(i))

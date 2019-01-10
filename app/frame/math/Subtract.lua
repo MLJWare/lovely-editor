@@ -21,9 +21,7 @@ setmetatable(SubtractFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     SubtractFrame.typecheck(frame, "SubtractFrame constructor")
 
-    if not frame.value then
-      frame.value = NumberPacket{ value = 0 }
-    end
+    frame.value = NumberPacket{ value = 0 }
 
     setmetatable(Frame(frame), SubtractFrame)
     return frame
@@ -97,6 +95,10 @@ end
 function SubtractFrame:refresh()
   self.value.value = _num(self.left) - _num(self.right)
   self.value:inform()
+end
+
+function SubtractFrame:serialize()
+  return "SubtractFrame {}"
 end
 
 function SubtractFrame.id()

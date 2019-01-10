@@ -167,4 +167,12 @@ function PixelFrame:id()
   return Frame.id(self)
 end
 
+function PixelFrame:serialize()
+  local encoded_data = love.data.encode("string", "base64", self.data:encode("png"), 80)
+  return ([=[PixelFrame {
+    data = imagedata [[
+%s]];
+  }]=]):format(encoded_data)
+end
+
 return PixelFrame

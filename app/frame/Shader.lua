@@ -14,15 +14,23 @@ ShaderFrame.__index = ShaderFrame
 
 ShaderFrame._kind = ";ShaderFrame;Frame;"
 
+local default_size_x = 16
+local default_size_y = 32
+
 setmetatable(ShaderFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "ShaderFrame constructor must be a table.")
     if not frame.size then
-      frame.size = vec2(16, 32)
+      frame.size = vec2(default_size_x, default_size_y)
     end
 
     ShaderFrame.typecheck(frame, "ShaderFrame constructor")
+
+    frame.image = ImagePacket {
+      value = love.graphics.newCanvas(default_size_x, default_size_y);
+    }
+
     frame._uniforms_in    = {}
 
     frame._uniform_ids    = {}
@@ -35,11 +43,6 @@ setmetatable(ShaderFrame, {
     return frame
   end;
 })
-
---ShaderFrame.takes = IOs{
---  {id = "image", kind = ImagePacket};
---  {id = "code",  kind = StringPacket};
---}
 
 function ShaderFrame:takes_count()
   return 2 + #self._uniform_ids
@@ -79,17 +82,12 @@ function ShaderFrame:on_connect(prop, from)
   if prop == "image" then
     self.image_in = from
     from:listen(self, self.refresh)
-    self.image    = from:clone()
-    self.size:setn(from.value:getDimensions())
     self:refresh()
   elseif prop == "code" then
     self.code_in = from
     from:listen(self, self.refresh_shader)
     self:refresh_shader()
   else
-    local uniform_ids = self._uniform_ids
-    local index = list_find(uniform_ids, prop)
-    if not index then return end
     self._uniforms_in[prop] = from
     from:listen(self, self.refresh_uniforms)
     self:refresh_uniforms()
@@ -115,7 +113,6 @@ end
 
 function ShaderFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  --assertf(Shader.is(obj.color), "Error in %s: Missing/invalid property: 'color' must be a Shader.", where)
 end
 
 function ShaderFrame.is(obj)
@@ -127,7 +124,7 @@ end
 
 function ShaderFrame:check_action(action_id)
   if action_id == "core:save" then
-    return self.image and self.on_save or nil
+    return self.on_save or nil
   end
 end
 
@@ -136,7 +133,6 @@ function ShaderFrame:on_save()
 end
 
 function ShaderFrame:refresh()
-  if not self.image then return end
   local cv = love.graphics.getCanvas()
 
   love.graphics.setCanvas(self.image.value)
@@ -146,9 +142,15 @@ function ShaderFrame:refresh()
   if shader_in then
     love.graphics.setShader(shader_in)
   end
-  local image = self.image_in
-  if image then
-    love.graphics.draw(image.value)
+  local image_in = self.image_in
+  if image_in then
+    local value = image_in.value
+    local w, h = value:getDimensions()
+    if self.size.x ~= w or self.size.y ~= h then
+      self.image:replicate(image_in)
+      self.size:setn(w, h)
+    end
+    love.graphics.draw(value)
   end
   love.graphics.setShader()
   love.graphics.setCanvas(cv)
@@ -191,11 +193,11 @@ function ShaderFrame:refresh_shader()
   if success then
     self:detect_uniforms(code)
   end
-  self:refresh()
+  self:refresh_uniforms()
 end
 
 local known_uniform_kinds = {
-  ["float"] = NumberPacket; --TODO make "FloatPacket"
+  ["float"] = NumberPacket;
   ["Image"] = ImagePacket;
 }
 
@@ -243,10 +245,12 @@ function ShaderFrame:draw(_, scale)
   local packet = self.image_in
   if not packet then return end
 
-  if not self.image then return end
-
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(self.image.value, 0, 0, 0, scale, scale)
+end
+
+function ShaderFrame:serialize()
+  return "ShaderFrame {}"
 end
 
 return ShaderFrame

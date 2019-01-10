@@ -21,10 +21,7 @@ setmetatable(TimerFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     TimerFrame.typecheck(frame, "TimerFrame constructor")
 
-    if not frame.value then
-      frame.value = NumberPacket{ value = 0 }
-    end
-
+    frame.value = NumberPacket{ value = 0 }
     frame._delta = 0
 
     setmetatable(Frame(frame), TimerFrame)
@@ -76,6 +73,10 @@ end
 
 function TimerFrame.id()
   return "Timer"
+end
+
+function TimerFrame:serialize()
+  return "TimerFrame {}"
 end
 
 return TimerFrame

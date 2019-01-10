@@ -23,6 +23,18 @@ local function _paste()
   love.graphics.draw(_pastee)
 end
 
+function ImagePacket:replicate(obj)
+  self.value:release()
+  local obj_canvas = obj.value
+  local new_canvas = love.graphics.newCanvas(obj_canvas:getDimensions())
+  love.graphics.setCanvas(new_canvas)
+  love.graphics.clear   (0,0,0,0)
+  love.graphics.setColor(1,1,1,1)
+  love.graphics.draw(obj_canvas)
+  love.graphics.setCanvas()
+  self.value = new_canvas
+end
+
 function ImagePacket.clone(obj)
   _pastee = obj.value
   local value = love.graphics.newCanvas(_pastee:getDimensions())

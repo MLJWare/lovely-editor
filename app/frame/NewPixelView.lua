@@ -9,7 +9,7 @@ local Images                  = require "Images"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
 local vec2                    = require "linear-algebra.Vector2"
-local integer_filter          = require "input.filter.integer"
+local integer_filter          = require "input.filter.non-negative-integer"
 local NewPixelViewFrame = {}
 NewPixelViewFrame.__index = NewPixelViewFrame
 
@@ -54,8 +54,12 @@ setmetatable(NewPixelViewFrame, {
       size = btn_size:copy();
       text_color = btn_text_color;
       mouseclicked = function ()
-        local width  = tonumber(edit_width .text) or DEFAULT_VIEW_WIDTH
-        local height = tonumber(edit_height.text) or DEFAULT_VIEW_HEIGHT
+        local width  = tonumber(edit_width .text)
+        if not width  or width  <= 0 then width  = DEFAULT_VIEW_WIDTH  end
+
+        local height = tonumber(edit_height.text)
+        if not height or height <= 0 then height = DEFAULT_VIEW_HEIGHT end
+
         app.add_view (1, {
           frame = PixelFrame {
             data = love.image.newImageData(width, height);

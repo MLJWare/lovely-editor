@@ -1,3 +1,7 @@
 return function (input)
-  return input:gsub("%D+", "")
+  if input:find("^-") then
+    return "-"..input:gsub("%D+", "")
+  else
+    return input:gsub("%D+", "")
+  end
 end

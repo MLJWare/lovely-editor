@@ -7,6 +7,7 @@ local ColorPickerFrame        = require "frame.ColorPicker"
 local ToolboxFrame            = require "frame.Toolbox"
 local ViewGroupFrame          = require "frame.ViewGroup"
 local ShaderFrame             = require "frame.Shader"
+local LoveFrame               = require "frame.Love"
 local TextBufferFrame         = require "frame.TextBuffer"
 local new_math_view           = require "menu.new_math_view"
 
@@ -36,6 +37,15 @@ return MenuListFrame {
       action = function (_, _)
         app.add_view (View {
           frame = ShaderFrame {};
+          pos = app.popup_position ();
+        })
+      end;
+    };
+    {
+      text   = "New Love View";
+      action = function (_, _)
+        app.add_view (View {
+          frame = LoveFrame {};
           pos = app.popup_position ();
         })
       end;

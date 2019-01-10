@@ -33,6 +33,10 @@ function love.keypressed(key, scancode, isrepeat)
   app.keypressed(key, scancode, isrepeat)
 end
 
+function love.keyreleased(key, scancode)
+  app.keyreleased(key, scancode)
+end
+
 function love.filedropped(file)
   local data, format = load_data(file)
   if format and data then

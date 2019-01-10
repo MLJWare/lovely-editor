@@ -229,6 +229,21 @@ function app.keypressed(key, scancode, isrepeat)
   end
 end
 
+function app.keyreleased(key, scancode)
+  if #app.popups > 0 then
+    local top = app.popups[#app.popups]
+    try_invoke(top.frame, "keyreleased", key, scancode)
+    return
+  elseif app.global_mode() or key == "menu" then
+    return
+  else
+    local has_focus = app.focus_handler:has_focus()
+    if has_focus then
+      try_invoke(has_focus, "keyreleased", key, scancode)
+    end
+  end
+end
+
 local function is_above(view1, view2)
   local views = app.project.views
   for i = 1, #views do

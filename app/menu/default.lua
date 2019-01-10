@@ -46,7 +46,7 @@ local load_project = LoadFileFrame {
     end
 
     if success and code then
-      local project = sandbox(code, {
+      local _, project = sandbox(code, {
         -- math frames
         DivideFrame      = require "frame.math.Divide";
         IntegerFrame     = require "frame.math.Integer";
@@ -58,6 +58,7 @@ local load_project = LoadFileFrame {
         TimerFrame       = require "frame.math.Timer";
         -- other frames
         ColorPickerFrame = require "frame.ColorPicker";
+        LoveFrame        = require "frame.Love";
         PixelFrame       = require "frame.Pixel";
         ShaderFrame      = require "frame.Shader";
         TextBufferFrame  = require "frame.TextBuffer";

@@ -187,6 +187,18 @@ function EditableText:keypressed (key)
       self:_set_caret(self.caret - 1)
     end
     return
+  elseif key == "delete" then
+    if select then
+      local start  = math.min(select, old_caret)
+      local length = math.abs(select - old_caret)
+      self:_set_text(unicode.splice(self.text, start, "", length))
+      self:_set_caret(start)
+      self.select = nil
+    else
+      self:_set_text(unicode.splice(self.text, self.caret, "", 1))
+      self:_set_caret(self.caret)
+    end
+    return
   end
 
   if key == "left" then

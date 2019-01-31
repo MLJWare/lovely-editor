@@ -1,0 +1,132 @@
+local Frame                   = require "Frame"
+local IOs                     = require "IOs"
+local NumberPacket            = require "packet.Number"
+local ImagePacket             = require "packet.Image"
+local EditImagePacket         = require "packet.EditImage"
+local vec2                    = require "linear-algebra.Vector2"
+
+local TimelineFrame = {}
+TimelineFrame.__index = TimelineFrame
+
+TimelineFrame._kind = ";TimelineFrame;Frame;"
+
+setmetatable(TimelineFrame, {
+  __index = Frame;
+  __call  = function (_, frame)
+    assert(type(frame) == "table", "TimelineFrame constructor must be a table.")
+
+    if not frame.size then
+      frame.size = vec2(32, 512)
+    end
+
+    TimelineFrame.typecheck(frame, "TimelineFrame constructor")
+
+    frame.frame_anim = ImagePacket {
+      value = love.graphics.newCanvas(64, 64);
+    }
+
+    local anim_frames = {}
+    for i = 1, 16 do
+      anim_frames[i] = EditImagePacket {
+        data = love.image.newImageData(64, 64);
+      }
+    end
+
+    frame._anim = 0
+
+    frame.anim_frames = anim_frames
+    frame.frame_active = anim_frames[1]
+
+    setmetatable(frame, TimelineFrame)
+    return frame
+  end;
+})
+
+function TimelineFrame.typecheck(obj, where)
+  Frame.typecheck(obj, where)
+  --assertf(type(obj.value) == "number", "Error in %s: Missing/invalid property: 'value' must be a number.", where)
+end
+
+function TimelineFrame.is(obj)
+  local meta = getmetatable(obj)
+  return type(meta) == "table"
+     and type(meta._kind) == "string"
+     and meta._kind:find(";TimelineFrame;")
+end
+
+TimelineFrame.takes = IOs{
+  {id = "tick"  , kind = NumberPacket};
+}
+
+TimelineFrame.gives = IOs{
+  {id = "frame_anim"  , kind = ImagePacket};
+  {id = "frame_active", kind = EditImagePacket};
+}
+
+function TimelineFrame:on_connect(prop, from)
+  if prop == "tick" then
+    self.tick = from
+    from:listen(self, self.refresh)
+    self:refresh()
+  end
+end
+
+function TimelineFrame:on_disconnect(prop)
+  if prop == "tick" then
+    self.tick:unlisten(self, self.refresh)
+    self.tick = nil
+    self:refresh()
+  end
+end
+
+local function int(x)
+  local val = math.floor(x and x.value or 0)
+  return val == val and val or 0
+end
+
+function TimelineFrame:refresh()
+  local anim_frames = self.anim_frames
+  local prev_anim = self._anim
+  local new_anim  = int(self.tick) % #anim_frames
+  if prev_anim == new_anim then return end
+  self._anim = new_anim
+  self.frame_anim.value = anim_frames[1 + self._anim].value
+  self.frame_anim:inform()
+end
+
+local row_height = 32
+
+function TimelineFrame:draw(size, scale)
+  local anim = self._anim
+  love.graphics.setColor(0.2, 0.2, 0.2)
+  love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+
+  local height = row_height * scale
+  local active_index = self._active_index
+  if active_index then
+    love.graphics.setColor(0.3, 0.3, 0.3)
+    love.graphics.rectangle("fill", 0, active_index*height, size.x, height)
+  end
+
+  love.graphics.setColor(0.8, 0.7, 0.2)
+  love.graphics.rectangle("line", 0, anim*height, size.x, height)
+end
+
+function TimelineFrame:mousepressed(_, my, _)
+  self:request_focus()
+
+  local anim_frames  = self.anim_frames
+  local new_active_index = math.max(0, math.min(math.floor(my/row_height), #anim_frames))
+  local old_active_index = self._active_index
+
+  if old_active_index == new_active_index then return end
+  self._active_index = new_active_index
+  self.frame_active = anim_frames[1 + self._active_index]
+  self.frame_active:inform()
+end
+
+function TimelineFrame.serialize()
+  return "TimelineFrame {}"
+end
+
+return TimelineFrame

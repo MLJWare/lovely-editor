@@ -37,6 +37,10 @@ function View.is(obj)
   and meta._kind:find(";View;")
 end
 
+function View:id()
+  return self._id or self.frame:id()
+end
+
 function View:_serialize(frame2index, frames)
   local frame = self.frame
   local frame_index = frame2index[frame]
@@ -45,11 +49,21 @@ function View:_serialize(frame2index, frames)
     frame2index[frame] = frame_index
     frames[frame_index] = frame:serialize()
   end
-  return ([[View {
+  local id = self._id
+  if id then
+    return ([[View {
+    _id   = %q;
+    pos   = %s;
+    scale = %s;
+    frame = frames[%d];
+  }]]):format(self._id, self.pos:serialize(), self.scale, frame_index)
+  else
+    return ([[View {
     pos   = %s;
     scale = %s;
     frame = frames[%d];
   }]]):format(self.pos:serialize(), self.scale, frame_index)
+  end
 end
 
 return View

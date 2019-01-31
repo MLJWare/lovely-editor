@@ -1,6 +1,7 @@
 local checker_pattern         = require "checker_pattern"
 local FocusHandler            = require "FocusHandler"
 local ImagePacket             = require "packet.Image"
+local EditImagePacket         = require "packet.EditImage"
 local StringPacket            = require "packet.String"
 local NumberPacket            = require "packet.Number"
 local MouseButton             = require "const.MouseButton"
@@ -27,18 +28,23 @@ local pin_dragged = {
 }
 
 local EMPTY = {}
-local global_style = {
-  transparency = {
-    pattern = "checker";
-    color  = {0.15, 0.15, 0.15};
-    color2 = {0.05, 0.05, 0.05};
-    scale  = 32;
-  };
-}
 
-local default_checker_color      = {0.8, 0.8, 0.8}
-local default_transparency_color = {0.6, 0.6, 0.6}
-local default_checker_scale      = 8
+local settings = require "settings"
+
+--[[
+  local global_style = {
+    transparency = {
+      pattern = "checker";
+      color  = {0.15, 0.15, 0.15};
+      color2 = {0.05, 0.05, 0.05};
+      scale  = 32;
+    };
+  }
+
+  local default_checker_color      = {0.8, 0.8, 0.8}
+  local default_transparency_color = {0.6, 0.6, 0.6}
+  local default_checker_scale      = 8
+--]]
 
 local app = {
   project = Project{
@@ -63,6 +69,22 @@ local app = {
   view_pressed3  = nil;
   popup_pressed1 = nil;
 }
+
+function app.restart()
+  app.project = Project{
+    viewport = Viewport {
+      pos    = vec2(0, 0);
+      scale  = 1;
+    };
+    views  = {};
+    _links = {};
+  };
+  app.focus_handler = FocusHandler ()
+  app.view_dragged   = nil
+  app.view_pressed1  = nil
+  app.view_pressed2  = nil
+  app.view_pressed3  = nil
+end
 
 local _delta_ = vec2(0)
 
@@ -89,8 +111,7 @@ end
 
 local function _io_gives_pos(view, index)
   local pos, size = app.project.viewport:view_bounds(view)
-  local gives = view.frame.gives
-  local sectors = #gives + 1
+  local sectors = view.frame:gives_count() + 1
 
   local x = pos.x + size.x + pin_offset_x
   local y = pos.y + (index/sectors)*size.y
@@ -100,8 +121,7 @@ end
 local function io_gives_pos(ref)
   local view = rawget(ref, "____view____")
   local prop = rawget(ref, "____prop____")
-  local gives = view.frame.gives
-  local index = gives[prop]
+  local index = view.frame:give_by_id(prop)
   return vec2(_io_gives_pos(view, index))
 end
 
@@ -119,7 +139,7 @@ local function _pin_gives_at(mx, my)
 
     if  0 <= dx and dx < 2*pin_radius_large
     and 0 <= dy and dy < size.y then
-      for index = 1, #(view.frame.gives or EMPTY) do
+      for index = 1, view.frame:gives_count() do
         local x, y = _io_gives_pos(view, index)
         local dist = math.abs(x - mx) + math.abs(y - my)
         if dist < pin_radius_large then
@@ -144,8 +164,7 @@ local function _pin_takes_at(mx, my)
 
     if  0 <= dx and dx < 2*pin_radius_large
     and 0 <= dy and dy < size.y then
-      local frame = view.frame
-      for index = 1, frame:takes_count() do
+      for index = 1, view.frame:takes_count() do
         local x, y = _io_takes_pos(view, index)
         local dist = math.abs(x - mx) + math.abs(y - my)
         if dist < pin_radius_large then
@@ -179,10 +198,11 @@ do
 end
 
 function app.pin_color(kind)
-  if     kind == StringPacket  then return 0.80, 0.90, 0.20, 1
-  elseif kind == ImagePacket   then return 0.80, 0.30, 0.20, 1
-  elseif kind == NumberPacket  then return 0.40, 0.30, 0.70, 11
-  else                              return 0.75, 0.75, 0.75, 1
+  if     kind == StringPacket    then return 0.80, 0.90, 0.20, 1
+  elseif kind == ImagePacket     then return 0.80, 0.30, 0.20, 1
+  elseif kind == EditImagePacket then return 0.95, 0.50, 0.60, 1
+  elseif kind == NumberPacket    then return 0.40, 0.30, 0.70, 1
+  else                                return 0.75, 0.75, 0.75, 1
   end
 end
 
@@ -292,8 +312,7 @@ function app.mousepressed(mx, my, button)
           local from = app.disconnect_raw(pin_view, pin_index)
           if from then
             local from_view = rawget(from, "____view____")
-            local gives = from_view.frame.gives
-            local from_index = gives[rawget(from, "____prop____")]
+            local from_index = from_view.frame:give_by_id(rawget(from, "____prop____"))
             pin_dragged.view  = from_view
             pin_dragged.index = from_index
           end
@@ -330,7 +349,8 @@ end
 
 
 local function compatible(give_kind, take_kind)
-  return give_kind == take_kind
+  if give_kind == take_kind then return true end
+  return give_kind._kind:find(take_kind._kind)
 end
 
 function app.mousereleased(mx, my, button)
@@ -339,11 +359,11 @@ function app.mousereleased(mx, my, button)
     if to_view then
       local from_view = pin_dragged.view
 
-      local give = from_view.frame.gives[pin_dragged.index]
+      local give_id, give_kind = from_view.frame:give_by_index(pin_dragged.index)
       local take_id, take_kind = to_view.frame:take_by_index(to_index)
 
-      if compatible(give.kind, take_kind) then
-        local from = Ref(from_view, give.id)
+      if compatible(give_kind, take_kind) then
+        local from = Ref(from_view, give_id)
         local to   = Ref(to_view, take_id)
         app.connect(from, to)
       end
@@ -503,11 +523,13 @@ function app.update(dt)
   end
 end
 
-
-
-local function draw_link(from, to)
+local function draw_link(from, to, special)
   love.graphics.push()
-  love.graphics.setColor(0.1, 0.7, 0.4, app.show_connections and 1 or 0.5)
+  if special then
+    love.graphics.setColor(0.7, 0.9, 0.5, app.show_connections and 1 or 0.5)
+  else
+    love.graphics.setColor(0.1, 0.7, 0.4, app.show_connections and 1 or 0.5)
+  end
   love.graphics.setLineWidth(4)
   love.graphics.setLineStyle("smooth")
 
@@ -570,7 +592,7 @@ function app.disconnect_raw(view, prop)
 end
 
 local function draw_transparency_pattern(width, height)
-  local style = global_style.transparency or EMPTY
+  local style = settings.style.transparency or EMPTY
   love.graphics.clear(style.color or default_transparency_color)
   if style.pattern == "checker" then
     love.graphics.setColor(style.color2 or default_checker_color)
@@ -592,10 +614,10 @@ local function draw_connectors(view, frame)
     pin_view2, pin_index2 = _pin_takes_at(love.mouse.getPosition())
   end
 
-  local gives = frame.gives
-  for index = 1, #(gives or EMPTY) do
+  for index = 1, frame:gives_count() do
     local x, y = _io_gives_pos(view, index)
-    love.graphics.setColor(app.pin_color(gives[index].kind))
+    local _, give_kind = frame:give_by_index(index)
+    love.graphics.setColor(app.pin_color(give_kind))
     if  clickable
     and pin_view  == view
     and pin_index == index then
@@ -640,7 +662,8 @@ function app.draw()
 
   if show_connections then
     for to, from in pairs(app.project._links) do
-      draw_link(io_gives_pos(from), io_takes_pos(to))
+      local special = (to._kind or ""):find(";Edit[^;]*Packet;")
+      draw_link(io_gives_pos(from), io_takes_pos(to), special)
     end
   end
 
@@ -664,13 +687,13 @@ function app.draw()
     local x1, y1 = pos.x - pad, pos.y - pad
     love.graphics.rectangle("line", x1, y1, size.x + 2*pad, size.y + 2*pad)
 
-    local frame_id = frame:id()
-    local w = text_width(frame_id)
+    local view_id = view:id()
+    local w = text_width(view_id)
     local h = font_height()
 
     love.graphics.rectangle("fill", x1 - pad, y1 - h, w + 2*pad, h)
     love.graphics.setColor(1.0, 1.0, 1.0)
-    love.graphics.print(frame_id, x1, y1 - h)
+    love.graphics.print(view_id, x1, y1 - h)
 
     if type(frame) == "table" and type(frame.draw) == "function" then
       pleasure.push_region()

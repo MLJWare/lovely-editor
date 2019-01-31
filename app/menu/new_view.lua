@@ -8,11 +8,26 @@ local ToolboxFrame            = require "frame.Toolbox"
 local ViewGroupFrame          = require "frame.ViewGroup"
 local ShaderFrame             = require "frame.Shader"
 local LoveFrame               = require "frame.Love"
+local TimelineFrame           = require "frame.Timeline"
+local ConditionalFrame        = require "frame.Conditional"
 local TextBufferFrame         = require "frame.TextBuffer"
+local SettingsFrame           = require "frame.Settings"
+local SliderFrame             = require "frame.Slider"
 local new_math_view           = require "menu.new_math_view"
 
 return MenuListFrame {
   options = {
+    {
+      text   = "New Settings View";
+      action = function (_, _)
+        app.add_view (View {
+          frame = SettingsFrame {
+            size = vec2(128, 128);
+          };
+          pos = app.popup_position ();
+        })
+      end;
+    };
     {
       text   = "New Pixel View";
       action = function (_, _)
@@ -33,10 +48,37 @@ return MenuListFrame {
       end;
     };
     {
+      text   = "New Timeline View";
+      action = function (_, _)
+        app.add_view (View {
+          frame = TimelineFrame {};
+          pos = app.popup_position ();
+        })
+      end;
+    };
+    {
+      text   = "New Slider View";
+      action = function (_, _)
+        app.add_view (View {
+          frame = SliderFrame {};
+          pos = app.popup_position ();
+        })
+      end;
+    };
+    {
       text   = "New Shader View";
       action = function (_, _)
         app.add_view (View {
           frame = ShaderFrame {};
+          pos = app.popup_position ();
+        })
+      end;
+    };
+    {
+      text   = "New Conditional View";
+      action = function (_, _)
+        app.add_view (View {
+          frame = ConditionalFrame {};
           pos = app.popup_position ();
         })
       end;

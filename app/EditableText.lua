@@ -15,7 +15,7 @@ local function is_shift_down() return love.keyboard.isDown("lshift", "rshift") e
 local is_callable = pleasure.is.callable
 
 local EditableText = {
-  x_pad              =  12;
+  x_pad              =  2;
   text_color         = Color{0, 0, 0, 1.0};
   hint_color         = Color{0, 0, 0, 0.3};
   double_click_delay = 0.5;

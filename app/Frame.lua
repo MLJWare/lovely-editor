@@ -67,6 +67,30 @@ function Frame:take_by_id(id)
   end
 end
 
+function Frame:gives_count()
+  local gives = self.gives
+  return type(gives) == "table" and #gives or 0
+end
+
+function Frame:give_by_index(index)
+  local gives = self.gives
+  if type(gives) ~= "table" then return end
+  local give = gives[index]
+  if not give then return end
+  return give.id, give.kind
+end
+
+function Frame:give_by_id(id)
+  local gives = self.gives
+  if type(gives) ~= "table" then return end
+  for index = 1, #gives do
+    local give = gives[index]
+    if give.id == id then
+      return index, give.kind
+    end
+  end
+end
+
 function Frame:request_focus()
   local focus_handler = self._focus_handler
   if not focus_handler then return false end

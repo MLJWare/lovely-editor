@@ -2,7 +2,7 @@
 
 * right click to get a context sensitive menu.
 
-* When holding shift;
+* When holding tab;
   * left mouse button to drag a single view,
   * middle mouse button to drag all non-anchored views around, and
   * right mouse button to toggle whether a view is anchored.
@@ -13,9 +13,9 @@
 
 As for undo/redo;
 * you undo using ctrl+z, and
-* you redo using ctrl+shift+z.(edited)
+* you redo using ctrl+shift+z.
 (Undo/redo only works on Pixel Frames, and only if they own the data, i.e. not if it's receiving it from a connection/link/wire.)
 
-To make connections, hold shift, then click on an output (pins on the right side of a view), and drag it to an input (pins on the left side of a view).
+To make connections, hold tab, then click on an output (pins on the right side of a view), and drag it to an input (pins on the left side of a view).
 
-If you get lost, you can use shift+home to reset the offset to the original position, and you can use shift+enter to reset the scale to 1.
+If you get lost, you can use tab+home to reset the offset to the original position, and you can use shift+enter to reset the scale to 1.

@@ -6,8 +6,8 @@ local assertf                 = require "assertf"
 local clone                   = require "pleasure.clone"
 local MouseButton             = require "const.MouseButton"
 local PropertyStore           = require "PropertyStore"
-local UndoStack               = require "UndoStack"
 local ImagePacket             = require "packet.Image"
+local EditImagePacket         = require "packet.EditImage"
 local IOs                     = require "IOs"
 local try_invoke              = require "pleasure.try".invoke
 
@@ -24,14 +24,12 @@ setmetatable(PixelFrame, {
       frame.size = vec2()
     end
     PixelFrame.typecheck(frame, "PixelFrame constructor")
-    frame.image = ImagePacket{
-      value = love.graphics.newCanvas(frame.data:getDimensions())
+    frame.image = EditImagePacket {
+      data = frame.data;
     }
+    frame.data = nil
     frame._own_image = frame.image
-    frame.size.x, frame.size.y = frame.data:getDimensions()
-    frame.data_image = love.graphics.newImage(frame.data)
-
-    frame._undoStack = UndoStack()
+    frame.size.x, frame.size.y = frame.image.data:getDimensions()
 
     setmetatable(frame, PixelFrame)
     frame:refresh()
@@ -39,9 +37,28 @@ setmetatable(PixelFrame, {
   end;
 })
 
+PixelFrame.takes = IOs{
+  {id = "image", kind = EditImagePacket};
+}
+
 PixelFrame.gives = IOs{
   {id = "image", kind = ImagePacket};
 }
+
+
+function PixelFrame:on_connect(prop, from)
+  if prop ~= "image" then return end
+  self.image = from
+  from:listen(self, self.refresh)
+  self:refresh()
+end
+
+function PixelFrame:on_disconnect(prop)
+  if prop ~= "image" then return end
+  try_invoke(self.image, "unlisten", self, self.refresh)
+  self.image = self._own_image
+  self:refresh()
+end
 
 function PixelFrame:check_action(action_id)
   if action_id == "core:save" then
@@ -50,7 +67,7 @@ function PixelFrame:check_action(action_id)
 end
 
 function PixelFrame:on_save()
-  return self.data:encode("png")
+  return self.image.data:encode("png")
 end
 
 function PixelFrame.typecheck(obj, where)
@@ -69,7 +86,7 @@ end
 
 function PixelFrame:clone()
   local frame = Frame.clone(self)
-  frame.data = clone(self.data)
+  frame.data = clone(self.image.data)
   return PixelFrame(frame)
 end
 
@@ -80,7 +97,7 @@ function PixelFrame:draw(size, scale)
 end
 
 function PixelFrame:locked()
-  return self.image ~= self._own_image
+  return false
 end
 
 function PixelFrame:tool()
@@ -89,19 +106,18 @@ function PixelFrame:tool()
        or nil
 end
 
-local _paste_self = nil
-local function _paste()
-  love.graphics.clear   (0,0,0,0)
-  love.graphics.setColor(1,1,1,1)
-  love.graphics.draw(_paste_self.data_image)
+function PixelFrame:refresh()
+  local image = self.image
+  image:refresh()
+  self._own_image:inform(image)
 end
 
-function PixelFrame:refresh()
-  self.data_image:replacePixels(self.data)
-  _paste_self = self
-  self.image.value:renderTo(_paste)
-  _paste_self = nil
-  self.image:inform()
+function PixelFrame:refresh_internal()
+  local image = self.image
+  if image ~= self._own_image then
+    image:inform_except(self)
+  end
+  self:refresh()
 end
 
 function PixelFrame:keypressed(key)
@@ -118,14 +134,14 @@ end
 
 function PixelFrame:undo()
   if self:locked() then return end
-  self._undoStack:undo(self.data)
-  self:refresh()
+  self.image.undoStack:undo(self.image.data)
+  self:refresh_internal()
 end
 
 function PixelFrame:redo()
   if self:locked() then return end
-  self._undoStack:redo(self.data)
-  self:refresh()
+  self.image.undoStack:redo(self.image.data)
+  self:refresh_internal()
 end
 
 function PixelFrame:mousepressed(mx, my, button)
@@ -135,8 +151,8 @@ function PixelFrame:mousepressed(mx, my, button)
   local tool = self:tool()
   if not tool then return end
 
-  try_invoke(tool, "on_press", self._undoStack, self.data, mx, my)
-  self:refresh()
+  try_invoke(tool, "on_press", self.image.undoStack, self.image.data, mx, my)
+  self:refresh_internal()
 end
 
 function PixelFrame:mousedragged1(mx, my, dx, dy)
@@ -146,8 +162,8 @@ function PixelFrame:mousedragged1(mx, my, dx, dy)
   local mx2 = mx - dx
   local my2 = my - dy
 
-  try_invoke(tool, "on_drag", self._undoStack, self.data, mx, my, mx2, my2)
-  self:refresh()
+  try_invoke(tool, "on_drag", self.image.undoStack, self.image.data, mx, my, mx2, my2)
+  self:refresh_internal()
 end
 
 function PixelFrame:mousereleased(mx, my, button)
@@ -155,8 +171,8 @@ function PixelFrame:mousereleased(mx, my, button)
   local tool = self:tool()
   if not tool then return end
 
-  try_invoke(tool, "on_release", self._undoStack, self.data, mx, my)
-  self:refresh()
+  try_invoke(tool, "on_release", self.image.undoStack, self.image.data, mx, my)
+  self:refresh_internal()
 end
 
 function PixelFrame:id()
@@ -168,7 +184,7 @@ function PixelFrame:id()
 end
 
 function PixelFrame:serialize()
-  local encoded_data = love.data.encode("string", "base64", self.data:encode("png"), 80)
+  local encoded_data = love.data.encode("string", "base64", self.image.data:encode("png"), 80)
   return ([=[PixelFrame {
     data = imagedata [[
 %s]];

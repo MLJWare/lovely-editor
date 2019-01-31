@@ -4,6 +4,7 @@ local SaveFileFrame           = require "frame.SaveFile"
 local YesNoFrame              = require "frame.YesNo"
 local MenuListFrame           = require "frame.MenuList"
 local PixelFrame              = require "frame.Pixel"
+local RenameFrame             = require "frame.Rename"
 
 local function is_pixelframe (_, menu)
   return PixelFrame.is(menu.view.frame)
@@ -31,9 +32,29 @@ local ask_destroy = YesNoFrame{
   end;
 }
 
+local renamer = RenameFrame {
+  _view = nil;
+  option_yes = function (self, text)
+    if text:gsub("%s", "") == "" then
+      self._view._id = nil
+    else
+      self._view._id = text
+    end
+    self._view = nil
+  end;
+}
+
 return MenuListFrame {
   view = nil;
   options = {
+    {
+      text   = "Rename View";
+      action = function (_, menu)
+        renamer._view = menu.view
+        renamer._edit:set_text(menu.view._id)
+        app.show_popup(renamer)
+      end;
+    };
     {
       text   = "Save Frame to File";
       action = function (_, menu)

@@ -54,7 +54,9 @@ function Viewport:view_at_global_pos(pos, views)
       pos2 = self:local_to_global_pos(view.pos)
       size = self:global_size_of(view)
     end
-    if  pos2 <= pos and pos < pos2 + size then
+    if  pos2.x <= pos.x
+    and pos2.y - 20 <= pos.y
+    and pos < pos2 + size then
       return view
     end
   end

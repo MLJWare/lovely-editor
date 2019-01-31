@@ -2,7 +2,7 @@ local app                     = require "app"
 local MenuListFrame           = require "frame.MenuList"
 local LoadFileFrame           = require "frame.LoadFile"
 local SaveFileFrame           = require "frame.SaveFile"
-local YesNoFrame              = require "frame.YesNo"
+local YesNoCancelFrame        = require "frame.YesNoCancel"
 local new_view_menu           = require "menu.new_view"
 local sandbox                 = require "util.sandbox"
 local Project                 = require "Project"
@@ -48,10 +48,11 @@ local load_project = LoadFileFrame {
     if success and code then
       local _, project = sandbox(code, {
         -- math frames
-        DivideFrame      = require "frame.math.Divide";
+        NumberFrame      = require "frame.math.Number";
         IntegerFrame     = require "frame.math.Integer";
         MultiplyFrame    = require "frame.math.Multiply";
-        NumberFrame      = require "frame.math.Number";
+        DivideFrame      = require "frame.math.Divide";
+        ModuloFrame      = require "frame.math.Modulo";
         SubtractFrame    = require "frame.math.Subtract";
         SumFrame         = require "frame.math.Sum";
         TickerFrame      = require "frame.math.Ticker";
@@ -60,10 +61,13 @@ local load_project = LoadFileFrame {
         ColorPickerFrame = require "frame.ColorPicker";
         LoveFrame        = require "frame.Love";
         PixelFrame       = require "frame.Pixel";
+        SliderFrame      = require "frame.Slider";
         ShaderFrame      = require "frame.Shader";
         TextBufferFrame  = require "frame.TextBuffer";
         ToolboxFrame     = require "frame.Toolbox";
         ViewGroupFrame   = require "frame.ViewGroup";
+        TimelineFrame    = require "frame.Timeline";
+        ConditionalFrame = require "frame.Conditional";
         -- other stuff
         Vector2         = require "linear-algebra.Vector2";
         Viewport        = require "Viewport";
@@ -100,7 +104,7 @@ local save_project_before_load = SaveFileFrame{
   end;
 }
 
-local ask_save_before_load = YesNoFrame {
+local ask_save_before_load = YesNoCancelFrame {
   title = "Save current project?";
   text  = "Do you want to save the current project before loading?";
   option_yes = function ()
@@ -108,6 +112,24 @@ local ask_save_before_load = YesNoFrame {
   end;
   option_no  = function ()
     app.show_popup(load_project)
+  end;
+}
+
+local save_project_before_new = SaveFileFrame{
+  action = save_project.action;
+  on_saved = function ()
+    app.restart()
+  end;
+}
+
+local ask_save_before_new = YesNoCancelFrame {
+  title = "Save current project?";
+  text  = "Do you want to save the current project before starting a new?";
+  option_yes = function ()
+    app.show_popup(save_project_before_new)
+  end;
+  option_no  = function ()
+    app.restart()
   end;
 }
 
@@ -129,6 +151,14 @@ return MenuListFrame {
       text   = "Save Project";
       action = function (_, _)
         app.show_popup(save_project)
+      end;
+    };
+    {
+      text   = "New Project";
+      action = function (_, _)
+        if #app.project.views > 0 then
+          app.show_popup(ask_save_before_new)
+        end
       end;
     };
     {

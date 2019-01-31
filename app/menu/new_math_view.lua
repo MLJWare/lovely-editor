@@ -6,6 +6,7 @@ local NumberFrame             = require "frame.math.Number"
 local SumFrame                = require "frame.math.Sum"
 local MultiplyFrame           = require "frame.math.Multiply"
 local DivideFrame             = require "frame.math.Divide"
+local ModuloFrame             = require "frame.math.Modulo"
 local SubtractFrame           = require "frame.math.Subtract"
 local TimerFrame              = require "frame.math.Timer"
 local TickerFrame             = require "frame.math.Ticker"
@@ -44,6 +45,15 @@ return MenuListFrame {
       action = function (_, _)
         app.add_view(View{
           frame = DivideFrame {};
+          pos = app.popup_position();
+        })
+      end;
+    };
+    {
+      text   = "New Modulo View";
+      action = function (_, _)
+        app.add_view(View{
+          frame = ModuloFrame {};
           pos = app.popup_position();
         })
       end;

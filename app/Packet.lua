@@ -46,10 +46,22 @@ function Packet:unlisten(listener, callback)
   end
 end
 
-function Packet:inform()
+function Packet:inform_except(ignore, substitude)
+  local packet = substitude or self
   local listeners = self.listeners
   for i = 1, #listeners, 2 do
-    listeners[i + 1](listeners[i], self)
+    local listener = listeners[i]
+    if listener ~= ignore then
+      listeners[i + 1](listener, packet)
+    end
+  end
+end
+
+function Packet:inform(substitude)
+  local packet = substitude or self
+  local listeners = self.listeners
+  for i = 1, #listeners, 2 do
+    listeners[i + 1](listeners[i], packet)
   end
 end
 

@@ -114,8 +114,10 @@ do
   }
   function love.quit()
     if CLOSE == nil then
-      app.show_popup(close_menu)
-      CLOSE = false
+      CLOSE = #app.project.views == 0
+      if not CLOSE then
+        app.show_popup(close_menu)
+      end
     end
     return not CLOSE
   end

@@ -45,9 +45,16 @@ TickerFrame.gives = IOs{
   {id = "value", kind = NumberPacket};
 }
 
-function TickerFrame:update(_)
-  self.value.value = self.value.value + 1
-  self:refresh()
+local SPT = 1/60
+
+function TickerFrame:update(dt)
+  local delta = self._delta + dt
+  if delta >= SPT then
+    delta = delta - SPT
+    self.value.value = self.value.value + 1
+    self:refresh()
+  end
+  self._delta = delta
 end
 function TickerFrame:draw(size, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)

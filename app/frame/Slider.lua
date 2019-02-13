@@ -2,7 +2,8 @@ local Frame                   = require "Frame"
 local clamp                   = require "math.clamp"
 local vec2                    = require "linear-algebra.Vector2"
 local MouseButton             = require "const.MouseButton"
-local NumberPacket            = require "packet.Number"
+local Signal                  = require "Signal"
+local NumberKind              = require "Kind.Number"
 local IOs                     = require "IOs"
 
 local SliderFrame = {}
@@ -18,8 +19,12 @@ setmetatable(SliderFrame, {
       frame.size = vec2(32, 128)
     end
     SliderFrame.typecheck(frame, "SliderFrame constructor")
-    frame.pct = NumberPacket {
-      value = frame.pct or 0;
+    frame.pct = frame.pct or 0
+    frame.signal_out = Signal {
+      on_connect = function ()
+        return frame.pct
+      end;
+      kind = NumberKind;
     }
     setmetatable(frame, SliderFrame)
 
@@ -28,7 +33,7 @@ setmetatable(SliderFrame, {
 })
 
 SliderFrame.gives = IOs {
-  {id = "pct", kind = NumberPacket}
+  {id = "signal_out", kind = NumberKind}
 }
 
 function SliderFrame.typecheck(obj, where)
@@ -49,7 +54,7 @@ function SliderFrame:draw(size, _)
 
   love.graphics.push()
 
-  local knob_y = math.floor( (1 - self.pct.value)*size.y - knob_h/2)
+  local knob_y = math.floor( (1 - self.pct)*size.y - knob_h/2)
   love.graphics.setColor(1, 1, 1)
   love.graphics.rectangle( "fill", 0, knob_y, size.x, knob_h)
   love.graphics.setColor(0.6, 0.6, 0.6)
@@ -59,12 +64,12 @@ function SliderFrame:draw(size, _)
 end
 
 function SliderFrame:refresh()
-  self.pct:inform()
+  self.signal_out:inform(self.pct)
 end
 
 function SliderFrame:mousepressed(_, my, button)
   if button ~= MouseButton.LEFT then return end
-  self.pct.value = clamp(1 - my/self.size.y, 0, 1)
+  self.pct = clamp(1 - my/self.size.y, 0, 1)
   self:refresh()
 end
 --[[
@@ -73,14 +78,14 @@ function SliderFrame:mousereleased(_, _, button)
 end
 --]]
 function SliderFrame:mousedragged1(_, my, _, _)
-  self.pct.value = clamp(1 - my/self.size.y, 0, 1)
+  self.pct = clamp(1 - my/self.size.y, 0, 1)
   self:refresh()
 end
 
 function SliderFrame:serialize()
   return ([[SliderFrame {
     pct = %s;
-  }]]):format(self.pct.value)
+  }]]):format(self.pct)
 end
 
 return SliderFrame

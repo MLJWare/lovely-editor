@@ -1,6 +1,7 @@
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
-local NumberPacket            = require "packet.Number"
+local NumberKind              = require "Kind.Number"
+local Signal                  = require "Signal"
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
@@ -21,7 +22,15 @@ setmetatable(DivideFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     DivideFrame.typecheck(frame, "DivideFrame constructor")
 
-    frame.value = NumberPacket{ value = 0 }
+    if not frame.value then
+      frame.value = 0
+    end
+    frame.signal_out = Signal {
+      on_connect = function ()
+        return frame.value;
+      end;
+      kind = NumberKind;
+    }
 
     setmetatable(Frame(frame), DivideFrame)
     return frame
@@ -30,7 +39,7 @@ setmetatable(DivideFrame, {
 
 function DivideFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberPacket.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a NumberPacket.", where)
+  assertf(not obj.value or NumberKind(obj.value), "Error in %s: Invalid optional property: 'value' must be a number.", where)
 end
 
 function DivideFrame.is(obj)
@@ -41,43 +50,43 @@ function DivideFrame.is(obj)
 end
 
 DivideFrame.takes = IOs{
-  {id = "left" , kind = NumberPacket};
-  {id = "right", kind = NumberPacket};
+  {id = "signal_left" , kind = NumberKind};
+  {id = "signal_right", kind = NumberKind};
 }
 
 
 DivideFrame.gives = IOs{
-  {id = "value", kind = NumberPacket};
+  {id = "signal_out", kind = NumberKind};
 }
 
-function DivideFrame:on_connect(prop, from)
-  if prop == "left" then
-    self.left = from
-    from:listen(self, self.refresh)
-    self:refresh()
-  elseif prop == "right" then
-    self.right = from
-    from:listen(self, self.refresh)
-    self:refresh()
+function DivideFrame:on_connect(prop, from, value)
+  if prop == "signal_left" then
+    self.signal_left = from
+    from:listen(self, prop, self.refresh_left)
+    self:refresh_left(value)
+  elseif prop == "signal_right" then
+    self.signal_right = from
+    from:listen(self, prop, self.refresh_right)
+    self:refresh_right(value)
   end
 end
 
 function DivideFrame:on_disconnect(prop)
-  if prop == "left" then
-    self.left:unlisten(self, self.refresh)
-    self.left = nil
-    self:refresh()
-  elseif prop == "right" then
-    self.right:unlisten(self, self.refresh)
-    self.right = nil
-    self:refresh()
+  if prop == "signal_left" then
+    self.signal_left:unlisten(self, prop, self.refresh_left)
+    self.signal_left = nil
+    self:refresh_left(nil)
+  elseif prop == "signal_right" then
+    self.signal_right:unlisten(self, prop, self.refresh_right)
+    self.signal_right = nil
+    self:refresh_right(nil)
   end
 end
 
 function DivideFrame:draw(size, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)
   love.graphics.rectangle("fill", 0, 0, size.x, size.y)
-  local text = tostring(self.value.value)
+  local text = tostring(self.value)
   pleasure.push_region(0, 0, size.x, size.y)
   pleasure.scale(scale)
   do
@@ -89,16 +98,26 @@ function DivideFrame:draw(size, scale)
 end
 
 local function _num(v)
-  return v and tonumber(v.value) or 0
+  return v and tonumber(v) or 0
 end
 
-function DivideFrame:refresh()
-  local val = _num(self.left) / _num(self.right)
-  self.value.value = (val == val) and val or 0
-  self.value:inform()
+function DivideFrame:refresh_left(value)
+  self.value_left = value
+  local val = _num(value) / _num(self.value_right)
+  if val ~= val then val = 0 end -- replace NaN with 0
+  self.value = val
+  self.signal_out:inform(val)
 end
 
-function DivideFrame:serialize()
+function DivideFrame:refresh_right(value)
+  self.value_right = value
+  local val = _num(self.value_left) / _num(value)
+  if val ~= val then val = 0 end -- replace NaN with 0
+  self.value = val
+  self.signal_out:inform(val)
+end
+
+function DivideFrame.serialize()
   return "DivideFrame {}"
 end
 

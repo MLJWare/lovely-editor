@@ -1,6 +1,7 @@
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
-local NumberPacket            = require "packet.Number"
+local NumberKind              = require "Kind.Number"
+local Signal                  = require "Signal"
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local integer_filter          = require "input.filter.integer"
@@ -20,24 +21,24 @@ setmetatable(IntegerFrame, {
     assert(type(frame) == "table", "IntegerFrame constructor must be a table.")
 
     if not frame.size then frame.size = vec2(64, 20) end
-
-    if type(frame.value) == "number" and frame.value%1==0 then
-      frame.value = NumberPacket{ value = frame.value }
-    end
-
     IntegerFrame.typecheck(frame, "IntegerFrame constructor")
 
-    frame.filter = integer_filter
-    if not frame.value then
-      frame.value = NumberPacket{ value = 0 }
-    end
+    frame.signal_out = Signal {
+      on_connect = function ()
+        return frame.value;
+      end;
+      kind  = NumberKind;
+    }
 
-    frame.value.value = math.floor(frame.value.value)
+    frame.filter = integer_filter
+
+    frame.value = math.floor(frame.value or 0)
 
     setmetatable(InputFrame(frame), IntegerFrame)
+
     frame._edit.hint_color = frame._edit.text_color
     frame._edit.hint = "0"
-    frame._edit.text = tostring(frame.value.value)
+    frame._edit.text = tostring(frame.value)
 
     return frame
   end;
@@ -45,7 +46,7 @@ setmetatable(IntegerFrame, {
 
 function IntegerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberPacket.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a NumberPacket.", where)
+  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a number.", where)
 end
 
 function IntegerFrame.is(obj)
@@ -56,37 +57,37 @@ function IntegerFrame.is(obj)
 end
 
 IntegerFrame.gives = IOs{
-  {id = "value", kind = NumberPacket};
+  {id = "signal_out", kind = NumberKind};
 }
 
 IntegerFrame.takes = IOs{
-  {id = "value", kind = NumberPacket};
+  {id = "signal_in", kind = NumberKind};
 }
 
-function IntegerFrame:on_connect(prop, from)
-  if prop == "value" then
-    self.value_in = from
-    from:listen(self, self.refresh)
-    self:refresh()
+function IntegerFrame:on_connect(prop, from, data)
+  if prop == "signal_in" then
+    self.signal_in = from
+    from:listen(self, prop, self.refresh)
+    self:refresh(data)
   end
 end
 
 function IntegerFrame:on_disconnect(prop)
-  if prop == "value" then
-    try_invoke(self.value_in, "unlisten", self, self.refresh)
-    self.value_in = nil
+  if prop == "signal_in" then
+    try_invoke(self.signal_in, "unlisten", self, prop, self.refresh)
+    self.signal_in = nil
   end
 end
 
 function IntegerFrame:locked()
-  return self.value_in ~= nil
+  return self.signal_in ~= nil
 end
 
 function IntegerFrame:draw(size, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)
   love.graphics.rectangle("fill", 0, 0, size.x, size.y)
   if self:locked() then
-    local text = tostring(self.value.value)
+    local text = tostring(self.value)
     local x_pad = self._edit.x_pad*scale
     pleasure.push_region(x_pad, 0, size.x - 2*x_pad, size.y)
     pleasure.scale(scale)
@@ -101,24 +102,17 @@ function IntegerFrame:draw(size, scale)
   end
 end
 
-function IntegerFrame:refresh()
-  local data = self.value
-  local data_in = self.value_in
-  if data_in then
-    local new_value = math.floor(data_in.value)
-    if data.value == new_value then return end
-    data.value = new_value
-    data:inform()
-  else
-    data.value = math.floor(tonumber(self._edit.text) or 0)
-    data:inform()
-  end
+function IntegerFrame:refresh(data_in)
+  local new_value = math.floor(tonumber(data_in or self._edit.text) or 0)
+  if self.value == new_value then return end
+  self.value = new_value
+  self.signal_out:inform(new_value)
 end
 
 function IntegerFrame:serialize()
   return ([[IntegerFrame {
     value = %s;
-  }]]):format(tostring(self.value.value))
+  }]]):format(tostring(self.value))
 end
 
 function IntegerFrame.id()

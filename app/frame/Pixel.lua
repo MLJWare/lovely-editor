@@ -6,8 +6,10 @@ local assertf                 = require "assertf"
 local clone                   = require "pleasure.clone"
 local MouseButton             = require "const.MouseButton"
 local PropertyStore           = require "PropertyStore"
-local ImagePacket             = require "packet.Image"
-local EditImagePacket         = require "packet.EditImage"
+local Signal                  = require "Signal"
+local ImageKind               = require "Kind.Image"
+local EditImageKind           = require "Kind.EditImage"
+local EditImage               = require "packet.EditImage"
 local IOs                     = require "IOs"
 local try_invoke              = require "pleasure.try".invoke
 
@@ -24,11 +26,17 @@ setmetatable(PixelFrame, {
       frame.size = vec2()
     end
     PixelFrame.typecheck(frame, "PixelFrame constructor")
-    frame.image = EditImagePacket {
+    frame.image = EditImage {
       data = frame.data;
     }
+    frame.signal_out = Signal {
+      on_connect = function ()
+        return frame.image_edit
+      end;
+      kind = EditImageKind;
+    }
+    frame.image_edit = frame.image
     frame.data = nil
-    frame._own_image = frame.image
     frame.size.x, frame.size.y = frame.image.data:getDimensions()
 
     setmetatable(frame, PixelFrame)
@@ -38,26 +46,26 @@ setmetatable(PixelFrame, {
 })
 
 PixelFrame.takes = IOs{
-  {id = "image", kind = EditImagePacket};
+  {id = "signal_in", kind = EditImageKind};
 }
 
 PixelFrame.gives = IOs{
-  {id = "image", kind = ImagePacket};
+  {id = "signal_out", kind = ImageKind};
 }
 
 
-function PixelFrame:on_connect(prop, from)
-  if prop ~= "image" then return end
-  self.image = from
-  from:listen(self, self.refresh)
-  self:refresh()
+function PixelFrame:on_connect(prop, from, data)
+  if prop ~= "signal_in" then return end
+  self.signal_in = from
+  from:listen(self, prop, self.refresh)
+  self:refresh(data)
 end
 
 function PixelFrame:on_disconnect(prop)
-  if prop ~= "image" then return end
-  try_invoke(self.image, "unlisten", self, self.refresh)
-  self.image = self._own_image
-  self:refresh()
+  if prop ~= "signal_in" then return end
+  try_invoke(self.signal_in, "unlisten", self, prop, self.refresh)
+  self.signal_in = nil
+  self:refresh(nil)
 end
 
 function PixelFrame:check_action(action_id)
@@ -67,7 +75,7 @@ function PixelFrame:check_action(action_id)
 end
 
 function PixelFrame:on_save()
-  return self.image.data:encode("png")
+  return self.image_edit.data:encode("png")
 end
 
 function PixelFrame.typecheck(obj, where)
@@ -86,42 +94,36 @@ end
 
 function PixelFrame:clone()
   local frame = Frame.clone(self)
-  frame.data = clone(self.image.data)
+  frame.data = clone(self.image_edit.data)
   return PixelFrame(frame)
 end
 
 function PixelFrame:draw(size, scale)
   love.graphics.setColor(1, 1, 1)
-  love.graphics.draw(self.image.value, 0, 0, 0, scale, scale)
-  try_invoke(self:tool(), "draw_hint", self.image.value, size, scale)
-end
-
-function PixelFrame:locked()
-  return false
+  love.graphics.draw(self.image_edit.value, 0, 0, 0, scale, scale)
+  try_invoke(self:tool(), "draw_hint", self.image_edit.value, size, scale)
 end
 
 function PixelFrame:tool()
-  return not self:locked()
-      and PropertyStore.get("core.graphics", "paint.tool")
-       or nil
+  return PropertyStore.get("core.graphics", "paint.tool")
 end
 
-function PixelFrame:refresh()
-  local image = self.image
-  image:refresh()
-  self._own_image:inform(image)
+function PixelFrame:refresh(data)
+  local image = data or self.image
+  self.image_edit = image
+  image:refresh() -- QUESTION is this correct?
+  self.signal_out:inform(image)
 end
 
 function PixelFrame:refresh_internal()
-  local image = self.image
-  if image ~= self._own_image then
-    image:inform_except(self)
+  local image = self.image_edit
+  if image ~= self.image then
+    --image:inform_except(self) -- FIXME!!!!!
   end
-  self:refresh()
+  self:refresh(image)
 end
 
 function PixelFrame:keypressed(key)
-  if self:locked() then return end
   if not ctrl_is_down() then return end
   if key ~= "z" then return end
 
@@ -133,14 +135,12 @@ function PixelFrame:keypressed(key)
 end
 
 function PixelFrame:undo()
-  if self:locked() then return end
-  self.image.undoStack:undo(self.image.data)
+  self.image_edit.undoStack:undo(self.image_edit.data)
   self:refresh_internal()
 end
 
 function PixelFrame:redo()
-  if self:locked() then return end
-  self.image.undoStack:redo(self.image.data)
+  self.image_edit.undoStack:redo(self.image_edit.data)
   self:refresh_internal()
 end
 
@@ -151,7 +151,7 @@ function PixelFrame:mousepressed(mx, my, button)
   local tool = self:tool()
   if not tool then return end
 
-  try_invoke(tool, "on_press", self.image.undoStack, self.image.data, mx, my)
+  try_invoke(tool, "on_press", self.image_edit.undoStack, self.image_edit.data, mx, my)
   self:refresh_internal()
 end
 
@@ -162,7 +162,7 @@ function PixelFrame:mousedragged1(mx, my, dx, dy)
   local mx2 = mx - dx
   local my2 = my - dy
 
-  try_invoke(tool, "on_drag", self.image.undoStack, self.image.data, mx, my, mx2, my2)
+  try_invoke(tool, "on_drag", self.image_edit.undoStack, self.image_edit.data, mx, my, mx2, my2)
   self:refresh_internal()
 end
 
@@ -171,7 +171,7 @@ function PixelFrame:mousereleased(mx, my, button)
   local tool = self:tool()
   if not tool then return end
 
-  try_invoke(tool, "on_release", self.image.undoStack, self.image.data, mx, my)
+  try_invoke(tool, "on_release", self.image_edit.undoStack, self.image_edit.data, mx, my)
   self:refresh_internal()
 end
 
@@ -184,7 +184,7 @@ function PixelFrame:id()
 end
 
 function PixelFrame:serialize()
-  local encoded_data = love.data.encode("string", "base64", self.image.data:encode("png"), 80)
+  local encoded_data = love.data.encode("string", "base64", self.image_edit.data:encode("png"), 80)
   return ([=[PixelFrame {
     data = imagedata [[
 %s]];

@@ -8,8 +8,10 @@ local shader_fill             = require "shader_fill"
 local rgb2hsv                 = require "color.rgb2hsv"
 local hsv2rgb                 = require "color.hsv2rgb"
 local Color                   = require "color.Color"
+local Vector4Kind             = require "Kind.Vector4"
 local vec2                    = require "linear-algebra.Vector2"
 local MouseButton             = require "const.MouseButton"
+local IOs                     = require "IOs"
 local PAD = 4
 
 local SLIDER_WIDTH  = 16
@@ -84,6 +86,10 @@ setmetatable(ColorPickerFrame, {
     return frame
   end;
 })
+
+ColorPickerFrame.gives = IOs{
+  {id = "color"; kind = Vector4Kind ;}
+}
 
 function ColorPickerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)

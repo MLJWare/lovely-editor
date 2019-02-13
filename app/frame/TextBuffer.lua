@@ -2,7 +2,8 @@ local IOs                     = require "IOs"
 local Frame                   = require "Frame"
 --local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
-local StringPacket            = require "packet.String"
+local Signal                  = require "Signal"
+local StringKind              = require "Kind.String"
 local TextBuffer              = require "text.Buffer"
 local TextCaret               = require "text.Caret"
 local unicode                 = require "unicode"
@@ -39,9 +40,14 @@ setmetatable(TextBufferFrame, {
 
     local text = tostring(frame.data or "")
 
-    frame.data = StringPacket {
-        value = text;
-    };
+    frame.signal_out = Signal {
+      on_connect = function ()
+        return frame.data
+      end;
+      kind = StringKind;
+    }
+
+    frame.data = text
 
     setmetatable(frame, TextBufferFrame)
     if frame.data then
@@ -65,7 +71,7 @@ function TextBufferFrame.is(obj)
 end
 
 TextBufferFrame.gives = IOs{
-  {id = "data", kind = StringPacket};
+  {id = "signal_out", kind = StringKind};
 }
 
 function TextBufferFrame:check_action(action_id)
@@ -77,7 +83,6 @@ end
 function TextBufferFrame:on_save()
   return self._buffer:dump()
 end
-
 
 function TextBufferFrame:draw(size)
   local old_font = love.graphics.getFont()
@@ -337,10 +342,9 @@ function TextBufferFrame:focuslost()
   end
 end
 function TextBufferFrame:refresh()
-  self.data.value = self._buffer:dump()
-  self.data:inform()
-
-
+  local data = self._buffer:dump()
+  self.data = data
+  self.signal_out:inform(data)
 end
 
 function TextBufferFrame:serialize()

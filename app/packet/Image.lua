@@ -1,17 +1,15 @@
-local Packet = require "Packet"
 local assertf = require "assertf"
 
 local ImagePacket = {}
 ImagePacket.__index = ImagePacket
 
-ImagePacket._kind = ";ImagePacket;Packet;"
+ImagePacket._kind = ";ImagePacket;"
 
 setmetatable(ImagePacket, {
-  __index = Packet;
   __call = function (_, packet)
     assert(type(packet) == "table", "ImagePacket constructor must be a table.")
     ImagePacket.typecheck(packet, "ImagePacket constructor")
-    setmetatable(Packet(packet), ImagePacket)
+    setmetatable(packet, ImagePacket)
     return packet
   end;
 })
@@ -47,7 +45,6 @@ function ImagePacket.clone(obj)
 end
 
 function ImagePacket.typecheck(obj, where)
-  Packet.typecheck(obj, where)
   local value = obj.value
   local test = type(value) == "userdata"
            and type(value.type) == "function"
@@ -60,14 +57,6 @@ function ImagePacket.is(obj)
   return type(meta) == "table"
   and type(meta._kind) == "string"
   and meta._kind:find(";ImagePacket;")
-end
-
-do
-  local pixel = love.graphics.newImage(love.image.newImageData(1, 1))
-  pixel:setWrap("repeat", "repeat")
-  function ImagePacket.default_raw_value()
-    return pixel
-  end
 end
 
 return ImagePacket

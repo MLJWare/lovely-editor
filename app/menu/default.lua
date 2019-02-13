@@ -80,8 +80,10 @@ local load_project = LoadFileFrame {
         project:prepare(app)
         app.project = project
         return
+      else print(_, project)
       end
     end
+
 
     error(("Invalid project file: %s"):format(filename))
   end;

@@ -1,4 +1,3 @@
-local Packet                  = require "Packet"
 local assertf                 = require "assertf"
 local UndoStack               = require "UndoStack"
 local ImagePacket             = require "packet.Image"
@@ -6,7 +5,7 @@ local ImagePacket             = require "packet.Image"
 local EditImagePacket = {}
 EditImagePacket.__index = EditImagePacket
 
-EditImagePacket._kind = ";EditImagePacket;ImagePacket;Packet;"
+EditImagePacket._kind = ";EditImagePacket;ImagePacket;"
 
 setmetatable(EditImagePacket, {
   __index = ImagePacket;
@@ -18,7 +17,7 @@ setmetatable(EditImagePacket, {
     packet.image = love.graphics.newImage(packet.data)
     packet.undoStack = UndoStack()
 
-    setmetatable(Packet(packet), EditImagePacket)
+    setmetatable(packet, EditImagePacket)
     packet:refresh()
     return packet
   end;
@@ -64,7 +63,6 @@ function EditImagePacket.clone(obj)
 end
 
 function EditImagePacket.typecheck(obj, where)
-  Packet.typecheck(obj, where)
   local data = obj.data
   local test = type(data) == "userdata"
            and type(data.type) == "function"
@@ -77,14 +75,6 @@ function EditImagePacket.is(obj)
   return type(meta) == "table"
   and type(meta._kind) == "string"
   and meta._kind:find(";EditImagePacket;")
-end
-
-do
-  local pixel = love.graphics.newImage(love.image.newImageData(1, 1))
-  pixel:setWrap("repeat", "repeat")
-  function EditImagePacket.default_raw_value()
-    return pixel
-  end
 end
 
 return EditImagePacket

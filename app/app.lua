@@ -1,9 +1,9 @@
 local checker_pattern         = require "checker_pattern"
 local FocusHandler            = require "FocusHandler"
-local ImagePacket             = require "packet.Image"
-local EditImagePacket         = require "packet.EditImage"
-local StringPacket            = require "packet.String"
-local NumberPacket            = require "packet.Number"
+local ImageKind               = require "Kind.Image"
+local EditImageKind           = require "Kind.EditImage"
+local StringKind              = require "Kind.String"
+local NumberKind              = require "Kind.Number"
 local MouseButton             = require "const.MouseButton"
 local PixelFrame              = require "frame.Pixel"
 local pleasure                = require "pleasure"
@@ -31,20 +31,9 @@ local EMPTY = {}
 
 local settings = require "settings"
 
---[[
-  local global_style = {
-    transparency = {
-      pattern = "checker";
-      color  = {0.15, 0.15, 0.15};
-      color2 = {0.05, 0.05, 0.05};
-      scale  = 32;
-    };
-  }
-
-  local default_checker_color      = {0.8, 0.8, 0.8}
-  local default_transparency_color = {0.6, 0.6, 0.6}
-  local default_checker_scale      = 8
---]]
+local default_checker_color      = {0.8, 0.8, 0.8}
+local default_transparency_color = {0.6, 0.6, 0.6}
+local default_checker_scale      = 8
 
 local app = {
   project = Project{
@@ -198,10 +187,10 @@ do
 end
 
 function app.pin_color(kind)
-  if     kind == StringPacket    then return 0.80, 0.90, 0.20, 1
-  elseif kind == ImagePacket     then return 0.80, 0.30, 0.20, 1
-  elseif kind == EditImagePacket then return 0.95, 0.50, 0.60, 1
-  elseif kind == NumberPacket    then return 0.40, 0.30, 0.70, 1
+  if     kind == EditImageKind   then return 0.95, 0.50, 0.60, 1
+  elseif kind == ImageKind       then return 0.80, 0.30, 0.20, 1
+  elseif kind == StringKind      then return 0.80, 0.90, 0.20, 1
+  elseif kind == NumberKind      then return 0.40, 0.30, 0.70, 1
   else                                return 0.75, 0.75, 0.75, 1
   end
 end
@@ -347,10 +336,10 @@ function app.mousepressed(mx, my, button)
   end
 end
 
-
 local function compatible(give_kind, take_kind)
   if give_kind == take_kind then return true end
-  return give_kind._kind:find(take_kind._kind)
+  return give_kind == EditImageKind
+     and take_kind == ImageKind
 end
 
 function app.mousereleased(mx, my, button)
@@ -551,15 +540,16 @@ local function draw_link(from, to, special)
 end
 
 function app.connect(from, to, force)
-  local view  = rawget(to, "____view____")
-  local prop  = rawget(to, "____prop____")
-  local frame = view.frame
+  local to_view  = rawget(to, "____view____")
+  local to_prop  = rawget(to, "____prop____")
+  local to_frame = to_view.frame
 
-  if not (frame:take_by_id(prop) or force) then return end
+  if not (to_frame:take_by_id(to_prop) or force) then return end
 
-  app.disconnect_raw(view, prop)
+  app.disconnect_raw(to_view, to_prop)
 
-  try_invoke(frame, "on_connect", prop, from)
+  local _, data = try_invoke(from, "on_connect")
+  try_invoke(to_frame, "on_connect", to_prop, from, data)
   app.project._links[to] = from
 end
 
@@ -662,7 +652,7 @@ function app.draw()
 
   if show_connections then
     for to, from in pairs(app.project._links) do
-      local special = (to._kind or ""):find(";Edit[^;]*Packet;")
+      local special = (to._kind or ""):find(";Edit[^;]*Packet;") -- FIXME
       draw_link(io_gives_pos(from), io_takes_pos(to), special)
     end
   end

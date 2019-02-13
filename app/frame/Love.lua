@@ -3,8 +3,8 @@ local vec2                    = require "linear-algebra.Vector2"
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
 local sandbox                 = require "util.sandbox"
-local NumberPacket            = require "packet.Number"
-local StringPacket            = require "packet.String"
+local NumberKind              = require "Kind.Number"
+local StringKind              = require "Kind.String"
 local try_invoke              = require "pleasure.try".invoke
 
 local LoveFrame = {}
@@ -34,31 +34,31 @@ setmetatable(LoveFrame, {
 })
 
 LoveFrame.takes = IOs{
-  {id = "code", kind = StringPacket};
-  {id = "tick", kind = NumberPacket};
+  {id = "signal_code", kind = StringKind};
+  {id = "signal_tick", kind = NumberKind};
 }
 
-function LoveFrame:on_connect(prop, from)
-  if prop == "code" then
-    self.code_in = from
-    from:listen(self, self.refresh_code)
-    self:refresh_code()
-  elseif prop == "tick" then
-    self.tick_in = from
-    from:listen(self, self.refresh)
-    self:refresh()
+function LoveFrame:on_connect(prop, from, data)
+  if prop == "signal_code" then
+    self.signal_code = from
+    from:listen(self, prop, self.refresh_code)
+    self:refresh_code(data)
+  elseif prop == "signal_tick" then
+    self.signal_tick = from
+    from:listen(self, prop, self.refresh_tick)
+    self:refresh_tick(data)
   end
 end
 
 function LoveFrame:on_disconnect(prop)
-  if prop == "code" then
-    try_invoke(self.code_in, "unlisten", self, self.refresh_code)
-    self.code_in   = nil
-    self:refresh()
-  elseif prop == "tick" then
-    try_invoke(self.tick_in, "unlisten", self, self.refresh)
-    self.tick_in   = nil
-    self:refresh()
+  if prop == "signal_code" then
+    try_invoke(self.signal_code, "unlisten", self, prop, self.refresh_code)
+    self.signal_code = nil
+    self:refresh_code(nil)
+  elseif prop == "signal_tick" then
+    try_invoke(self.signal_tick, "unlisten", self, prop, self.refresh_tick)
+    self.signal_tick = nil
+    self:refresh_tick(nil)
   end
 end
 
@@ -83,27 +83,49 @@ function LoveFrame:on_save()
   return self._canvas:newImageData():encode("png")
 end
 
-function LoveFrame:refresh()
+function LoveFrame:refresh_tick(data)
   local game = self._game
-  if not game or type(game.love) ~= "table" then return end
+  if not game then return end
+  local game_love = game.love
+  if type(game_love) ~= "table" then return end
   love.graphics.push("all")
   love.graphics.setCanvas(self._canvas)
   love.graphics.setColor(1, 1, 1)
   love.graphics.clear(0,0,0,0)
-  local success, err
-  success, err = pcall(game.love.update, 1/60) if not success then print("LoveFrame - update:", err) end
-  success, err = pcall(game.love.draw)         if not success then print("LoveFrame - draw:", err) end
+  local game_update = game_love.update
+  if game_update then
+    local success, err = pcall(game_update, 1/60)
+    if not success then print("LoveFrame - update:", err) end
+  end
+  local game_draw   = game_love.draw
+  if game_draw then
+    local success, err = pcall(game_draw)
+    if not success then print("LoveFrame - draw:", err) end
+  end
   love.graphics.setCanvas()
   love.graphics.pop()
 end
 
-function LoveFrame:refresh_code()
-  local code = self.code_in
-  if not code then return end
-  code = code.value
+function LoveFrame:refresh_code(code)
   if not code then return end
 
   local env, err = sandbox(code, {
+    math = {
+      abs = math.abs;
+      asin = math.asin;
+      acos = math.acos;
+      atan = math.atan;
+      atan2 = math.atan2;
+      ceil = math.ceil;
+      cos = math.cos;
+      cosh = math.cosh;
+      deg = math.deg;
+      exp = math.exp;
+      floor = math.floor;
+      huge = math.huge;
+      sin = math.sin;
+      tan = math.tan;
+    };
     love = {
       keyboard = {
         isDown = function (...)
@@ -180,7 +202,7 @@ function LoveFrame:mousereleased(x, y, button, isTouch)
   self:invoke_love("mousereleased", x, y, button, isTouch)
 end
 
-function LoveFrame:serialize()
+function LoveFrame.serialize()
   return "LoveFrame {}"
 end
 

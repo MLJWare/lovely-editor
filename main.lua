@@ -95,8 +95,12 @@ function love.textinput(text)
 end
 
 function love.draw()
-  love.window.setTitle(love.timer.getFPS())
   app.draw()
+  love.graphics.origin()
+  love.graphics.setColor(0, 0, 0, 0.5)
+  love.graphics.rectangle("fill", 0, 0, 180, 20)
+  love.graphics.setColor(1, 0, 1, 0.5)
+  love.graphics.print(("FPS: %2d, garbage: %d"):format(love.timer.getFPS(), collectgarbage("count")), 2, 2)
 end
 
 do

@@ -1,7 +1,9 @@
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
-local NumberPacket            = require "packet.Number"
-local ImagePacket             = require "packet.Image"
+local Signal                  = require "Signal"
+local NumberKind              = require "Kind.Number"
+local ImageKind               = require "Kind.Image"
+local EditImageKind           = require "Kind.EditImage"
 local EditImagePacket         = require "packet.EditImage"
 local vec2                    = require "linear-algebra.Vector2"
 
@@ -21,8 +23,17 @@ setmetatable(TimelineFrame, {
 
     TimelineFrame.typecheck(frame, "TimelineFrame constructor")
 
-    frame.frame_anim = ImagePacket {
-      value = love.graphics.newCanvas(64, 64);
+    frame.signal_anim = Signal {
+      on_connect = function ()
+        return frame.frame_anim
+      end;
+      kind = ImageKind;
+    }
+    frame.signal_edit = Signal {
+      on_connect = function ()
+        return frame.frame_active
+      end;
+      kind = ImageKind;
     }
 
     local anim_frames = {}
@@ -36,6 +47,7 @@ setmetatable(TimelineFrame, {
 
     frame.anim_frames = anim_frames
     frame.frame_active = anim_frames[1]
+    frame.frame_anim = anim_frames[1]
 
     setmetatable(frame, TimelineFrame)
     return frame
@@ -55,43 +67,45 @@ function TimelineFrame.is(obj)
 end
 
 TimelineFrame.takes = IOs{
-  {id = "tick"  , kind = NumberPacket};
+  {id = "signal_tick"  , kind = NumberKind};
 }
 
 TimelineFrame.gives = IOs{
-  {id = "frame_anim"  , kind = ImagePacket};
-  {id = "frame_active", kind = EditImagePacket};
+  {id = "signal_anim", kind = ImageKind};
+  {id = "signal_edit", kind = EditImageKind};
 }
 
-function TimelineFrame:on_connect(prop, from)
-  if prop == "tick" then
-    self.tick = from
-    from:listen(self, self.refresh)
-    self:refresh()
+function TimelineFrame:on_connect(prop, from, data)
+  if prop == "signal_tick" then
+    self.signal_tick = from
+    from:listen(self, prop, self.refresh)
+    self:refresh(data)
   end
 end
 
 function TimelineFrame:on_disconnect(prop)
-  if prop == "tick" then
-    self.tick:unlisten(self, self.refresh)
-    self.tick = nil
-    self:refresh()
+  if prop == "signal_tick" then
+    self.signal_tick:unlisten(self, prop, self.refresh)
+    self.signal_tick = nil
+    self:refresh(nil)
   end
 end
 
 local function int(x)
-  local val = math.floor(x and x.value or 0)
-  return val == val and val or 0
+  local val = math.floor(x or 0)
+  if val ~= val then return 0 end
+  return val
 end
 
-function TimelineFrame:refresh()
+function TimelineFrame:refresh(tick)
   local anim_frames = self.anim_frames
   local prev_anim = self._anim
-  local new_anim  = int(self.tick) % #anim_frames
+  local new_anim  = int(tick) % #anim_frames
   if prev_anim == new_anim then return end
   self._anim = new_anim
-  self.frame_anim.value = anim_frames[1 + self._anim].value
-  self.frame_anim:inform()
+  local frame_anim = anim_frames[1 + self._anim].value
+  self.frame_anim = frame_anim
+  self.signal_anim:inform(frame_anim)
 end
 
 local row_height = 32
@@ -121,8 +135,9 @@ function TimelineFrame:mousepressed(_, my, _)
 
   if old_active_index == new_active_index then return end
   self._active_index = new_active_index
-  self.frame_active = anim_frames[1 + self._active_index]
-  self.frame_active:inform()
+  local frame_active = anim_frames[1 + self._active_index]
+  self.frame_active = frame_active
+  self.signal_edit:inform(frame_active)
 end
 
 function TimelineFrame.serialize()

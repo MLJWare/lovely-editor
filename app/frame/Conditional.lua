@@ -1,11 +1,13 @@
+-- FIXME !!!!!!!
+
 local Frame                   = require "Frame"
 local Group                   = require "frame.comp.Group"
 local vec2                    = require "linear-algebra.Vector2"
 local pleasure                = require "pleasure"
 local EditableText            = require "EditableText"
-local Packet                  = require "Packet"
-local NumberPacket            = require "packet.Number"
-local StringPacket            = require "packet.String"
+local NoKind                  = require "Kind.None"
+local NumberKind              = require "Kind.Number"
+local StringKind              = require "Kind.String"
 local font_writer             = require "util.font_writer"
 local generate_clause         = require "frame.comp.generate_clause"
 local try_invoke              = require "pleasure.try".invoke
@@ -53,7 +55,7 @@ setmetatable(ConditionalFrame, {
       }
     }
 
-    frame.result = Packet{}
+    frame.result = nil
 
     setmetatable(frame, ConditionalFrame)
     frame:refresh_gens()
@@ -89,14 +91,14 @@ function ConditionalFrame:id2index(id)
 end
 
 function ConditionalFrame:take_by_index(index)
-  return self:index2id(index), Packet
+  return self:index2id(index), NoKind
 end
 
 function ConditionalFrame:take_by_id(id)
-  return self:id2index(id), Packet
+  return self:id2index(id), NoKind
 end
 
-function ConditionalFrame:gives_count()
+function ConditionalFrame.gives_count()
   return 1
 end
 
@@ -104,18 +106,18 @@ function ConditionalFrame:_give_kind()
   local data = self._data
   local _, value = data:get_row(data:len())
   if tonumber(value) then
-    return NumberPacket
+    return NumberKind
   elseif value:find("^%s*['\"]") then
-    return StringPacket
+    return StringKind
   else
     local index = tonumber(value:match("^%s*v(%d+)") or "")
     if index then
       local input = self._inputs[index]
       return input
          and input.kind
-          or Packet
+          or NoKind
     end
-    return Packet
+    return NoKind
   end
 end
 
@@ -131,14 +133,14 @@ function ConditionalFrame:on_connect(prop, from)
   local index = self:id2index(prop)
   if not index then return end
   self._inputs[index] = from
-  from:listen(self, self.refresh)
+  from:listen(self, prop, self.refresh)
   self:refresh()
 end
 
 function ConditionalFrame:on_disconnect(prop)
   local index = self:id2index(prop)
   if not index then return end
-  try_invoke(self._inputs[index], "unlisten", self, self.refresh)
+  try_invoke(self._inputs[index], "unlisten", self, prop, self.refresh)
   self._inputs[index] = nil
   self:refresh()
 end
@@ -200,10 +202,10 @@ function ConditionalFrame:_draw_prep_condition(condition, index)
   return condition
 end
 
-function ConditionalFrame:_draw_prep_value(value, give_kind)
+function ConditionalFrame._draw_prep_value(_, value, give_kind)
   if not value:find("[^%s]+") then
     love.graphics.setColor(0.6, 0.6, 0.6)
-    value = tostring(give_kind:default_raw_value() or "") or ""
+    value = tostring(give_kind.to_shader_value() or "") or ""
   else
     love.graphics.setColor(0.0, 0.0, 0.0)
   end

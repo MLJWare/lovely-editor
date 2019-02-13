@@ -1,6 +1,7 @@
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
-local NumberPacket            = require "packet.Number"
+local NumberKind              = require "Kind.Number"
+local Signal                  = require "Signal"
 local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
@@ -21,8 +22,15 @@ setmetatable(TickerFrame, {
     if not frame.size then frame.size = vec2(64, 20) end
     TickerFrame.typecheck(frame, "TickerFrame constructor")
 
-    frame.value = NumberPacket{ value = 0 }
     frame._delta = 0
+    frame.value = math.floor(frame.value or 0)
+
+    frame.signal_out = Signal {
+      on_connect = function ()
+        return frame.value
+      end;
+      kind  = NumberKind;
+    }
 
     setmetatable(Frame(frame), TickerFrame)
     return frame
@@ -31,7 +39,7 @@ setmetatable(TickerFrame, {
 
 function TickerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberPacket.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be an Ticker.", where)
+  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a number.", where)
 end
 
 function TickerFrame.is(obj)
@@ -42,7 +50,7 @@ function TickerFrame.is(obj)
 end
 
 TickerFrame.gives = IOs{
-  {id = "value", kind = NumberPacket};
+  {id = "signal_out", kind = NumberKind};
 }
 
 local SPT = 1/60
@@ -51,15 +59,17 @@ function TickerFrame:update(dt)
   local delta = self._delta + dt
   if delta >= SPT then
     delta = delta - SPT
-    self.value.value = self.value.value + 1
-    self:refresh()
+    local value = self.value + 1
+    self.value = value
+    self:refresh(value)
   end
   self._delta = delta
 end
+
 function TickerFrame:draw(size, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)
   love.graphics.rectangle("fill", 0, 0, size.x, size.y)
-  local text = tostring(self.value.value)
+  local text = tostring(self.value)
   pleasure.push_region(0, 0, size.x, size.y)
   pleasure.scale(scale)
   do
@@ -70,15 +80,15 @@ function TickerFrame:draw(size, scale)
   pleasure.pop_region()
 end
 
-function TickerFrame:refresh()
-  self.value:inform()
+function TickerFrame:refresh(data)
+  self.signal_out:inform(data)
 end
 
 function TickerFrame.id()
   return "Ticker"
 end
 
-function TickerFrame:serialize()
+function TickerFrame.serialize()
   return "TickerFrame {}"
 end
 

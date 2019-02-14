@@ -86,16 +86,16 @@ function TextBufferFrame:on_save()
   return self._buffer:dump()
 end
 
-function TextBufferFrame:draw(size)
+function TextBufferFrame:draw(size_x, size_y)
   local old_font = love.graphics.getFont()
   love.graphics.setFont(self._font)
-  pleasure.push_region(0, 0, size.x, size.y)
+  pleasure.push_region(0, 0, size_x, size_y)
   do
     local tr, tg, tb, ta = unpack_color(self._text_color)
     local sr, sg, sb, sa = unpack_color(self._selection_color)
 
     love.graphics.setColor(0.2, 0.2, 0.2)
-    love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+    love.graphics.rectangle("fill", 0, 0, size_x, size_y)
     love.graphics.setColor(tr, tg, tb, ta)
 
     local caret = self._caret
@@ -356,9 +356,10 @@ end
 
 function TextBufferFrame:serialize()
   return ([[TextBufferFrame {
-    size = %s;
+    size_x = %s;
+    size_y = %s;
     data = %q;
-  }]]):format(self.size:serialize(), self._buffer:dump())
+  }]]):format(self.size_x, self.size_y, self._buffer:dump())
 end
 
 function TextBufferFrame:id()

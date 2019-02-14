@@ -18,9 +18,11 @@ local load_as_view = LoadFileFrame{
     local frame = app.try_create_frame(format, data)
     if frame then
       frame.filename = filename
+      local popup_x, popup_y = app.popup_position()
       app.add_view (1, {
         frame = frame;
-        pos   = app.popup_position();
+        pos_x = popup_x;
+        pos_y = popup_y;
         scale = 1;
       })
     end
@@ -63,13 +65,13 @@ local load_project = LoadFileFrame {
         PixelFrame       = require "frame.Pixel";
         SliderFrame      = require "frame.Slider";
         ShaderFrame      = require "frame.Shader";
+        ParticlesFrame   = require "frame.Particles";
         TextBufferFrame  = require "frame.TextBuffer";
         ToolboxFrame     = require "frame.Toolbox";
         ViewGroupFrame   = require "frame.ViewGroup";
         TimelineFrame    = require "frame.Timeline";
         ConditionalFrame = require "frame.Conditional";
         -- other stuff
-        Vector2         = require "linear-algebra.Vector2";
         Viewport        = require "Viewport";
         View            = require "View";
         Ref             = require "Ref";

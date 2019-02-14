@@ -15,7 +15,6 @@ love.graphics.setDefaultFilter("nearest", "nearest", 0)
 love.keyboard.setKeyRepeat(true)
 
 local app                     = require "app"
-local vec2                    = require "linear-algebra.Vector2"
 local YesNoFrame              = require "frame.YesNo"
 local load_data               = require "util.file.load_data"
 
@@ -44,12 +43,12 @@ function love.filedropped(file)
     if frame then
       frame.filename = file:getFilename()
       local mx, my = love.mouse.getPosition()
-      local size = frame.size
-      local pos_x, pos_y = app.project.viewport:global_to_local_pos(mx - size.x/2, my - size.y/2)
+      local pos_x, pos_y = app.project.viewport:global_to_local_pos(mx - frame.size_x/2, my - frame.size_y/2)
 
       app.add_view (1, {
         frame = frame;
-        pos   = vec2(pos_x, pos_y);
+        pos_x = pos_x;
+        pos_y = pos_y;
         scale = 1;
       })
     end

@@ -1,5 +1,4 @@
 local Frame                   = require "Frame"
-local vec2                    = require "linear-algebra.Vector2"
 local pleasure                = require "pleasure"
 local EditableText            = require "EditableText"
 
@@ -13,16 +12,16 @@ setmetatable(InputFrame, {
   __call  = function (_, frame)
     assert(type(frame) == "table", "InputFrame constructor must be a table.")
 
-    if not frame.size then
-      frame.size = vec2(64, 20)
-    end
+    frame.size_x = frame.size_x or 64
+    frame.size_y = frame.size_y or 20
 
     InputFrame.typecheck(frame, "InputFrame constructor")
 
     frame._edit = EditableText{
       text   = "";
       filter = frame.filter;
-      size   = frame.size;
+      size_x = frame.size_x;
+      size_y = frame.size_y;
       hint   = frame.hint or "";
     }
 
@@ -43,7 +42,7 @@ function InputFrame.is(obj)
      and meta._kind:find(";InputFrame;")
 end
 
-function InputFrame:draw(_, scale)
+function InputFrame:draw(_, _, scale)
   pleasure.push_region()
   self._edit:draw(self, scale)
   pleasure.pop_region()

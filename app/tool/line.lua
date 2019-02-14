@@ -3,7 +3,7 @@ local LineAction              = require "action.paint.Line"
 local unpack_color            = require "util.color.unpack"
 return {
     id = "tool.line";
-    draw_hint = function (self, data, _, scale)
+    draw_hint = function (self, _, data, scale) -- might need to swap `_` and `data`
       if data ~= self._owner then return end
       local x1, y1 = self._x1, self._y1
       local x2, y2 = self._x2, self._y2

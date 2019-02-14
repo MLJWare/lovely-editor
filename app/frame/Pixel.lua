@@ -1,7 +1,6 @@
 local ctrl_is_down            = require "util.ctrl_is_down"
 local shift_is_down           = require "util.shift_is_down"
 local Frame                   = require "Frame"
-local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local clone                   = require "pleasure.clone"
 local MouseButton             = require "const.MouseButton"
@@ -22,22 +21,22 @@ setmetatable(PixelFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "PixelFrame constructor must be a table.")
-    if not frame.size then
-      frame.size = vec2()
-    end
+    frame.size_x = frame.size_x or 0
+    frame.size_y = frame.size_y or 0
+
     PixelFrame.typecheck(frame, "PixelFrame constructor")
     frame.image = EditImage {
       data = frame.data;
     }
     frame.signal_out = Signal {
-      kind = EditImageKind;
+      kind = ImageKind;
       on_connect = function ()
         return frame.image_edit
       end;
     }
     frame.image_edit = frame.image
     frame.data = nil
-    frame.size.x, frame.size.y = frame.image.data:getDimensions()
+    frame.size_x, frame.size_y = frame.image.data:getDimensions()
 
     setmetatable(frame, PixelFrame)
     frame:refresh()
@@ -58,14 +57,14 @@ function PixelFrame:on_connect(prop, from, data)
   if prop ~= "signal_in" then return end
   self.signal_in = from
   from:listen(self, prop, self.refresh)
-  self:refresh(data)
+  self:refresh(prop, data)
 end
 
 function PixelFrame:on_disconnect(prop)
   if prop ~= "signal_in" then return end
   try_invoke(self.signal_in, "unlisten", self, prop, self.refresh)
   self.signal_in = nil
-  self:refresh(nil)
+  self:refresh(prop, nil)
 end
 
 function PixelFrame:check_action(action_id)
@@ -98,17 +97,17 @@ function PixelFrame:clone()
   return PixelFrame(frame)
 end
 
-function PixelFrame:draw(size, scale)
+function PixelFrame:draw(size_x, size_y, scale)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(self.image_edit.value, 0, 0, 0, scale, scale)
-  try_invoke(self:tool(), "draw_hint", self.image_edit.value, size, scale)
+  try_invoke(self:tool(), "draw_hint", self.image_edit.value, size_x, size_y, scale)
 end
 
-function PixelFrame:tool()
+function PixelFrame.tool()
   return PropertyStore.get("core.graphics", "paint.tool")
 end
 
-function PixelFrame:refresh(data)
+function PixelFrame:refresh(_, data)
   local image = data or self.image
   self.image_edit = image
   image:refresh() -- QUESTION is this correct?

@@ -1,4 +1,3 @@
-local vec2    = require "linear-algebra.Vector2"
 local Frame   = require "Frame"
 local assertf = require "assertf"
 
@@ -8,7 +7,10 @@ View.__index = View
 View._kind = ";View;"
 
 View.frame = setmetatable({}, {
-  __index = {size = vec2(8)};
+  __index = {
+    size_x = 8;
+    size_y = 8;
+  };
 })
 
 setmetatable(View, {
@@ -25,7 +27,8 @@ setmetatable(View, {
 })
 
 function View.typecheck(obj, where)
-  assertf(vec2.is(obj.pos ), "Error in %s: Missing/invalid property: 'pos' must be a Vector2.", where)
+  assertf(type(obj.pos_x) == "number", "Error in %s: Missing/invalid property: 'pos_x' must be a number.", where)
+  assertf(type(obj.pos_y) == "number", "Error in %s: Missing/invalid property: 'pos_y' must be a number.", where)
   assertf(not obj.scale or type(obj.scale) == "number", "Error in %s: Invalid optional property: 'scale' must be of a number.", where)
   assertf(not obj.frame or Frame.is(obj.frame), "Error in %s: invalid optional property: 'frame' must be a Frame.", where)
 end
@@ -53,16 +56,18 @@ function View:_serialize(frame2index, frames)
   if id then
     return ([[View {
     _id   = %q;
-    pos   = %s;
+    pos_x = %s;
+    pos_y = %s;
     scale = %s;
     frame = frames[%d];
-  }]]):format(self._id, self.pos:serialize(), self.scale, frame_index)
+  }]]):format(self._id, self.pos_x, self.pos_y, self.scale, frame_index)
   else
     return ([[View {
-    pos   = %s;
+    pos_x = %s;
+    pos_y = %s;
     scale = %s;
     frame = frames[%d];
-  }]]):format(self.pos:serialize(), self.scale, frame_index)
+  }]]):format(self.pos_x, self.pos_y, self.scale, frame_index)
   end
 end
 

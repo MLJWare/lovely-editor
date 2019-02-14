@@ -6,7 +6,6 @@ local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
-local vec2                    = require "linear-algebra.Vector2"
 
 local MessageFrame = {}
 MessageFrame.__index = MessageFrame
@@ -16,19 +15,22 @@ MessageFrame._kind = ";MessageFrame;Frame;"
 local PAD_X =  6
 local PAD_Y = 10
 
-local btn_size = vec2(100, 20)
+local btn_size_x = 100
+local btn_size_y = 20
 local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 
 setmetatable(MessageFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "MessageFrame constructor must be a table.")
-    frame.size = vec2(400, 88)
+    frame.size_x = 400
+    frame.size_y = 88
     MessageFrame.typecheck(frame, "MessageFrame constructor")
 
     frame._btn_ok = Button {
       text = frame.label_ok or "Ok";
-      size = btn_size:copy();
+      size_x = btn_size_x;
+      size_y = btn_size_y;
       text_color = btn_text_color;
       mouseclicked = function ()
         try_invoke(frame, "option_ok")
@@ -56,12 +58,12 @@ function MessageFrame.is(obj)
      and meta._kind:find(";MessageFrame;")
 end
 
-function MessageFrame:draw(size)
-  local w, h = size.x, size.y
+function MessageFrame:draw(size_x, size_y)
+  local w, h = size_x, size_y
   Images.ninepatch("menu", 0, 16, w, h - 16)
   Images.ninepatch("menu", 0,  0, w, 20)
   love.graphics.print(self.title, PAD_X, 4)
-  love.graphics.printf(self.text or "", PAD_X, 28, self.size.x - PAD_X*2, "left")
+  love.graphics.printf(self.text or "", PAD_X, 28, self.size_x - PAD_X*2, "left")
 
   pleasure.push_region(self:_btn_bounds())
   love.graphics.setColor(1, 1, 1)
@@ -70,10 +72,11 @@ function MessageFrame:draw(size)
 end
 
 function MessageFrame:_btn_bounds()
-  local size = self.size
-  local x = (size.x - btn_size.x)/2
-  local y = size.y - PAD_Y - btn_size.y
-  return x, y, btn_size.x, btn_size.y
+  local size_x = self.size_x
+  local size_y = self.size_y
+  local x = (size_x - btn_size_x)/2
+  local y = size_y - PAD_Y - btn_size_y
+  return x, y, btn_size_x, btn_size_y
 end
 
 function MessageFrame:mousepressed(mx, my, button)

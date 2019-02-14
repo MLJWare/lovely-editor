@@ -1,4 +1,3 @@
-local vec2                    = require "linear-algebra.Vector2"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local MouseButton             = require "const.MouseButton"
@@ -34,7 +33,8 @@ setmetatable(MenuListFrame, {
   __index = Frame;
   __call = function (_, menu)
     assert(type(menu) == "table", "MenuListFrame constructor must be a table.")
-    if not menu.size then menu.size = vec2(0) end
+    menu.size_x = menu.size_x or 0
+    menu.size_y = menu.size_y or 0
     MenuListFrame.typecheck(menu, "MenuListFrame constructor")
 
     local options = menu.options
@@ -44,8 +44,10 @@ setmetatable(MenuListFrame, {
     local width  = row_width + 2*menu_pad
     local height = #options*(row_height + menu_pad) + menu_pad
 
-    menu.size:setn(width, height)
-    menu.row_size = vec2(row_width, row_height)
+    menu.size_x = width
+    menu.size_y = height
+    menu.row_size_x = row_width
+    menu.row_size_y = row_height
 
     setmetatable(Frame(menu), MenuListFrame)
     return menu
@@ -66,21 +68,22 @@ end
 function MenuListFrame:_pos(mx, my)
   local display_width, display_height = love.graphics.getDimensions()
 
-  local width  = self.size.x
-  local height = self.size.y
+  local width  = self.size_x
+  local height = self.size_y
 
   local x = math.min(mx, display_width  - width)
   local y = math.min(my, display_height - height)
 
-  return vec2(x, y)
+  return x, y
 end
 
 function MenuListFrame:option_at(mx, my)
-  local row_size = self.row_size
+  local row_size_x = self.row_size_x
+  local row_size_y = self.row_size_y
   local x2 = menu_pad
-  if not (x2 <= mx and mx < x2 + row_size.x) then return nil end
+  if not (x2 <= mx and mx < x2 + row_size_x) then return nil end
 
-  local row_offset = row_size.y + menu_pad
+  local row_offset = row_size_y + menu_pad
   local index = 1 + math.floor((my - menu_pad)/row_offset)
 
   return self.options[index]
@@ -117,14 +120,16 @@ function MenuListFrame:keypressed(key)
   end
 end
 
-function MenuListFrame:draw(_, _, mx, my)
-  local size = self.size
-  local row_size = self.row_size
+function MenuListFrame:draw(_, _, _, mx, my)
+  local size_x = self.size_x
+  local size_y = self.size_y
+  local row_size_x = self.row_size_x
+  local row_size_y = self.row_size_y
 
-  local row_offset = row_size.y + menu_pad
+  local row_offset = row_size_y + menu_pad
 
   love.graphics.setColor(1,1,1)
-  Images.ninepatch("menu", 0, 0, size.x, size.y)
+  Images.ninepatch("menu", 0, 0, size_x, size_y)
 
   local options = self.options
   for i = 1, #options do
@@ -133,12 +138,12 @@ function MenuListFrame:draw(_, _, mx, my)
 
     local option = options[i]
     local disabled = self:_is_disabled(option)
-    local contains = x2 <= mx and mx < x2 + row_size.x
+    local contains = x2 <= mx and mx < x2 + row_size_x
                  and y2 <= my and my < y2 + row_offset
 
     if contains then
       love.graphics.setColor(0.2, 0.2, 0.2)
-      love.graphics.rectangle("fill", x2, y2, row_size.x, row_size.y)
+      love.graphics.rectangle("fill", x2, y2, row_size_x, row_size_y)
     end
 
     if disabled then

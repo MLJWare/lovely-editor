@@ -2,7 +2,6 @@ local Frame                   = require "Frame"
 local IOs                     = require "IOs"
 local NumberKind              = require "Kind.Number"
 local Signal                  = require "Signal"
-local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
 local font_writer             = require "util.font_writer"
@@ -19,7 +18,8 @@ setmetatable(TimerFrame, {
   __call  = function (_, frame)
     assert(type(frame) == "table", "TimerFrame constructor must be a table.")
 
-    if not frame.size then frame.size = vec2(64, 20) end
+    frame.size_x = frame.size_x or 64
+    frame.size_y = frame.size_y or 20
     TimerFrame.typecheck(frame, "TimerFrame constructor")
 
     frame._delta = 0
@@ -61,26 +61,26 @@ function TimerFrame:update(dt)
     delta = delta - SPT
     local value = self.value + 1
     self.value = value
-    self:refresh(value)
+    self:refresh(nil, value)
   end
   self._delta = delta
 end
 
-function TimerFrame:draw(size, scale)
+function TimerFrame:draw(size_x, size_y, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)
-  love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+  love.graphics.rectangle("fill", 0, 0, size_x, size_y)
   local text = tostring(self.value)
-  pleasure.push_region(0, 0, size.x, size.y)
+  pleasure.push_region(0, 0, size_x, size_y)
   pleasure.scale(scale)
   do
-    local center_y = size.y/2/scale
+    local center_y = size_y/2/scale
     love.graphics.setColor(0.0, 0.0, 0.0)
     font_writer.print_aligned(font, text, 0, center_y, "left", "center")
   end
   pleasure.pop_region()
 end
 
-function TimerFrame:refresh(data)
+function TimerFrame:refresh(_, data)
   self.signal_out:inform(data)
 end
 

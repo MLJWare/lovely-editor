@@ -12,7 +12,6 @@ local Popup                   = require "Popup"
 local Ref                     = require "Ref"
 local remove_once             = require "util.list.remove_once"
 local TextBufferFrame         = require "frame.TextBuffer"
-local vec2                    = require "linear-algebra.Vector2"
 local View                    = require "View"
 local Viewport                = require "Viewport"
 local Project                 = require "Project"
@@ -42,7 +41,8 @@ local default_checker_scale      = 8
 local app = {
   project = Project{
     viewport = Viewport {
-      pos    = vec2(0, 0);
+      pos_x  = 0;
+      pos_y  = 0;
       scale  = 1;
     };
     views  = {};
@@ -66,7 +66,8 @@ local app = {
 function app.restart()
   app.project = Project{
     viewport = Viewport {
-      pos    = vec2(0, 0);
+      pos_x  = 0;
+      pos_y  = 0;
       scale  = 1;
     };
     views  = {};
@@ -83,7 +84,7 @@ local pin_radius_small = 5
 local pin_radius_large = 9
 local pin_offset_x = pin_radius_small + 4
 
-local function _io_takes_pos(view, index)
+local function io_takes_pos(view, index)
   local pos_x, pos_y, _, size_y = app.project.viewport:view_bounds(view)
   local sectors = view.frame:takes_count() + 1
 
@@ -92,14 +93,14 @@ local function _io_takes_pos(view, index)
   return x, y
 end
 
-local function io_takes_pos(ref)
+local function io_takes_pos_ref(ref)
   local view = rawget(ref, "____view____")
   local prop = rawget(ref, "____prop____")
   local index = view.frame:take_by_id(prop)
-  return vec2(_io_takes_pos(view, index))
+  return io_takes_pos(view, index)
 end
 
-local function _io_gives_pos(view, index)
+local function io_gives_pos(view, index)
   local pos_x, pos_y, size_x, size_y = app.project.viewport:view_bounds(view)
   local sectors = view.frame:gives_count() + 1
 
@@ -108,12 +109,13 @@ local function _io_gives_pos(view, index)
   return x, y
 end
 
-local function io_gives_pos(ref)
+local function io_gives_pos_ref(ref)
   local view = rawget(ref, "____view____")
   local prop = rawget(ref, "____prop____")
   local index = view.frame:give_by_id(prop)
-  return vec2(_io_gives_pos(view, index))
+  return io_gives_pos(view, index)
 end
+
 
 local function _pin_gives_at(mx, my)
   local views = app.project.views
@@ -130,7 +132,7 @@ local function _pin_gives_at(mx, my)
     if  0 <= dx and dx < 2*pin_radius_large
     and 0 <= dy and dy < size_y then
       for index = 1, view.frame:gives_count() do
-        local x, y = _io_gives_pos(view, index)
+        local x, y = io_gives_pos(view, index)
         local dist = math.abs(x - mx) + math.abs(y - my)
         if dist < pin_radius_large then
           return view, index
@@ -155,7 +157,7 @@ local function _pin_takes_at(mx, my)
     if  0 <= dx and dx < 2*pin_radius_large
     and 0 <= dy and dy < size_y then
       for index = 1, view.frame:takes_count() do
-        local x, y = _io_takes_pos(view, index)
+        local x, y = io_takes_pos(view, index)
         local dist = math.abs(x - mx) + math.abs(y - my)
         if dist < pin_radius_large then
           return view, index
@@ -197,10 +199,12 @@ function app.pin_color(kind)
   end
 end
 
-function app.show_popup(frame, pos)
+function app.show_popup(frame, pos_x, pos_y)
+  local display_size_x, display_size_y = love.graphics.getDimensions()
   local popup = Popup {
     frame = frame;
-    pos   = pos or vec2(love.graphics.getDimensions()):subv(frame.size):divn(2);
+    pos_x = pos_x or (display_size_x-frame.size_x)/2;
+    pos_y = pos_y or (display_size_y-frame.size_y)/2;
   }
   table.insert(app.popups, popup)
   frame._focus_handler = app.focus_handler
@@ -272,12 +276,11 @@ function app.mousepressed(mx, my, button)
   local popups = app.popups
   if #popups > 0 then
     local top = popups[#popups]
-    local top_pos = top.pos
-    local top_size = top.frame.size
-    local dx = mx - top_pos.x
-    local dy = my - top_pos.y
-    if  0 <= dx and dx < top_size.x
-    and 0 <= dy and dy < top_size.y then
+    local frame = top.frame
+    local dx = mx - top.pos_x
+    local dy = my - top.pos_y
+    if  0 <= dx and dx < frame.size_x
+    and 0 <= dy and dy < frame.size_y then
       try_invoke(top.frame, "mousepressed", dx, dy, button)
       if button == MouseButton.LEFT then
         app.popup_pressed1 = top
@@ -370,9 +373,9 @@ function app.mousereleased(mx, my, button)
   end
 
   if app.popup_pressed1 then
-    local popup_pos = app.popup_pressed1.pos
-    local dx = mx - popup_pos.x
-    local dy = my - popup_pos.y
+    local popup = app.popup_pressed1
+    local dx = mx - popup.pos_x
+    local dy = my - popup.pos_y
     try_invoke(app.popup_pressed1.frame, "mousereleased", dx, dy, button)
     app.popup_pressed1 = nil
     return
@@ -404,18 +407,17 @@ function app.mousemoved(mx, my, dx, dy)
   local popups = app.popups
   if #popups > 0 then
     if app.popup_pressed1 then
-      local popup_pos = app.popup_pressed1.pos
-      local popup_dx = mx - popup_pos.x
-      local popup_dy = my - popup_pos.y
+      local popup = app.popup_pressed1
+      local popup_dx = mx - popup.pos_x
+      local popup_dy = my - popup.pos_y
       try_invoke(app.popup_pressed1.frame, "mousedragged1", popup_dx, popup_dy, dx, dy)
     else
       local top = popups[#popups]
-      local top_pos = top.pos
-      local top_dx = mx - top_pos.x
-      local top_dy = my - top_pos.y
-      local top_size = top.frame.size
-      if  0 <= top_dx and top_dx <= top_size.x
-      and 0 <= top_dy and top_dy <= top_size.y then
+      local top_dx = mx - top.pos_x
+      local top_dy = my - top.pos_y
+      local frame = top.frame
+      if  0 <= top_dx and top_dx <= frame.size_x
+      and 0 <= top_dy and top_dy <= frame.size_y then
         try_invoke(top.frame, "mousemoved", top_dx, top_dy, dx, dy)
       end
     end
@@ -456,7 +458,8 @@ end
 
 function app.popup_position()
   local popup = app.popups[#app.popups]
-  return popup and popup.pos:copy()
+  if not popup then return end
+  return popup.pos_x, popup.pos_y
 end
 
 function app.global_mode()
@@ -505,7 +508,8 @@ function app.try_create_frame(format, data)
   elseif format == "text" then
     return TextBufferFrame {
       data = data;
-      size = vec2(256, 256);
+      size_x = 256;
+      size_y = 256;
     };
   end
 end
@@ -527,27 +531,28 @@ function app.update(dt)
   end
 end
 
-local function draw_link(from, to, special)
+local function draw_link(from_x, from_y, to_x, to_y, kind)
   love.graphics.push()
-  if special then
-    love.graphics.setColor(0.7, 0.9, 0.5, app.show_connections and 1 or 0.5)
+  if kind then
+    local r, g, b = app.pin_color(kind)
+    love.graphics.setColor(r, g, b, app.show_connections and 0.8 or 0.4)
   else
-    love.graphics.setColor(0.1, 0.7, 0.4, app.show_connections and 1 or 0.5)
+    love.graphics.setColor(0.1, 0.7, 0.4, app.show_connections and 0.8 or 0.4)
   end
   love.graphics.setLineWidth(4)
   love.graphics.setLineStyle("smooth")
 
-  local dx = (to.x - from.x)/2
+  local dx = (to_x - from_x)/2
   local bez, x1, y1, x2, y2
   if dx > 0 then
-    x1, y1 = from.x + dx, from.y
-    x2, y2 = to.x   - dx, to.y
+    x1, y1 = from_x + dx, from_y
+    x2, y2 = to_x   - dx, to_y
   else
-    local dy = (to.y - from.y)/2
-    x1, y1 = from.x - dx, from.y + dy*2
-    x2, y2 = to.x   + dx, to.y   - dy*2
+    local dy = (to_y - from_y)/2
+    x1, y1 = from_x - dx, from_y + dy*2
+    x2, y2 = to_x   + dx, to_y   - dy*2
   end
-  bez = love.math.newBezierCurve(from.x, from.y, x1, y1, x2, y2, to.x, to.y)
+  bez = love.math.newBezierCurve(from_x, from_y, x1, y1, x2, y2, to_x, to_y)
   love.graphics.line(bez:render())
   bez:release()
 
@@ -563,8 +568,8 @@ function app.connect(from, to, force)
 
   app.disconnect_raw(to_view, to_prop)
 
-  local _, data = try_invoke(from, "on_connect")
-  try_invoke(to_frame, "on_connect", to_prop, from, data)
+  local _, a, b, c, d, e, f, g = try_invoke(from, "on_connect")
+  try_invoke(to_frame, "on_connect", to_prop, from, a, b, c, d, e, f, g)
   app.project._links[to] = from
 end
 
@@ -620,7 +625,7 @@ local function draw_connectors(view, frame)
   end
 
   for index = 1, frame:gives_count() do
-    local x, y = _io_gives_pos(view, index)
+    local x, y = io_gives_pos(view, index)
     local _, give_kind = frame:give_by_index(index)
     love.graphics.setColor(app.pin_color(give_kind))
     if  clickable
@@ -633,7 +638,7 @@ local function draw_connectors(view, frame)
   end
 
   for index = 1, frame:takes_count() do
-    local x, y = _io_takes_pos(view, index)
+    local x, y = io_takes_pos(view, index)
     local _, takes_kind = frame:take_by_index(index)
     love.graphics.setColor(app.pin_color(takes_kind))
     if  clickable
@@ -667,8 +672,10 @@ function app.draw()
 
   if show_connections then
     for to, from in pairs(app.project._links) do
-      local special = (to._kind or ""):find(";Edit[^;]*Packet;") -- FIXME
-      draw_link(io_gives_pos(from), io_takes_pos(to), special)
+      local kind = from.kind
+      local from_x, from_y = io_gives_pos_ref(from)
+      local to_x, to_y = io_takes_pos_ref(to)
+      draw_link(from_x, from_y, to_x, to_y, kind)
     end
   end
 
@@ -704,7 +711,7 @@ function app.draw()
       pleasure.push_region()
       pleasure.translate(pos_x, pos_y)
       love.graphics.setColor(1.0, 1.0, 1.0)
-      frame:draw(vec2(size_x, size_y), scale, mx - pos_x, my - pos_y) -- NOTE runtime vec2
+      frame:draw(size_x, size_y, scale, mx - pos_x, my - pos_y) -- NOTE runtime vec2
       pleasure.pop_region()
     end
 
@@ -723,7 +730,8 @@ function app.draw()
   end
 
   if pin_dragged.view then
-    draw_link(vec2(_io_gives_pos(pin_dragged.view, pin_dragged.index)), vec2(mx, my))-- NOTE runtime vec2
+    local from_x, from_y = io_gives_pos(pin_dragged.view, pin_dragged.index)
+    draw_link(from_x, from_y, mx, my)
   end
 
   -- draw popups
@@ -733,11 +741,13 @@ function app.draw()
     local frame = popup.frame
 
     if type(frame) == "table" and type(frame.draw) == "function" then
-      local pos  = popup.pos
-      local size = frame.size
-      pleasure.push_region(pos.x, pos.y)
+      local pos_x = popup.pos_x
+      local pos_y = popup.pos_y
+      local size_x = frame.size_x
+      local size_y = frame.size_y
+      pleasure.push_region(pos_x, pos_y)
       love.graphics.setColor(1.0, 1.0, 1.0)
-      frame:draw(size, 1, mx - pos.x, my - pos.y)
+      frame:draw(size_x, size_y, 1, mx - pos_x, my - pos_y)
       pleasure.pop_region()
     end
   end

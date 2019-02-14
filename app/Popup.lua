@@ -1,4 +1,3 @@
-local vec2    = require "linear-algebra.Vector2"
 local Frame   = require "Frame"
 local assertf = require "assertf"
 
@@ -8,7 +7,10 @@ Popup.__index = Popup
 Popup._kind = ";Popup;"
 
 Popup.frame = setmetatable({}, {
-  __index = {size = vec2(8)};
+  __index = {
+    size_x = 8;
+    size_y = 8;
+  };
 })
 
 setmetatable(Popup, {
@@ -25,7 +27,8 @@ setmetatable(Popup, {
 })
 
 function Popup.typecheck(obj, where)
-  assertf(vec2.is(obj.pos), "Error in %s: Missing/invalid property: 'pos' must be a Vector2.", where)
+  assertf(type(obj.pos_x) == "number", "Error in %s: Missing/invalid property: 'pos_x' must be a number.", where)
+  assertf(type(obj.pos_y) == "number", "Error in %s: Missing/invalid property: 'pos_y' must be a number.", where)
   assertf(not obj.frame or Frame.is(obj.frame), "Error in %s: invalid optional property: 'frame' must be a Frame.", where)
 end
 

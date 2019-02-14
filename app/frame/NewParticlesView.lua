@@ -4,15 +4,15 @@ local pack_color              = require "util.color.pack"
 local EditableText            = require "EditableText"
 local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
-local PixelFrame              = require "frame.Pixel"
+local ParticlesFrame          = require "frame.Particles"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
 local integer_filter          = require "input.filter.non-negative-integer"
-local NewPixelViewFrame = {}
-NewPixelViewFrame.__index = NewPixelViewFrame
+local NewParticlesViewFrame = {}
+NewParticlesViewFrame.__index = NewParticlesViewFrame
 
-NewPixelViewFrame._kind = ";NewPixelViewFrame;Frame;"
+NewParticlesViewFrame._kind = ";NewParticlesViewFrame;Frame;"
 
 local PAD_X    = 10
 local PAD_Y    = 10
@@ -26,13 +26,13 @@ local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 local DEFAULT_VIEW_WIDTH  = 64
 local DEFAULT_VIEW_HEIGHT = 64
 
-setmetatable(NewPixelViewFrame, {
+setmetatable(NewParticlesViewFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "NewPixelViewFrame constructor must be a table.")
+    assert(type(frame) == "table", "NewParticlesViewFrame constructor must be a table.")
     frame.size_x = 400
     frame.size_y = 88
-    NewPixelViewFrame.typecheck(frame, "NewPixelViewFrame constructor")
+    NewParticlesViewFrame.typecheck(frame, "NewParticlesViewFrame constructor")
 
     local edit_width = EditableText{
       text = "";
@@ -66,8 +66,9 @@ setmetatable(NewPixelViewFrame, {
 
         local popup_x, popup_y = app.popup_position()
         app.add_view (1, {
-          frame = PixelFrame {
-            data = love.image.newImageData(width, height);
+          frame = ParticlesFrame {
+            size_x = width;
+            size_y = height;
           };
           pos_x = frame.create_pos_x or popup_x;
           pos_y = frame.create_pos_y or popup_y;
@@ -93,26 +94,27 @@ setmetatable(NewPixelViewFrame, {
 
     frame._pressed_index = nil
 
-    setmetatable(frame, NewPixelViewFrame)
+    setmetatable(frame, NewParticlesViewFrame)
     return frame
   end;
 })
 
-function NewPixelViewFrame.typecheck(obj, where)
+function NewParticlesViewFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
 end
 
-function NewPixelViewFrame.is(obj)
+function NewParticlesViewFrame.is(obj)
   local meta = getmetatable(obj)
   return type(meta) == "table"
      and type(meta._kind) == "string"
-     and meta._kind:find(";NewPixelViewFrame;")
+     and meta._kind:find(";NewParticlesViewFrame;")
 end
 
-function NewPixelViewFrame:draw(size_x, size_y)
-  Images.ninepatch("menu", 0, 16, size_x, size_y - 16)
-  Images.ninepatch("menu", 0,  0, size_x, 20)
-  love.graphics.print("New Pixel View", 6, 4)
+function NewParticlesViewFrame:draw(size_x, size_y)
+  local w, h = size_x, size_y
+  Images.ninepatch("menu", 0, 16, w, h - 16)
+  Images.ninepatch("menu", 0,  0, w, 20)
+  love.graphics.print("New Particles View", 6, 4)
 
   for i, element in ipairs(self._ui) do
     pleasure.push_region(self:_element_bounds(i))
@@ -122,7 +124,7 @@ function NewPixelViewFrame:draw(size_x, size_y)
   end
 end
 
-function NewPixelViewFrame:_element_bounds(index)
+function NewParticlesViewFrame:_element_bounds(index)
   if index <= 2 then
     local half_width = self.size_x/2
     return OFFSET_X + (index - 1)*half_width, OFFSET_Y, half_width - 2*OFFSET_X, 20
@@ -136,7 +138,7 @@ function NewPixelViewFrame:_element_bounds(index)
   end
 end
 
-function NewPixelViewFrame:mousepressed(mx, my, button)
+function NewParticlesViewFrame:mousepressed(mx, my, button)
   self:request_focus()
 
   local searching = true
@@ -160,7 +162,7 @@ function NewPixelViewFrame:mousepressed(mx, my, button)
   end
 end
 
-function NewPixelViewFrame:mousemoved(mx, my)
+function NewParticlesViewFrame:mousemoved(mx, my)
   for index, element in ipairs(self._ui) do
     local x, y = self:_element_bounds(index)
     local mx2, my2 = mx - x, my - y
@@ -177,14 +179,14 @@ function NewPixelViewFrame:mousemoved(mx, my)
   end
 end
 
-function NewPixelViewFrame:mousedragged1(mx, my)
+function NewParticlesViewFrame:mousedragged1(mx, my)
   local index = self._pressed_index
   if not index then return end
   local x, y = self:_element_bounds(index)
   try_invoke(self._ui[index], "mousedragged1", mx - x, my - y)
 end
 
-function NewPixelViewFrame:mousereleased(mx, my, button)
+function NewParticlesViewFrame:mousereleased(mx, my, button)
   local index = self._pressed_index
   if index then
     self._pressed_index = nil
@@ -202,7 +204,7 @@ function NewPixelViewFrame:mousereleased(mx, my, button)
   end
 end
 
-function NewPixelViewFrame:keypressed(key, scancode, isrepeat)
+function NewParticlesViewFrame:keypressed(key, scancode, isrepeat)
   if key == "tab" then
     if self._edit_width.focused then
       self._edit_width.focused  = false
@@ -222,7 +224,7 @@ function NewPixelViewFrame:keypressed(key, scancode, isrepeat)
   end
 end
 
-function NewPixelViewFrame:textinput(text)
+function NewParticlesViewFrame:textinput(text)
   if self._edit_width.focused then
     self._edit_width:textinput(text)
   elseif self._edit_height.focused then
@@ -230,10 +232,10 @@ function NewPixelViewFrame:textinput(text)
   end
 end
 
-function NewPixelViewFrame:focuslost()
+function NewParticlesViewFrame:focuslost()
   for _, element in ipairs(self._ui) do
     element.focused = false
   end
 end
 
-return NewPixelViewFrame
+return NewParticlesViewFrame

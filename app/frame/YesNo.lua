@@ -6,7 +6,6 @@ local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
-local vec2                    = require "linear-algebra.Vector2"
 
 local YesNoFrame = {}
 YesNoFrame.__index = YesNoFrame
@@ -16,19 +15,22 @@ YesNoFrame._kind = ";YesNoFrame;Frame;"
 local PAD_X =  6
 local PAD_Y = 10
 
-local btn_size = vec2(100, 20)
+local btn_size_x = 100
+local btn_size_y = 20
 local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 
 setmetatable(YesNoFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "YesNoFrame constructor must be a table.")
-    frame.size = vec2(400, 88)
+    frame.size_x = 400
+    frame.size_y = 88
     YesNoFrame.typecheck(frame, "YesNoFrame constructor")
 
     local btn_yes = Button {
       text = frame.label_yes or "Yes";
-      size = btn_size:copy();
+      size_x = btn_size_x;
+      size_y = btn_size_y;
       text_color = btn_text_color;
       mouseclicked = function ()
         try_invoke(frame, "option_yes")
@@ -39,7 +41,8 @@ setmetatable(YesNoFrame, {
 
     local btn_no = Button {
       text = frame.label_no or "No";
-      size = btn_size:copy();
+      size_x = btn_size_x;
+      size_y = btn_size_y;
       text_color = btn_text_color;
       mouseclicked = function ()
         try_invoke(frame, "option_no")
@@ -71,12 +74,11 @@ function YesNoFrame.is(obj)
      and meta._kind:find(";YesNoFrame;")
 end
 
-function YesNoFrame:draw(size)
-  local w, h = size.x, size.y
-  Images.ninepatch("menu", 0, 16, w, h - 16)
-  Images.ninepatch("menu", 0,  0, w, 20)
+function YesNoFrame:draw(size_x, size_y)
+  Images.ninepatch("menu", 0, 16, size_x, size_y - 16)
+  Images.ninepatch("menu", 0,  0, size_x, 20)
   love.graphics.print(self.title, PAD_X, 4)
-  love.graphics.printf(self.text or "", PAD_X, 28, self.size.x - PAD_X*2, "left")
+  love.graphics.printf(self.text or "", PAD_X, 28, self.size_x - PAD_X*2, "left")
   for i, element in ipairs(self._ui) do
     pleasure.push_region(self:_element_bounds(i))
     love.graphics.setColor(1, 1, 1)
@@ -86,11 +88,12 @@ function YesNoFrame:draw(size)
 end
 
 function YesNoFrame:_element_bounds(index)
-  local size = self.size
-  local qx   = size.x/4
-  local x = (2*index - 1)*qx - btn_size.x/2
-  local y = size.y - PAD_Y - btn_size.y
-  return x, y, btn_size.x, btn_size.y
+  local size_x = self.size_x
+  local size_y = self.size_y
+  local qx   = size_x/4
+  local x = (2*index - 1)*qx - btn_size_x/2
+  local y = size_y - PAD_Y - btn_size_y
+  return x, y, btn_size_x, btn_size_y
 end
 
 function YesNoFrame:mousepressed(mx, my, button)

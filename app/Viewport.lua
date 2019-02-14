@@ -1,5 +1,3 @@
-local vec2 = require "linear-algebra.Vector2"
-
 local Viewport = {}
 Viewport.__index = Viewport
 
@@ -8,7 +6,8 @@ setmetatable(Viewport, {
     local self = setmetatable(viewport, Viewport)
 
     assert(type(viewport      ) == "table", "Viewport must be a table.")
-    assert(vec2.is(viewport.pos)          , "Viewport must have a `pos` property of type `Vector2`.")
+    assert(type(viewport.pos_x) == "number", "Viewport must have a numeric `pos_x` property.")
+    assert(type(viewport.pos_y) == "number", "Viewport must have a numeric `pos_y` property.")
     assert(type(viewport.scale) == "number", "Viewport must have a numeric `scale` property.")
 
     return self
@@ -17,59 +16,57 @@ setmetatable(Viewport, {
 
 function Viewport:_serialize()
   return ([[Viewport {
-    pos = %s;
+    pos_x = %s;
+    pos_y = %s;
     scale = %s;
-  }]]):format(self.pos:serialize(), self.scale)
+  }]]):format(self.pos_x, self.pos_y, self.scale)
 end
 
 function Viewport:set_position(x, y)
-  self.pos:setn(x, y)
+  self.pos_x = x
+  self.pos_y = y
 end
 
 function Viewport:global_size_of(view)
-  local size = view.frame.size
+  local frame = view.frame
   local scale = view.scale*self.scale
-  return size.x*scale, size.y*scale
+  return frame.size_x*scale, frame.size_y*scale
 end
 
 function Viewport:local_to_global_pos(pos_x, pos_y)
-  local own_pos = self.pos
   local scale = self.scale
-  return (pos_x - own_pos.x)*scale
-       , (pos_y - own_pos.y)*scale
+  return (pos_x - self.pos_x)*scale
+       , (pos_y - self.pos_y)*scale
 end
 
 function Viewport:global_to_local_pos(pos_x, pos_y)
-  local own_pos = self.pos
   local scale = self.scale
-  return pos_x/scale + own_pos.x
-       , pos_y/scale + own_pos.y
+  return pos_x/scale + self.pos_x
+       , pos_y/scale + self.pos_y
 end
 
 function Viewport:position_in_view_space(pos_x, pos_y, view)
   if not view.anchored then
     pos_x, pos_y = self:global_to_local_pos(pos_x, pos_y)
   end
-  local view_pos = view.pos
   local view_scale = view.scale
-  return (pos_x - view_pos.x)/view_scale
-       , (pos_y - view_pos.y)/view_scale
+  return (pos_x - view.pos_x)/view_scale
+       , (pos_y - view.pos_y)/view_scale
 end
 
 function Viewport:view_at_global_pos(pos_x, pos_y, views)
   local pos2_x, pos2_y, size_x, size_y
 
   for _, view in ipairs(views) do
-    local view_pos = view.pos
      if view.anchored then
-      local frame_size = view.frame.size
+      local frame = view.frame
       local view_scale = view.scale
-      pos2_x = view_pos.x
-      pos2_y = view_pos.y
-      size_x = frame_size.x*view_scale
-      size_y = frame_size.y*view_scale
+      pos2_x = view.pos_x
+      pos2_y = view.pos_y
+      size_x = frame.size_x*view_scale
+      size_y = frame.size_y*view_scale
     else
-      pos2_x, pos2_y = self:local_to_global_pos(view_pos.x, view_pos.y)
+      pos2_x, pos2_y = self:local_to_global_pos(view.pos_x, view.pos_y)
       size_x, size_y = self:global_size_of(view)
     end
     if  pos2_x <= pos_x
@@ -95,10 +92,9 @@ function Viewport:scale_view(view, scalar)
   local new_scale = math.max(0.1, old_scale * (1 + scalar))
   local delta_scale = new_scale/old_scale
 
-  local view_pos = view.pos
   view.scale = new_scale
-  view_pos.x = mouse_x - (mouse_x - view_pos.x)*delta_scale
-  view_pos.y = mouse_y - (mouse_y - view_pos.y)*delta_scale
+  view.pos_x = mouse_x - (mouse_x - view.pos_x)*delta_scale
+  view.pos_y = mouse_y - (mouse_y - view.pos_y)*delta_scale
 end
 
 function Viewport:set_view_scale(view, new_scale)
@@ -112,10 +108,9 @@ function Viewport:set_view_scale(view, new_scale)
   new_scale = math.max(0.1, new_scale)
   local delta_scale = new_scale/old_scale
 
-  local view_pos = view.pos
   view.scale = new_scale
-  view_pos.x = mouse_x - (mouse_x - view_pos.x)*delta_scale
-  view_pos.y = mouse_y - (mouse_y - view_pos.y)*delta_scale
+  view.pos_x = mouse_x - (mouse_x - view.pos_x)*delta_scale
+  view.pos_y = mouse_y - (mouse_y - view.pos_y)*delta_scale
 end
 
 function Viewport:scale_viewport(scalar)
@@ -124,10 +119,9 @@ function Viewport:scale_viewport(scalar)
   local new_scale = math.max(0.1, old_scale * (1 + scalar))
   local delta_scale = old_scale/new_scale
 
-  local own_pos = self.pos
   self.scale = new_scale
-  own_pos.x = mouse_x - (mouse_x - own_pos.x)*delta_scale
-  own_pos.y = mouse_y - (mouse_y - own_pos.y)*delta_scale
+  self.pos_x = mouse_x - (mouse_x - self.pos_x)*delta_scale
+  self.pos_y = mouse_y - (mouse_y - self.pos_y)*delta_scale
 end
 
 function Viewport:set_viewport_scale(new_scale)
@@ -136,23 +130,21 @@ function Viewport:set_viewport_scale(new_scale)
   new_scale = math.max(0.1, new_scale)
   local delta_scale = old_scale/new_scale
 
-  local own_pos = self.pos
   self.scale = new_scale
-  own_pos.x = mouse_x - (mouse_x - own_pos.x)*delta_scale
-  own_pos.y = mouse_y - (mouse_y - own_pos.y)*delta_scale
+  self.pos_x = mouse_x - (mouse_x - self.pos_x)*delta_scale
+  self.pos_y = mouse_y - (mouse_y - self.pos_y)*delta_scale
 end
 
 function Viewport:view_bounds(view)
-  local view_pos = view.pos
   local view_scale = view.scale
 
   if view.anchored then
-    local frame_size = view.frame.size
-    return view_pos.x, view_pos.y
-         , frame_size.x*view_scale, frame_size.y*view_scale
+    local frame = view.frame
+    return view.pos_x, view.pos_y
+         , frame.size_x*view_scale, frame.size_y*view_scale
          , view_scale
   end
-  local pos_x, pos_y = self:local_to_global_pos(view_pos.x, view_pos.y)
+  local pos_x, pos_y = self:local_to_global_pos(view.pos_x, view.pos_y)
   local size_x, size_y = self:global_size_of(view)
   return pos_x, pos_y, size_x, size_y, view_scale*self.scale
 end
@@ -166,43 +158,36 @@ end
 
 function Viewport:lock_view(view)
   if view.anchored then return end
-  local view_pos = view.pos
-  local own_pos = self.pos
   local own_scale = self.scale
   view.anchored = true
   view.scale = view.scale*own_scale
-  view_pos.x = (view_pos.x - own_pos.x)*own_scale
-  view_pos.y = (view_pos.y - own_pos.y)*own_scale
+  view.pos_x = (view.pos_x - self.pos_x)*own_scale
+  view.pos_y = (view.pos_y - self.pos_y)*own_scale
 end
 
 function Viewport:unlock_view(view)
   if not view.anchored then return end
-  local view_pos = view.pos
-  local own_pos = self.pos
   local own_scale = self.scale
   view.anchored = nil
   view.scale = view.scale/own_scale
-  view_pos.x = view_pos.x/own_scale + own_pos.x
-  view_pos.y = view_pos.y/own_scale + own_pos.y
+  view.pos_x = view.pos_x/own_scale + self.pos_x
+  view.pos_y = view.pos_y/own_scale + self.pos_y
 end
 
 function Viewport:pan_viewport(dx, dy)
-  local pos = self.pos
   local scale = self.scale
-  pos.x = pos.x - dx/scale
-  pos.y = pos.y - dy/scale
+  self.pos_x = self.pos_x - dx/scale
+  self.pos_y = self.pos_y - dy/scale
 end
 
 function Viewport:move_view(view, dx, dy)
-  local view_pos = view.pos
-
   if view.anchored then
-    view_pos.x = view_pos.x + dx
-    view_pos.y = view_pos.y + dy
+    view.pos_x = view.pos_x + dx
+    view.pos_y = view.pos_y + dy
   else
     local own_scale = self.scale
-    view_pos.x = view_pos.x + dx/own_scale
-    view_pos.y = view_pos.y + dy/own_scale
+    view.pos_x = view.pos_x + dx/own_scale
+    view.pos_y = view.pos_y + dy/own_scale
   end
 end
 

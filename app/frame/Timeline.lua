@@ -5,7 +5,6 @@ local NumberKind              = require "Kind.Number"
 local ImageKind               = require "Kind.Image"
 local EditImageKind           = require "Kind.EditImage"
 local EditImagePacket         = require "packet.EditImage"
-local vec2                    = require "linear-algebra.Vector2"
 
 local TimelineFrame = {}
 TimelineFrame.__index = TimelineFrame
@@ -17,9 +16,8 @@ setmetatable(TimelineFrame, {
   __call  = function (_, frame)
     assert(type(frame) == "table", "TimelineFrame constructor must be a table.")
 
-    if not frame.size then
-      frame.size = vec2(32, 512)
-    end
+    frame.size_x = frame.size_x or 32
+    frame.size_y = frame.size_y or 512
 
     TimelineFrame.typecheck(frame, "TimelineFrame constructor")
 
@@ -80,7 +78,7 @@ function TimelineFrame:on_connect(prop, from, data)
   if prop == "signal_tick" then
     self.signal_tick = from
     from:listen(self, prop, self.refresh)
-    self:refresh(data)
+    self:refresh(prop, data)
   end
 end
 
@@ -88,7 +86,7 @@ function TimelineFrame:on_disconnect(prop)
   if prop == "signal_tick" then
     self.signal_tick:unlisten(self, prop, self.refresh)
     self.signal_tick = nil
-    self:refresh(nil)
+    self:refresh(prop, nil)
   end
 end
 
@@ -98,7 +96,7 @@ local function int(x)
   return val
 end
 
-function TimelineFrame:refresh(tick)
+function TimelineFrame:refresh(_, tick)
   local anim_frames = self.anim_frames
   local prev_anim = self._anim
   local new_anim  = int(tick) % #anim_frames
@@ -111,20 +109,20 @@ end
 
 local row_height = 32
 
-function TimelineFrame:draw(size, scale)
+function TimelineFrame:draw(size_x, size_y, scale)
   local anim = self._anim
   love.graphics.setColor(0.2, 0.2, 0.2)
-  love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+  love.graphics.rectangle("fill", 0, 0, size_x, size_y)
 
   local height = row_height * scale
   local active_index = self._active_index
   if active_index then
     love.graphics.setColor(0.3, 0.3, 0.3)
-    love.graphics.rectangle("fill", 0, active_index*height, size.x, height)
+    love.graphics.rectangle("fill", 0, active_index*height, size_x, height)
   end
 
   love.graphics.setColor(0.8, 0.7, 0.2)
-  love.graphics.rectangle("line", 0, anim*height, size.x, height)
+  love.graphics.rectangle("line", 0, anim*height, size_x, height)
 end
 
 function TimelineFrame:mousepressed(_, my, _)

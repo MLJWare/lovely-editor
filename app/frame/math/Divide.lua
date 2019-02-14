@@ -2,7 +2,6 @@ local Frame                   = require "Frame"
 local IOs                     = require "IOs"
 local NumberKind              = require "Kind.Number"
 local Signal                  = require "Signal"
-local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
 local font_writer             = require "util.font_writer"
@@ -19,7 +18,8 @@ setmetatable(DivideFrame, {
   __call  = function (_, frame)
     assert(type(frame) == "table", "DivideFrame constructor must be a table.")
 
-    if not frame.size then frame.size = vec2(64, 20) end
+    frame.size_x = frame.size_x or 64
+    frame.size_y = frame.size_y or 20
     DivideFrame.typecheck(frame, "DivideFrame constructor")
 
     if not frame.value then
@@ -63,11 +63,11 @@ function DivideFrame:on_connect(prop, from, value)
   if prop == "signal_left" then
     self.signal_left = from
     from:listen(self, prop, self.refresh_left)
-    self:refresh_left(value)
+    self:refresh_left(prop, value)
   elseif prop == "signal_right" then
     self.signal_right = from
     from:listen(self, prop, self.refresh_right)
-    self:refresh_right(value)
+    self:refresh_right(prop, value)
   end
 end
 
@@ -75,22 +75,22 @@ function DivideFrame:on_disconnect(prop)
   if prop == "signal_left" then
     self.signal_left:unlisten(self, prop, self.refresh_left)
     self.signal_left = nil
-    self:refresh_left(nil)
+    self:refresh_left(prop, nil)
   elseif prop == "signal_right" then
     self.signal_right:unlisten(self, prop, self.refresh_right)
     self.signal_right = nil
-    self:refresh_right(nil)
+    self:refresh_right(prop, nil)
   end
 end
 
-function DivideFrame:draw(size, scale)
+function DivideFrame:draw(size_x, size_y, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)
-  love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+  love.graphics.rectangle("fill", 0, 0, size_x, size_y)
   local text = tostring(self.value)
-  pleasure.push_region(0, 0, size.x, size.y)
+  pleasure.push_region(0, 0, size_x, size_y)
   pleasure.scale(scale)
   do
-    local center_y = size.y/2/scale
+    local center_y = size_y/2/scale
     love.graphics.setColor(0.0, 0.0, 0.0)
     font_writer.print_aligned(font, text, 0, center_y, "left", "center")
   end
@@ -101,7 +101,7 @@ local function _num(v)
   return v and tonumber(v) or 0
 end
 
-function DivideFrame:refresh_left(value)
+function DivideFrame:refresh_left(_, value)
   self.value_left = value
   local val = _num(value) / _num(self.value_right)
   if val ~= val then val = 0 end -- replace NaN with 0
@@ -109,7 +109,7 @@ function DivideFrame:refresh_left(value)
   self.signal_out:inform(val)
 end
 
-function DivideFrame:refresh_right(value)
+function DivideFrame:refresh_right(_, value)
   self.value_right = value
   local val = _num(self.value_left) / _num(value)
   if val ~= val then val = 0 end -- replace NaN with 0

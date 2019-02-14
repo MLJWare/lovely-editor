@@ -1,5 +1,4 @@
 local app                     = require "app"
-local vec2                    = require "linear-algebra.Vector2"
 local clone                   = require "util.clone"
 local SaveFileFrame           = require "frame.SaveFile"
 local YesNoFrame              = require "frame.YesNo"
@@ -74,11 +73,13 @@ return MenuListFrame {
     {
       text   = "Clone View (using same Frame)";
       action = function (_, menu)
-        local view_pos = menu.view.pos
+        local view = menu.view
+        local pos_x, pos_y = app.project.viewport:global_to_local_pos(view.pos_x + 10, view.pos_y + 10);
         app.add_view(1, {
-          frame = menu.view.frame;
-          pos   = vec2(app.project.viewport:global_to_local_pos(view_pos.x + 10, view_pos.y + 10));
-          scale = menu.view.scale;
+          frame = view.frame;
+          pos_x = pos_x;
+          pos_y = pos_y;
+          scale = view.scale;
         })
       end;
       condition = is_pixelframe;
@@ -86,11 +87,13 @@ return MenuListFrame {
     {
       text   = "Clone View and Frame";
       action = function (_, menu)
-        local view_pos = menu.view.pos
+        local view = menu.view
+        local pos_x, pos_y = app.project.viewport:global_to_local_pos(view.pos_x + 10, view.pos_y + 10);
         app.add_view(1, {
-          frame = clone(menu.view.frame);
-          pos   = vec2(app.project.viewport:global_to_local_pos(view_pos.x + 10, view_pos.y + 10));
-          scale = menu.view.scale;
+          frame = clone(view.frame);
+          pos_x = pos_x;
+          pos_y = pos_y;
+          scale = view.scale;
         })
       end;
       condition = is_pixelframe;

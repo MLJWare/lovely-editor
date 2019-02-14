@@ -16,81 +16,99 @@ return MenuListFrame {
     {
       text   = "New Integer View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = IntegerFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Number View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = NumberFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Multiply View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = MultiplyFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Divide View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = DivideFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Modulo View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = ModuloFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Sum View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = SumFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Subtract View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = SubtractFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Timer View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = TimerFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };
     {
       text   = "New Ticker View";
       action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
         app.add_view(View{
           frame = TickerFrame {};
-          pos = app.popup_position();
+          pos_x = popup_x;
+          pos_y = popup_y;
         })
       end;
     };

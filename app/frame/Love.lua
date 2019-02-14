@@ -1,5 +1,4 @@
 local app                     = require "app"
-local vec2                    = require "linear-algebra.Vector2"
 local Frame                   = require "Frame"
 local IOs                     = require "IOs"
 local sandbox                 = require "util.sandbox"
@@ -19,9 +18,8 @@ setmetatable(LoveFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "LoveFrame constructor must be a table.")
-    if not frame.size then
-      frame.size = vec2(default_size_x, default_size_y)
-    end
+    frame.size_x = frame.size_x or default_size_x
+    frame.size_y = frame.size_y or default_size_y
 
     LoveFrame.typecheck(frame, "LoveFrame constructor")
 
@@ -42,11 +40,11 @@ function LoveFrame:on_connect(prop, from, data)
   if prop == "signal_code" then
     self.signal_code = from
     from:listen(self, prop, self.refresh_code)
-    self:refresh_code(data)
+    self:refresh_code(prop, data)
   elseif prop == "signal_tick" then
     self.signal_tick = from
     from:listen(self, prop, self.refresh_tick)
-    self:refresh_tick(data)
+    self:refresh_tick(prop, data)
   end
 end
 
@@ -54,11 +52,11 @@ function LoveFrame:on_disconnect(prop)
   if prop == "signal_code" then
     try_invoke(self.signal_code, "unlisten", self, prop, self.refresh_code)
     self.signal_code = nil
-    self:refresh_code(nil)
+    self:refresh_code(prop, nil)
   elseif prop == "signal_tick" then
     try_invoke(self.signal_tick, "unlisten", self, prop, self.refresh_tick)
     self.signal_tick = nil
-    self:refresh_tick(nil)
+    self:refresh_tick(prop, nil)
   end
 end
 
@@ -83,7 +81,7 @@ function LoveFrame:on_save()
   return self._canvas:newImageData():encode("png")
 end
 
-function LoveFrame:refresh_tick(data)
+function LoveFrame:refresh_tick()
   local game = self._game
   if not game then return end
   local game_love = game.love
@@ -106,7 +104,7 @@ function LoveFrame:refresh_tick(data)
   love.graphics.pop()
 end
 
-function LoveFrame:refresh_code(code)
+function LoveFrame:refresh_code(_, code)
   if not code then return end
 
   local env, err = sandbox(code, {
@@ -180,7 +178,7 @@ function LoveFrame:refresh_code(code)
   end
 end
 
-function LoveFrame:draw(_, scale)
+function LoveFrame:draw(_, _, scale)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(self._canvas, 0, 0, 0, scale, scale)
 end

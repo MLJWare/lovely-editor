@@ -4,7 +4,6 @@ local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
-local vec2                    = require "linear-algebra.Vector2"
 local settings                = require "settings"
 
 local SettingsFrame = {}
@@ -21,12 +20,14 @@ setmetatable(SettingsFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "SettingsFrame constructor must be a table.")
-    frame.size = vec2(400, 400)
+    frame.size_x = 400
+    frame.size_y = 400
     SettingsFrame.typecheck(frame, "SettingsFrame constructor")
 
     local edit = EditableText{
       text = "";
-      size = vec2(frame.size.x - OFFSET_X*2, 20);
+      size_x = frame.size_x - OFFSET_X*2;
+      size_y = 20;
       hint = "filename";
     }
     frame._edit = edit
@@ -52,10 +53,9 @@ function SettingsFrame.is(obj)
      and meta._kind:find(";SettingsFrame;")
 end
 
-function SettingsFrame:draw(size)
-  local w, h = size.x, size.y
-  Images.ninepatch("menu", 0, 16, w, h - 16)
-  Images.ninepatch("menu", 0,  0, w, 20)
+function SettingsFrame:draw(size_x, size_y)
+  Images.ninepatch("menu", 0, 16, size_x, size_y - 16)
+  Images.ninepatch("menu", 0,  0, size_x, 20)
   love.graphics.print("Settings:", 6, 4)
 
   for i, element in ipairs(self._ui) do
@@ -69,7 +69,7 @@ end
 function SettingsFrame:_element_bounds(index)
   -- TODO
   if index == 1 then
-    return OFFSET_X, OFFSET_Y, self.size.x - 2*OFFSET_X, 20
+    return OFFSET_X, OFFSET_Y, self.size_x - 2*OFFSET_X, 20
   end
 end
 

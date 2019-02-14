@@ -1,5 +1,4 @@
 local app                     = require "app"
-local vec2                    = require "linear-algebra.Vector2"
 local Frame                   = require "Frame"
 local list_clear              = require "util.list.clear"
 local list_find               = require "util.list.find"
@@ -24,9 +23,8 @@ setmetatable(ShaderFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "ShaderFrame constructor must be a table.")
-    if not frame.size then
-      frame.size = vec2(default_size_x, default_size_y)
-    end
+    frame.size_x = frame.size_x or default_size_x
+    frame.size_y = frame.size_y or default_size_y
 
     ShaderFrame.typecheck(frame, "ShaderFrame constructor")
 
@@ -93,15 +91,15 @@ function ShaderFrame:on_connect(prop, from, data)
   if prop == "image" then
     self.signal_image = from
     from:listen(self, prop, self.refresh)
-    self:refresh(data)
+    self:refresh(prop, data)
   elseif prop == "code" then
     self.signal_code = from
     from:listen(self, prop, self.refresh_shader)
-    self:refresh_shader(data)
+    self:refresh_shader(prop, data)
   else
     self._uniforms_in [prop] = from
     from:listen(self, prop, self.refresh_uniform)
-    self:refresh_uniform(data, prop)
+    self:refresh_uniform(prop, data)
   end
 end
 
@@ -109,16 +107,16 @@ function ShaderFrame:on_disconnect(prop)
   if prop == "image" then
     try_invoke(self.signal_image, "unlisten", self, prop, self.refresh)
     self.signal_image = nil
-    self:refresh(nil)
+    self:refresh(prop, nil)
   elseif prop == "code" then
     try_invoke(self.signal_code, "unlisten", self, prop, self.refresh_shader)
     self.signal_code = nil
     self.shader_in = nil
-    self:refresh(nil)
+    self:refresh(prop, nil)
   else
     try_invoke(self._uniforms_in[prop], "unlisten", self, prop, self.refresh_uniform)
     self._uniforms_in[prop] = nil
-    self:refresh_uniform(nil, prop)
+    self:refresh_uniform(prop, nil)
   end
 end
 
@@ -143,7 +141,7 @@ function ShaderFrame:on_save()
   return self.image.value:newImageData():encode("png")
 end
 
-function ShaderFrame:refresh(image_data)
+function ShaderFrame:refresh(_, image_data)
   if image_data then
     self.image_in = image_data
   else
@@ -161,10 +159,12 @@ function ShaderFrame:refresh(image_data)
   end
   if image_data then
     local value = image_data.value
-    local w, h = value:getDimensions()
-    if self.size.x ~= w or self.size.y ~= h then
+    local size_x, size_y = value:getDimensions()
+    if self.size_x ~= size_x
+    or self.size_y ~= size_y then
       self.image:replicate(image_data)
-      self.size:setn(w, h)
+      self.size_x = size_x
+      self.size_y = size_y
     end
     love.graphics.draw(value)
   end
@@ -173,21 +173,22 @@ function ShaderFrame:refresh(image_data)
   self.signal_out:inform(self.image)
 end
 
-function ShaderFrame:_ensure_valid_uniform(prop, value)
+function ShaderFrame:_ensure_valid_uniform(prop, ...)
   local kind = self._uniform_kind_by_id[prop]
-  return kind and kind.to_shader_value(value)
+  if not kind then return end
+  return kind.to_shader_value(...)
 end
 
-function ShaderFrame:_set_uniform(prop, value)
+function ShaderFrame:_set_uniform(prop, ...)
   local shader = self.shader_in
   if not (shader and shader:hasUniform(prop)) then return end
-  value = self:_ensure_valid_uniform(prop, value)
+  local value = self:_ensure_valid_uniform(prop, ...)
   if not value then return end
   shader:send(prop, value)
 end
 
-function ShaderFrame:refresh_uniform(data, prop)
-  self:_set_uniform(prop, data)
+function ShaderFrame:refresh_uniform(prop, ...)
+  self:_set_uniform(prop, ...)
   self:refresh()
 end
 
@@ -198,13 +199,17 @@ function ShaderFrame:refresh_uniforms()
   for index = 1, #uniform_ids do
     local prop = uniform_ids[index]
     local from = uniforms_in[prop]
-    local success, result = try_invoke(from, "on_connect")
-    self:_set_uniform(prop, success and result or nil)
+    local success, a, b, c, d = try_invoke(from, "on_connect")
+    if success then
+      self:_set_uniform(prop, a, b, c, d)
+    else
+      self:_set_uniform(prop, nil)
+    end
   end
   self:refresh()
 end
 
-function ShaderFrame:refresh_shader(code)
+function ShaderFrame:refresh_shader(_, code)
   if not code then return end
   local success, data = pcall(love.graphics.newShader, code)
   self.shader_in = success and data or nil
@@ -265,7 +270,7 @@ function ShaderFrame:detect_uniforms(code)
   self._uniform_kinds2 = uniform_kinds
 end
 
-function ShaderFrame:draw(_, scale)
+function ShaderFrame:draw(_, _, scale)
   local packet = self.signal_image
   if not packet then return end
 
@@ -273,7 +278,7 @@ function ShaderFrame:draw(_, scale)
   love.graphics.draw(self.image.value, 0, 0, 0, scale, scale)
 end
 
-function ShaderFrame:serialize()
+function ShaderFrame.serialize()
   return "ShaderFrame {}"
 end
 

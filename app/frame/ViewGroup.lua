@@ -46,18 +46,18 @@ local data = {
   {0, 1, 1, 1}, " = ";
   {1, 1, 0, 1}, " 100";
 }
-function ViewGroupFrame:draw(size, scale)
+function ViewGroupFrame:draw(size_x, _, scale)
   local font = fonts[math.max(1, math.ceil(scale))]
-  local scale = scale/(font[1]/16)
+  scale = scale/(font[1]/16)
   text:setFont(font[2])
-  text:setf(data, size.x/scale, "left", 10, 10)
+  text:setf(data, size_x/scale, "left", 10, 10)
   love.graphics.draw(text, 0, 0, 0, scale, scale)
   if math.random() < 0.01 then
     data[3], data[4], data[7], data[8] = data[7], data[8], data[3], data[4]
   end
 end
 
-function ViewGroupFrame:serialize()
+function ViewGroupFrame.serialize()
   require "app".show_popup(require "frame.Message" { text = "Cannot save projects containing ViewGroupFrames (yet)" })
 end
 

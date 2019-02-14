@@ -1,17 +1,12 @@
 local Frame                   = require "Frame"
-local PropertyStore           = require "PropertyStore"
 local clamp                   = require "math.clamp"
 local hue_shader              = require "shader.gradient.hue"
 local gradient_shader         = require "shader.gradient.sat_val"
 local alpha_shader            = require "shader.gradient.alpha"
 local shader_fill             = require "shader_fill"
-local rgb2hsv                 = require "color.rgb2hsv"
 local hsv2rgb                 = require "color.hsv2rgb"
-local pack_color              = require "util.color.pack"
-local unpack_color            = require "util.color.unpack"
 local Signal                  = require "Signal"
 local Vector4Kind             = require "Kind.Vector4"
-local vec2                    = require "linear-algebra.Vector2"
 local MouseButton             = require "const.MouseButton"
 local IOs                     = require "IOs"
 local PAD = 4
@@ -55,20 +50,26 @@ setmetatable(ColorPickerFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "ColorPickerFrame constructor must be a table.")
-    frame.size = vec2(FULL_WIDTH, FULL_HEIGHT)
+    frame.size_x = FULL_WIDTH
+    frame.size_y = FULL_HEIGHT
     ColorPickerFrame.typecheck(frame, "ColorPickerFrame constructor")
     setmetatable(frame, ColorPickerFrame)
 
-    frame.hue = 0
-    frame.sat = 1
-    frame.val = 1
-    frame.alpha = 1
-    frame.color = {1,1,1,1}
+    local hue = frame._hue or 0
+    local sat = frame._sat or 0
+    local val = frame._val or 0
+    frame._hue = hue
+    frame._sat = sat
+    frame._val = val
+    frame._red
+    , frame._green
+    , frame._blue = hsv2rgb(hue, sat, val)
+    frame._alpha = frame._alpha or 1
 
-    frame.color_signal = Signal{
+    frame.color_signal = Signal {
       kind = Vector4Kind;
       on_connect = function ()
-        return frame.color
+        return frame._red, frame._green, frame._blue, frame._alpha
       end;
     }
 
@@ -125,43 +126,45 @@ end
 
 
 function ColorPickerFrame:set_color_hue(hue)
-  self.hue = clamp(hue, 0, 6)
+  self._hue = clamp(hue, 0, 6)
   self:_on_change()
 end
 
 function ColorPickerFrame:set_color_sat_val(sat, val)
-  self.sat = clamp(sat, 0, 1)
-  self.val = clamp(val, 0, 1)
+  self._sat = clamp(sat, 0, 1)
+  self._val = clamp(val, 0, 1)
   self:_on_change()
 end
 
 function ColorPickerFrame:set_color_alpha(alpha)
-  self.alpha = alpha
+  self._alpha = alpha
   self:_on_change()
 end
 
 function ColorPickerFrame:_on_change()
-  local hue = self.hue
-  local sat = self.sat
-  local val = self.val
-  local color = self.color
-  color[1], color[2], color[3] = hsv2rgb(hue, sat, val)
-  color[4] = self.alpha
-  self.color_signal:inform(color)
+  local hue = self._hue
+  local sat = self._sat
+  local val = self._val
+  local red, green, blue = hsv2rgb(hue, sat, val)
+  local alpha = self._alpha
+  self._red = red
+  self._green = green
+  self._blue = blue
+  self.color_signal:inform(red, green, blue, alpha)
 end
 
-function ColorPickerFrame:draw(size, _)
-  local width, height = size.x, size.y
+function ColorPickerFrame:draw(size_x, size_y, _)
+  local width, height = size_x, size_y
 
   love.graphics.setColor(0.3, 0.3, 0.3)
   love.graphics.rectangle("fill", 0, 0, width, height)
 
   love.graphics.push()
-  love.graphics.scale(size.x / FULL_WIDTH, size.y / FULL_HEIGHT)
-  local hue = self.hue
-  local sat = self.sat
-  local val = self.val
-  local alpha = self.alpha
+  love.graphics.scale(size_x / FULL_WIDTH, size_y / FULL_HEIGHT)
+  local hue = self._hue
+  local sat = self._sat
+  local val = self._val
+  local alpha = self._alpha
   local r, g, b = hsv2rgb(hue, sat, val)
 
   gradient_shader:send("hue", hue)
@@ -236,7 +239,12 @@ end
 --]]
 
 function ColorPickerFrame:serialize()
-  return "ColorPickerFrame {}"
+  return ([[ColorPickerFrame {
+    _hue = %s;
+    _sat = %s;
+    _val = %s;
+    _alpha = %s;
+  }]]):format(self._hue, self._sat, self._val, self._alpha)
 end
 
 return ColorPickerFrame

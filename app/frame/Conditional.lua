@@ -2,7 +2,6 @@
 
 local Frame                   = require "Frame"
 local Group                   = require "frame.comp.Group"
-local vec2                    = require "linear-algebra.Vector2"
 local pleasure                = require "pleasure"
 local EditableText            = require "EditableText"
 local NoKind                  = require "Kind.None"
@@ -24,9 +23,8 @@ setmetatable(ConditionalFrame, {
   __call  = function (_, frame)
     assert(type(frame) == "table", "ConditionalFrame constructor must be a table.")
 
-    if not frame.size then
-      frame.size = vec2(256, 58)
-    end
+    frame.size_x = frame.size_x or 256
+    frame.size_y = frame.size_y or 58
 
     ConditionalFrame.typecheck(frame, "ConditionalFrame constructor")
 
@@ -37,7 +35,8 @@ setmetatable(ConditionalFrame, {
 
     frame._edit = EditableText{
       text   = "";
-      size   = vec2(0);
+      size_x = 0;
+      size_y = 0;
       hint   = "";
     }
 
@@ -185,7 +184,7 @@ local pad = 2
 function ConditionalFrame:_field_info()
   local text_height = love.graphics.getFont():getHeight()
   local row_height  = text_height + 2*pad
-  return vec2 (math.floor((self.size.x - 3*pad)/2), row_height - pad), row_height
+  return math.floor((self.size_x - 3*pad)/2), row_height - pad, row_height
 end
 
 function ConditionalFrame:_draw_prep_condition(condition, index)
@@ -212,38 +211,38 @@ function ConditionalFrame._draw_prep_value(_, value, give_kind)
   return value
 end
 
-function ConditionalFrame:draw(size, scale)
-  pleasure.push_region(0, 0, size.x, size.y)
+function ConditionalFrame:draw(size_x, size_y, scale)
+  pleasure.push_region(0, 0, size_x, size_y)
   love.graphics.setColor(0.4, 0.4, 0.4)
-  love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+  love.graphics.rectangle("fill", 0, 0, size_x, size_y)
   love.graphics.setColor(0.9, 0.9, 0.9)
 
   love.graphics.setLineStyle("rough")
   local give_kind = self:_give_kind()
   local font = love.graphics.getFont()
-  local field_size, row_height = self:_field_info()
+  local field_size_x, field_size_y, row_height = self:_field_info()
   for condition, value, index in self._data:rows() do
     local x1 = pad
-    local x2 = 2*pad + field_size.x
+    local x2 = 2*pad + field_size_x
     local y  = (index - 1)*row_height + pad
 
     love.graphics.setColor(0.9, 0.9, 0.9)
-    love.graphics.rectangle("fill", x1, y, field_size.x, field_size.y)
-    love.graphics.rectangle("fill", x2, y, field_size.x, field_size.y)
+    love.graphics.rectangle("fill", x1, y, field_size_x, field_size_y)
+    love.graphics.rectangle("fill", x2, y, field_size_x, field_size_y)
 
     self:_draw_prep_condition(condition, index)
-    pleasure.push_region(x1, y, field_size.x, field_size.y)
+    pleasure.push_region(x1, y, field_size_x, field_size_y)
     font_writer.print_aligned(font, condition, pad, pad, "left", "top")
     pleasure.pop_region()
 
-    pleasure.push_region(x2, y, field_size.x, field_size.y)
+    pleasure.push_region(x2, y, field_size_x, field_size_y)
     self:_draw_prep_value(value, give_kind)
     font_writer.print_aligned(font, value, pad, pad, "left", "top")
     pleasure.pop_region()
   end
 
   if self:has_focus() then
-    pleasure.push_region(self._edit_x, self._edit_y, field_size.x, field_size.y)
+    pleasure.push_region(self._edit_x, self._edit_y, field_size_x, field_size_y)
 
     local text = self._edit.text or ""
     if self._edit_column == 1 then
@@ -252,7 +251,8 @@ function ConditionalFrame:draw(size, scale)
       self:_draw_prep_value(text, give_kind)
     end
     love.graphics.setColor(1,0,0,1)
-    self._edit.size = field_size
+    self._edit.size_x = field_size_x
+    self._edit.size_y = field_size_y
     self._edit:draw(self, scale)
     pleasure.pop_region()
   end
@@ -282,12 +282,12 @@ function ConditionalFrame:mousepressed(mx, my, button)
   self:_refresh()
 
   -- load field into edit text
-  local field_size, row_height = self:_field_info()
+  local field_size_x, field_size_y, row_height = self:_field_info()
   local row_index = 1 + math.floor((my - pad)/row_height)
   if row_index < 1 or row_index > data:len() then return end
 
   local x1 = pad
-  local x2 = 2*pad + field_size.x
+  local x2 = 2*pad + field_size_x
   local column = mx < x2 and 1 or 0
 
   local active_index = row_index*2 - column
@@ -295,7 +295,8 @@ function ConditionalFrame:mousepressed(mx, my, button)
 
   local text = data:get_direct(active_index)
   self._edit:set_text(text)
-  self._edit.size = field_size
+  self._edit.size_x = field_size_x
+  self._edit.size_y = field_size_y
 
   local x = column == 1 and x1 or x2
   local y = (row_index - 1)*row_height + pad

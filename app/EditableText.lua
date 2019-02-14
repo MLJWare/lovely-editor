@@ -5,8 +5,6 @@ local pleasure                = require "pleasure"
 local pack_color              = require "util.color.pack"
 local unpack_color            = require "util.color.unpack"
 
-local vec2                    = require "linear-algebra.Vector2"
-
 local clamp                   = require "math.clamp"
 local minmax                  = require "math.minmax"
 local unicode                 = require "unicode"
@@ -15,6 +13,7 @@ local function is_ctrl_down () return love.keyboard.isDown("lctrl" , "rctrl" ) e
 local function is_shift_down() return love.keyboard.isDown("lshift", "rshift") end
 
 local is_callable = pleasure.is.callable
+local is_non_negative = pleasure.is.non_negative_number
 
 local EditableText = {
   x_pad              =  2;
@@ -32,8 +31,10 @@ setmetatable(EditableText, {
       "Error in EditableText constructor: Invalid property: 'text' must be a string (or nil).")
     assert(not field.hint or type(field.hint) == "string",
       "Error in EditableText constructor: Invalid property: 'hint' must be a string (or nil).")
-    assert(vec2.is(field.size),
-    "Error in EditableText constructor: Invalid property: 'size' must be a Vector2.")
+    assert(is_non_negative(field.size_x),
+      "Error in EditableText constructor: Invalid property: 'size_x' must be a non-negative number.")
+    assert(is_non_negative(field.size_y),
+      "Error in EditableText constructor: Invalid property: 'size_y' must be a non-negative number.")
 
     setmetatable(field, EditableText)
 
@@ -69,7 +70,7 @@ function EditableText:_set_caret(new_caret, select)
 end
 
 function EditableText:_text_x()
-  local width = self.size.x
+  local width = self.size_x
 
   local left_x  = self.x_pad
   local right_x = left_x + width - 2*self.x_pad
@@ -124,26 +125,26 @@ function EditableText:_select_all ()
 end
 
 function EditableText:_token_start()
-  local pos = self.caret
+  local index = self.caret
 
-  while pos > 1
-  and unicode.is_alphanumeric(unicode.sub(self.text, pos - 1, pos - 1)) do
-    pos = pos - 1
+  while index > 1
+  and unicode.is_alphanumeric(unicode.sub(self.text, index - 1, index - 1)) do
+    index = index - 1
   end
 
-  return pos
+  return index
 end
 
 function EditableText:_token_end()
   local text_len = unicode.len(self.text)
-  local pos = self.caret
+  local index = self.caret
 
-  while pos <= text_len
-  and unicode.is_alphanumeric(unicode.sub(self.text, pos, pos)) do
-    pos = pos + 1
+  while index <= text_len
+  and unicode.is_alphanumeric(unicode.sub(self.text, index, index)) do
+    index = index + 1
   end
 
-  return pos
+  return index
 end
 
 function EditableText:_select_token ()
@@ -260,7 +261,7 @@ end
 function EditableText:draw (frame, scale)
   scale = scale or 1
   love.graphics.setColor(0.9, 0.9, 0.9)
-  love.graphics.rectangle("fill", 0, 0, self.size.x*scale, self.size.y*scale)
+  love.graphics.rectangle("fill", 0, 0, self.size_x*scale, self.size_y*scale)
   if self.focused and (not frame or frame:has_focus()) then
     self:draw_active(scale)
   else
@@ -273,12 +274,13 @@ function EditableText:draw_default (scale)
 
   scale = scale or 1
 
-  local size = self.size
+  local size_x = self.size_x
+  local size_y = self.size_y
   local text = self:text_as_shown()
-  pleasure.push_region(self.x_pad*scale, 0, (size.x - 2*self.x_pad)*scale, size.y*scale)
+  pleasure.push_region(self.x_pad*scale, 0, (size_x - 2*self.x_pad)*scale, size_y*scale)
   pleasure.scale(scale)
   do
-    local center_y = size.y/2
+    local center_y = size_y/2
 
     if #text == 0 then
       love.graphics.setColor(unpack_color(self.hint_color))
@@ -294,14 +296,15 @@ end
 
 function EditableText:draw_active (scale)
   scale = scale or 1
-  local size = self.size
-  pleasure.push_region(self.x_pad*scale, 0, (size.x - 2*self.x_pad + 2)*scale, size.y*scale)
+  local size_x = self.size_x
+  local size_y = self.size_y
+  pleasure.push_region(self.x_pad*scale, 0, (size_x - 2*self.x_pad + 2)*scale, size_y*scale)
   pleasure.scale(scale)
   pleasure.translate(self.off_x, 0)
   do
     local text, caret = self:text_as_shown(), self.caret
 
-    local center_y = size.y/2
+    local center_y = size_y/2
 
     local tr, tg, tb, ta = unpack_color(self.text_color)
 

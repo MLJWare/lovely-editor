@@ -2,7 +2,6 @@ local Frame                   = require "Frame"
 local IOs                     = require "IOs"
 local NumberKind              = require "Kind.Number"
 local Signal                  = require "Signal"
-local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local integer_filter          = require "input.filter.integer"
 local InputFrame              = require "frame.Input"
@@ -21,7 +20,8 @@ setmetatable(IntegerFrame, {
   __call  = function (_, frame)
     assert(type(frame) == "table", "IntegerFrame constructor must be a table.")
 
-    if not frame.size then frame.size = vec2(64, 20) end
+    frame.size_x = frame.size_x or 64
+    frame.size_y = frame.size_y or 20
     IntegerFrame.typecheck(frame, "IntegerFrame constructor")
 
     frame.signal_out = Signal {
@@ -69,7 +69,7 @@ function IntegerFrame:on_connect(prop, from, data)
   if prop == "signal_in" then
     self.signal_in = from
     from:listen(self, prop, self.refresh)
-    self:refresh(data)
+    self:refresh(prop, data)
   end
 end
 
@@ -84,26 +84,26 @@ function IntegerFrame:locked()
   return self.signal_in ~= nil
 end
 
-function IntegerFrame:draw(size, scale)
+function IntegerFrame:draw(size_x, size_y, scale)
   love.graphics.setColor(1.0, 1.0, 1.0)
-  love.graphics.rectangle("fill", 0, 0, size.x, size.y)
+  love.graphics.rectangle("fill", 0, 0, size_x, size_y)
   if self:locked() then
     local text = tostring(self.value)
     local x_pad = self._edit.x_pad*scale
-    pleasure.push_region(x_pad, 0, size.x - 2*x_pad, size.y)
+    pleasure.push_region(x_pad, 0, size_x - 2*x_pad, size_y)
     pleasure.scale(scale)
     do
-      local center_y = size.y/2/scale
+      local center_y = size_y/2/scale
       love.graphics.setColor(unpack_color(self._edit.text_color))
       font_writer.print_aligned(self._edit.font, text, 0, center_y, "left", "center")
     end
     pleasure.pop_region()
   else
-    InputFrame.draw(self, size, scale)
+    InputFrame.draw(self, size_x, size_y, scale)
   end
 end
 
-function IntegerFrame:refresh(data_in)
+function IntegerFrame:refresh(_, data_in)
   local new_value = math.floor(tonumber(data_in or self._edit.text) or 0)
   if self.value == new_value then return end
   self.value = new_value

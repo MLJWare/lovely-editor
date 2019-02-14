@@ -1,6 +1,6 @@
-local vec2                    = require "linear-algebra.Vector2"
 local assertf                 = require "assertf"
 local try_invoke              = require "pleasure.try".invoke
+local is_non_negative         = require "pleasure.is".non_negative_number
 
 local Frame = {}
 Frame.__index = Frame
@@ -17,7 +17,8 @@ setmetatable(Frame, {
 })
 
 function Frame.typecheck(obj, where)
-  assertf(vec2.is (obj.size), "Error in %s: Missing/invalid property: 'size' must be a Vector2.", where)
+  assertf(is_non_negative (obj.size_x), "Error in %s: Missing/invalid property: 'size_x' must be a non-negative number.", where)
+  assertf(is_non_negative (obj.size_y), "Error in %s: Missing/invalid property: 'size_y' must be a non-negative number.", where)
 end
 
 function Frame.is(obj)
@@ -29,8 +30,9 @@ end
 
 function Frame:serialize()
   return ([[Frame {
-    size = %s;
-  }]]):format(self.size:serialize())
+    size_x = %s;
+    size_y = %s;
+  }]]):format(self.size_x, self.size_y)
 end
 
 function Frame:id()
@@ -39,7 +41,8 @@ end
 
 function Frame:clone()
   return Frame{
-    size = self.size;
+    size_x = self.size_x;
+    size_y = self.size_y;
   }
 end
 

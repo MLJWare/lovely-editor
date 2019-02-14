@@ -6,6 +6,3 @@
 	path = lib/pleasure
 	url = https://github.com/MLJWare/pleasure
 	branch = master
-[submodule "lib/linear-algebra"]
-	path = lib/linear-algebra
-	url = https://github.com/MLJWare/linear-algebra

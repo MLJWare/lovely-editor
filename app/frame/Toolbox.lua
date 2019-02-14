@@ -5,7 +5,6 @@ local Toolbox                 = require "Toolbox"
 local pack_color              = require "util.color.pack"
 local unpack_color            = require "util.color.unpack"
 local Vector4Kind             = require "Kind.Vector4"
-local vec2                    = require "linear-algebra.Vector2"
 
 local try_invoke              = require "pleasure.try".invoke
 
@@ -28,9 +27,9 @@ setmetatable(ToolboxFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "ToolboxFrame constructor must be a table.")
-    if not frame.size then
-      frame.size = vec2(PAD + (#Toolbox + 1)*BTN_OFFSET_X, PAD + BTN_OFFSET_Y);
-    end
+    frame.size_x = frame.size_x or PAD + (#Toolbox + 1)*BTN_OFFSET_X
+    frame.size_y = frame.size_y or PAD + BTN_OFFSET_Y;
+
     ToolboxFrame.typecheck(frame, "ToolboxFrame constructor")
     setmetatable(frame, ToolboxFrame)
     return frame
@@ -52,11 +51,11 @@ ToolboxFrame.takes = IOs {
   {id = "signal_color", kind = Vector4Kind}
 }
 
-function ToolboxFrame:on_connect(prop, from, data)
+function ToolboxFrame:on_connect(prop, from, r, g, b, a)
   if prop ~= "signal_color" then return end
   self.signal_color = from
   from:listen(self, prop, self.refresh_color)
-  self:refresh_color(data)
+  self:refresh_color(prop, r, g, b, a)
 end
 
 function ToolboxFrame:on_disconnect(prop)
@@ -65,13 +64,13 @@ function ToolboxFrame:on_disconnect(prop)
   self.signal_color = nil
 end
 
-function ToolboxFrame:refresh_color(data)
-  local color = pack_color(data[1], data[2], data[3], data[4])
+function ToolboxFrame.refresh_color(_, _, r, g, b, a)
+  local color = pack_color(r, g, b, a)
   PropertyStore.set("core.graphics", "paint.color", color)
 end
 
 function ToolboxFrame:buttons()
-  local rows = math.floor((self.size.x - PAD)/BTN_OFFSET_X)
+  local rows = math.floor((self.size_x - PAD)/BTN_OFFSET_X)
 
   return coroutine.wrap(function()
     for i = 0, #Toolbox - 1 do
@@ -86,11 +85,9 @@ local function get_rgba()
   return unpack_color(PropertyStore.get("core.graphics", "paint.color"))
 end
 
-function ToolboxFrame.draw(self, size, scale)
-  local width, height = size.x, size.y
-
+function ToolboxFrame:draw(size_x, size_y, scale)
   love.graphics.setColor(0.3, 0.3, 0.3)
-  love.graphics.rectangle("fill", 0, 0, width, height)
+  love.graphics.rectangle("fill", 0, 0, size_x, size_y)
 
   love.graphics.push()
   love.graphics.scale(scale)
@@ -141,7 +138,7 @@ end
 function ToolboxFrame.mousemoved(_, _, _, _, _)
 end
 
-function ToolboxFrame:serialize()
+function ToolboxFrame.serialize()
   return "ToolboxFrame {}"
 end
 

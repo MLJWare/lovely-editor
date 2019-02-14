@@ -8,7 +8,6 @@ local MessageFrame            = require "frame.Message"
 local pleasure                = require "pleasure"
 local pack_color              = require "util.color.pack"
 local try_invoke              = require "pleasure.try".invoke
-local vec2                    = require "linear-algebra.Vector2"
 
 local _info_ = {}
 
@@ -27,26 +26,30 @@ local PAD_Y    = 10
 local OFFSET_X = PAD_X
 local OFFSET_Y = PAD_Y + 20
 
-local btn_size = vec2(100, 20)
+local btn_size_x = 100
+local btn_size_y = 20
 local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 
 setmetatable(LoadFileFrame, {
   __index = Frame;
   __call  = function (_, frame)
     assert(type(frame) == "table", "LoadFileFrame constructor must be a table.")
-    frame.size = vec2(400, 88)
+    frame.size_x = 400
+    frame.size_y = 88
     LoadFileFrame.typecheck(frame, "LoadFileFrame constructor")
 
     local edit = EditableText{
       text = "";
-      size = vec2(frame.size.x - OFFSET_X*2, 20);
+      size_x = frame.size_x - OFFSET_X*2;
+      size_y = 20;
       hint = "filename";
     }
     frame._edit = edit
 
     local btn_yes = Button {
       text = "Load";
-      size = btn_size:copy();
+      size_x = btn_size_x;
+      size_y = btn_size_y;
       text_color = btn_text_color;
       mouseclicked = function ()
         local filename = edit.text
@@ -64,7 +67,8 @@ setmetatable(LoadFileFrame, {
 
     local btn_no = Button {
       text = "Cancel";
-      size = btn_size:copy();
+      size_x = btn_size_x;
+      size_y = btn_size_y;
       text_color = btn_text_color;
       mouseclicked = function ()
         frame:close()
@@ -103,10 +107,9 @@ function LoadFileFrame:_try_load(filename)
   end
 end
 
-function LoadFileFrame:draw(size)
-  local w, h = size.x, size.y
-  Images.ninepatch("menu", 0, 16, w, h - 16)
-  Images.ninepatch("menu", 0,  0, w, 20)
+function LoadFileFrame:draw(size_x, size_y)
+  Images.ninepatch("menu", 0, 16, size_x, size_y - 16)
+  Images.ninepatch("menu", 0,  0, size_x, 20)
   love.graphics.print("Load From:", 6, 4)
 
   for i, element in ipairs(self._ui) do
@@ -119,13 +122,14 @@ end
 
 function LoadFileFrame:_element_bounds(index)
   if index == 1 then
-    return OFFSET_X, OFFSET_Y, self.size.x - 2*OFFSET_X, 20
+    return OFFSET_X, OFFSET_Y, self.size_x - 2*OFFSET_X, 20
   else
-    local size = self.size
-    local qx   = size.x/4
-    local x = (2*index - 3)*qx - btn_size.x/2
-    local y = size.y - PAD_Y - btn_size.y
-    return x, y, btn_size.x, btn_size.y
+    local size_x = self.size_x
+    local size_y = self.size_y
+    local qx   = size_x/4
+    local x = (2*index - 3)*qx - btn_size_x/2
+    local y = size_y - PAD_Y - btn_size_y
+    return x, y, btn_size_x, btn_size_y
   end
 end
 

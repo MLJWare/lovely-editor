@@ -23,19 +23,6 @@ setmetatable(TimelineFrame, {
 
     TimelineFrame.typecheck(frame, "TimelineFrame constructor")
 
-    frame.signal_anim = Signal {
-      on_connect = function ()
-        return frame.frame_anim
-      end;
-      kind = ImageKind;
-    }
-    frame.signal_edit = Signal {
-      on_connect = function ()
-        return frame.frame_active
-      end;
-      kind = ImageKind;
-    }
-
     local anim_frames = {}
     for i = 1, 16 do
       anim_frames[i] = EditImagePacket {
@@ -48,6 +35,20 @@ setmetatable(TimelineFrame, {
     frame.anim_frames = anim_frames
     frame.frame_active = anim_frames[1]
     frame.frame_anim = anim_frames[1]
+
+    frame.signal_anim = Signal {
+      kind = ImageKind;
+      on_connect = function ()
+        return frame.frame_anim
+      end;
+    }
+
+    frame.signal_edit = Signal {
+      kind = ImageKind;
+      on_connect = function ()
+        return frame.frame_active
+      end;
+    }
 
     setmetatable(frame, TimelineFrame)
     return frame

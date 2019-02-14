@@ -1,3 +1,5 @@
+local pack_color              = require "util.color.pack"
+
 local sandbox = require "util.sandbox"
 
 local function setup_settings(default, user)
@@ -24,8 +26,8 @@ local settings = {
   style = {
     transparency = {
       pattern = "checker";
-      color  = {0.15, 0.15, 0.15};
-      color2 = {0.05, 0.05, 0.05};
+      color  = pack_color(0.15, 0.15, 0.15, 1.0);
+      color2 = pack_color(0.05, 0.05, 0.05, 1.0);
       scale  = 32;
     };
   };

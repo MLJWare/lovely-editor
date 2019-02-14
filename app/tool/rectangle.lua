@@ -1,5 +1,6 @@
 local PropertyStore           = require "PropertyStore"
 local RectangleAction         = require "action.paint.Rectangle"
+local unpack_color            = require "util.color.unpack"
 
 return {
     id = "tool.rectangle";
@@ -9,7 +10,7 @@ return {
       local y1, y2 = self._y1, self._y2
       love.graphics.setLineWidth(1)
     local color = PropertyStore.get("core.graphics", "paint.color")
-    love.graphics.setColor(color)
+    love.graphics.setColor(unpack_color(color))
       love.graphics.rectangle("line", x1*scale, y1*scale, (x2 - x1)*scale, (y2 - y1)*scale)
     end;
     on_press   = function (self, _, data, x, y)
@@ -27,7 +28,7 @@ return {
     on_release = function (self, undoStack, data, x2, y2)
       if data ~= self._owner then return end
       local x1, y1 = self._x1, self._y1
-      local color = PropertyStore.get("core.graphics", "paint.color"):hex()
+      local color = PropertyStore.get("core.graphics", "paint.color")
       undoStack:commit(RectangleAction.apply(data, x1, y1, x2, y2, color))
       self._owner = nil
     end;

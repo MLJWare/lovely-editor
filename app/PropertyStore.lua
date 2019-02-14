@@ -1,5 +1,5 @@
-local Color  = require "color.Color"
-local ensure = require "ensure"
+local ensure                  = require "ensure"
+local pack_color              = require "util.color.pack"
 
 local P = {}
 
@@ -41,7 +41,7 @@ end
 
 -- setup initial properties
 do
-  P.set_default("core.graphics", "paint.color", Color{1, 1, 1, 1})
+  P.set_default("core.graphics", "paint.color", pack_color(1, 1, 1, 1))
 end
 
 return P

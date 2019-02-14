@@ -26,10 +26,10 @@ setmetatable(TickerFrame, {
     frame.value = math.floor(frame.value or 0)
 
     frame.signal_out = Signal {
+      kind  = NumberKind;
       on_connect = function ()
         return frame.value
       end;
-      kind  = NumberKind;
     }
 
     setmetatable(Frame(frame), TickerFrame)

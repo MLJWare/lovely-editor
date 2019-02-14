@@ -2,7 +2,9 @@ local font_writer             = require "util.font_writer"
 
 local pleasure                = require "pleasure"
 
-local Color                   = require "color.Color"
+local pack_color              = require "util.color.pack"
+local unpack_color            = require "util.color.unpack"
+
 local vec2                    = require "linear-algebra.Vector2"
 
 local clamp                   = require "math.clamp"
@@ -16,8 +18,8 @@ local is_callable = pleasure.is.callable
 
 local EditableText = {
   x_pad              =  2;
-  text_color         = Color{0, 0, 0, 1.0};
-  hint_color         = Color{0, 0, 0, 0.3};
+  text_color         = pack_color(0, 0, 0, 1.0);
+  hint_color         = pack_color(0, 0, 0, 0.3);
   double_click_delay = 0.5;
   font               = love.graphics.newFont(12);
 }
@@ -279,11 +281,11 @@ function EditableText:draw_default (scale)
     local center_y = size.y/2
 
     if #text == 0 then
-      love.graphics.setColor(self.hint_color)
+      love.graphics.setColor(unpack_color(self.hint_color))
       font_writer.print_aligned(self.font, self.hint or "Hello", 0, center_y, "left", "center")
     else
       -- TODO if text is to long, add elipsis near right border
-      love.graphics.setColor(self.text_color)
+      love.graphics.setColor(unpack_color(self.text_color))
       font_writer.print_aligned(self.font, text, 0, center_y, "left", "center")
     end
   end
@@ -301,11 +303,13 @@ function EditableText:draw_active (scale)
 
     local center_y = size.y/2
 
+    local tr, tg, tb, ta = unpack_color(self.text_color)
+
     local blink = (love.timer.getTime() % 1 < 0.5)
     if not blink then -- show caret
       local left  = unicode.sub(text, 1, caret - 1)
       local caret_x = self.font:getWidth(left) + 1
-      love.graphics.setColor(self.text_color)
+      love.graphics.setColor(tr, tg, tb, ta)
       love.graphics.setLineWidth(1)
       love.graphics.line(caret_x, center_y - 6, caret_x, center_y + 6)
     end
@@ -321,7 +325,7 @@ function EditableText:draw_active (scale)
       love.graphics.rectangle("fill", from_x, center_y - font_height/2, selection_width, font_height)
     end
 
-    love.graphics.setColor(self.text_color)
+    love.graphics.setColor(tr, tg, tb, ta)
     font_writer.print_aligned(self.font, text, 0, center_y - 1, "left", "center")
   end
 

@@ -1,9 +1,9 @@
 local assertf                 = require "assertf"
 local Button                  = require "Button"
-local Color                   = require "color.Color"
 local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
+local pack_color              = require "util.color.pack"
 local pleasure                = require "pleasure"
 local try_invoke              = require "pleasure.try".invoke
 local vec2                    = require "linear-algebra.Vector2"
@@ -17,7 +17,7 @@ local PAD_X =  6
 local PAD_Y = 10
 
 local btn_size = vec2(100, 20)
-local btn_text_color = Color{0.2, 0.2, 0.2}
+local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 
 setmetatable(YesNoCancelFrame, {
   __index = Frame;

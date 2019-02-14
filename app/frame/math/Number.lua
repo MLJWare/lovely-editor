@@ -7,6 +7,7 @@ local assertf                 = require "assertf"
 local number_filter           = require "input.filter.number"
 local InputFrame              = require "frame.Input"
 local pleasure                = require "pleasure"
+local unpack_color            = require "util.color.unpack"
 local font_writer             = require "util.font_writer"
 local try_invoke              = pleasure.try.invoke
 
@@ -24,10 +25,10 @@ setmetatable(NumberFrame, {
     NumberFrame.typecheck(frame, "NumberFrame constructor")
 
     frame.signal_out = Signal {
+      kind  = NumberKind;
       on_connect = function ()
         return frame.value;
       end;
-      kind  = NumberKind;
     }
 
     frame.filter = number_filter
@@ -92,7 +93,7 @@ function NumberFrame:draw(size, scale)
     pleasure.scale(scale)
     do
       local center_y = size.y/2/scale
-      love.graphics.setColor(self._edit.text_color)
+      love.graphics.setColor(unpack_color(self._edit.text_color))
       font_writer.print_aligned(self._edit.font, text, 0, center_y, "left", "center")
     end
     pleasure.pop_region()

@@ -4,6 +4,7 @@ local ImageKind               = require "Kind.Image"
 local EditImageKind           = require "Kind.EditImage"
 local StringKind              = require "Kind.String"
 local NumberKind              = require "Kind.Number"
+local Vector4Kind             = require "Kind.Vector4"
 local MouseButton             = require "const.MouseButton"
 local PixelFrame              = require "frame.Pixel"
 local pleasure                = require "pleasure"
@@ -15,6 +16,9 @@ local vec2                    = require "linear-algebra.Vector2"
 local View                    = require "View"
 local Viewport                = require "Viewport"
 local Project                 = require "Project"
+
+local pack_color              = require "util.color.pack"
+local unpack_color            = require "util.color.unpack"
 
 local shift_is_down           = require "util.shift_is_down"
 local  ctrl_is_down           = require "util.ctrl_is_down"
@@ -31,8 +35,8 @@ local EMPTY = {}
 
 local settings = require "settings"
 
-local default_checker_color      = {0.8, 0.8, 0.8}
-local default_transparency_color = {0.6, 0.6, 0.6}
+local default_checker_color      = pack_color(0.8, 0.8, 0.8, 1.0)
+local default_transparency_color = pack_color(0.6, 0.6, 0.6, 1.0)
 local default_checker_scale      = 8
 
 local app = {
@@ -187,7 +191,8 @@ function app.pin_color(kind)
   if     kind == EditImageKind   then return 0.95, 0.50, 0.60, 1
   elseif kind == ImageKind       then return 0.80, 0.30, 0.20, 1
   elseif kind == StringKind      then return 0.80, 0.90, 0.20, 1
-  elseif kind == NumberKind      then return 0.40, 0.30, 0.70, 1
+  elseif kind == NumberKind      then return 0.60, 0.40, 0.90, 1
+  elseif kind == Vector4Kind     then return 0.40, 0.20, 0.70, 1
   else                                return 0.75, 0.75, 0.75, 1
   end
 end
@@ -593,9 +598,9 @@ end
 
 local function draw_transparency_pattern(width, height)
   local style = settings.style.transparency or EMPTY
-  love.graphics.clear(style.color or default_transparency_color)
+  love.graphics.clear(unpack_color(style.color or default_transparency_color))
   if style.pattern == "checker" then
-    love.graphics.setColor(style.color2 or default_checker_color)
+    love.graphics.setColor(unpack_color(style.color2 or default_checker_color))
     checker_pattern(0, 0, width, height, style.scale or default_checker_scale)
   end
 end

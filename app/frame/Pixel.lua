@@ -30,10 +30,10 @@ setmetatable(PixelFrame, {
       data = frame.data;
     }
     frame.signal_out = Signal {
+      kind = EditImageKind;
       on_connect = function ()
         return frame.image_edit
       end;
-      kind = EditImageKind;
     }
     frame.image_edit = frame.image
     frame.data = nil

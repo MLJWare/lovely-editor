@@ -1,5 +1,5 @@
 local Button                  = require "Button"
-local Color                   = require "color.Color"
+local pack_color              = require "util.color.pack"
 local EditableText            = require "EditableText"
 local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
@@ -19,7 +19,7 @@ local OFFSET_X = PAD_X
 local OFFSET_Y = PAD_Y + 20
 
 local btn_size = vec2(100, 20)
-local btn_text_color = Color{0.2, 0.2, 0.2}
+local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 
 setmetatable(RenameFrame, {
   __index = Frame;

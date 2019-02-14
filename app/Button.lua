@@ -2,15 +2,14 @@ local font_writer             = require "util.font_writer"
 local Images                  = require "Images"
 local assertf                 = require "assertf"
 local vec2                    = require "linear-algebra.Vector2"
-
-local Color                   = require "color.Color"
+local unpack_color            = require "util.color.unpack"
 local font = love.graphics.newFont(12)
 
 
 local Button = {}
 Button.__index = Button
 
-Button.text_color = Color{0, 0, 0}
+Button.text_color = 0x000000FF
 
 setmetatable(Button, {
   __call = function (_, button)
@@ -35,21 +34,21 @@ end
 function Button:draw_normal(size)
   love.graphics.setColor(0.9, 0.9, 0.9)
   Images.ninepatch("button", 0, 0, size.x, size.y - 1, 2)
-  love.graphics.setColor(self.text_color)
+  love.graphics.setColor(unpack_color(self.text_color))
   font_writer.print_aligned(font, self.text:upper(), size.x/2, size.y/2, "middle", "center")
 end
 
 function Button:draw_hover (size)
   love.graphics.setColor(1, 1, 1)
   Images.ninepatch("button", 0, 0, size.x, size.y - 1, 2)
-  love.graphics.setColor(self.text_color)
+  love.graphics.setColor(unpack_color(self.text_color))
   font_writer.print_aligned(font, self.text:upper(), size.x/2, size.y/2, "middle", "center")
 end
 
 function Button:draw_pressed (size)
   love.graphics.setColor(0.8, 0.8, 0.8)
   Images.ninepatch("button-pressed", 0, 0, size.x, size.y - 1, 2)
-  love.graphics.setColor(self.text_color)
+  love.graphics.setColor(unpack_color(self.text_color))
   font_writer.print_aligned(font, self.text:upper(), size.x/2, size.y/2, "middle", "center")
 end
 

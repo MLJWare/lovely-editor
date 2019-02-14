@@ -2,6 +2,8 @@ local IOs                     = require "IOs"
 local Frame                   = require "Frame"
 --local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
+local pack_color              = require "util.color.pack"
+local unpack_color            = require "util.color.unpack"
 local Signal                  = require "Signal"
 local StringKind              = require "Kind.String"
 local TextBuffer              = require "text.Buffer"
@@ -24,8 +26,8 @@ TextBufferFrame.__index = TextBufferFrame
 
 TextBufferFrame._kind = ";TextBufferFrame;TextFrame;Frame;"
 
-TextBufferFrame._selection_color = {0.5, 0.5, 0.5, 0.5}
-TextBufferFrame._text_color      = {1, 1, 1, 1}
+TextBufferFrame._selection_color = pack_color(0.5, 0.5, 0.5, 0.5)
+TextBufferFrame._text_color      = pack_color(1.0, 1.0, 1.0, 1.0)
 
 setmetatable(TextBufferFrame, {
   __index = Frame;
@@ -40,14 +42,14 @@ setmetatable(TextBufferFrame, {
 
     local text = tostring(frame.data or "")
 
+    frame.data = text
+
     frame.signal_out = Signal {
+      kind = StringKind;
       on_connect = function ()
         return frame.data
       end;
-      kind = StringKind;
     }
-
-    frame.data = text
 
     setmetatable(frame, TextBufferFrame)
     if frame.data then
@@ -89,9 +91,12 @@ function TextBufferFrame:draw(size)
   love.graphics.setFont(self._font)
   pleasure.push_region(0, 0, size.x, size.y)
   do
+    local tr, tg, tb, ta = unpack_color(self._text_color)
+    local sr, sg, sb, sa = unpack_color(self._selection_color)
+
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.rectangle("fill", 0, 0, size.x, size.y)
-    love.graphics.setColor(self._text_color)
+    love.graphics.setColor(tr, tg, tb, ta)
 
     local caret = self._caret
     local caret_row = caret:get_row()
@@ -103,12 +108,14 @@ function TextBufferFrame:draw(size)
     local row1, column1, row2, column2 = caret:selection_range()
 
     local from = 1
+
+
     for index, line in self._buffer:lines(from) do
       local y = (index - from)*15
       if selection and index >= row1 and index <= row2 then
-        love.graphics.setColor(self._selection_color)
+        love.graphics.setColor(sr, sg, sb, sa)
         self:_draw_selection_bar(index, y, line, row1, column1, row2, column2)
-        love.graphics.setColor(self._text_color)
+        love.graphics.setColor(tr, tg, tb, ta)
       end
       love.graphics.print(line, 0, y)
       if show_caret and index == caret_row then
@@ -221,15 +228,16 @@ function TextBufferFrame:keypressed(key, _, _)
     elseif key == "backspace" then
       if caret:has_selection() then
         self:_delete_selection(caret)
-      end
-      local buffer = self._buffer
-      local old_row    = caret:get_row()
-      buffer:set(old_row, unicode.splice(buffer:get(old_row), caret:get_column() - 1, "", 1))
-      caret:move_left()
-      local new_row = caret:get_row()
-      if old_row ~= new_row then -- merge the lines
-        local text = buffer:remove(old_row)
-        buffer:set(caret:get_row(), buffer:get(caret:get_row())..text)
+      else
+        local buffer = self._buffer
+        local old_row    = caret:get_row()
+        buffer:set(old_row, unicode.splice(buffer:get(old_row), caret:get_column() - 1, "", 1))
+        caret:move_left()
+        local new_row = caret:get_row()
+        if old_row ~= new_row then -- merge the lines
+          local text = buffer:remove(old_row)
+          buffer:set(caret:get_row(), buffer:get(caret:get_row())..text)
+        end
       end
     elseif key == "delete" then
       if caret:has_selection() then
@@ -273,25 +281,25 @@ function TextBufferFrame:keypressed(key, _, _)
   else
     if key == "return" then
       self:refresh()
-    elseif key == "c" then
+    elseif key == "c" then -- copy
       if caret:has_selection() then
         love.system.setClipboardText(
           table.concat(
             caret:selection_content(), "\n"))
       end
-    elseif key == "x" then
+    elseif key == "x" then -- cut
       if caret:has_selection() then
         love.system.setClipboardText(
           table.concat(
             caret:selection_content(), "\n"))
         self:_delete_selection(caret)
       end
-    elseif key == "v" then
+    elseif key == "v" then -- paste
       if caret:has_selection() then
         self:_delete_selection(caret)
       end
       self:paste(love.system.getClipboardText())
-    elseif key == "a" then
+    elseif key == "a" then -- select all
       caret:jump_top()
       caret:jump_head()
       caret:start_selection()
@@ -307,7 +315,7 @@ end
 
 function TextBufferFrame:paste(text)
   if not text then return end
-  text = tostring(text)
+  text = tostring(text).."\n"
 
   local buffer = self._buffer
   local caret  = self._caret
@@ -316,14 +324,13 @@ function TextBufferFrame:paste(text)
 
   local left, right = split(buffer:get(row), caret:get_column())
 
-  local first, rest = text:match"^([^\n]*)\n?(.*)$"
+  local first, rest = text:match"^([^\n]*)\n(.*)$"
   buffer:set(row, left..first)
   if #rest > 0 then
-    for line in rest:gmatch"([^\n]*)\n?" do
+    for line in rest:gmatch"([^\n]*)\n" do
       row = row + 1
       buffer:add(row, line)
     end
-    row = row - 1
   end
   local data = buffer:get(row)
   buffer:set(row, data..right)

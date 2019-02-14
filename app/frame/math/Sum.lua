@@ -26,10 +26,10 @@ setmetatable(SumFrame, {
       frame.value = 0
     end
     frame.signal_out = Signal {
+      kind = NumberKind;
       on_connect = function ()
         return frame.value;
       end;
-      kind = NumberKind;
     }
 
     setmetatable(Frame(frame), SumFrame)

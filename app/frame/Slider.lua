@@ -21,10 +21,10 @@ setmetatable(SliderFrame, {
     SliderFrame.typecheck(frame, "SliderFrame constructor")
     frame.pct = frame.pct or 0
     frame.signal_out = Signal {
+      kind = NumberKind;
       on_connect = function ()
         return frame.pct
       end;
-      kind = NumberKind;
     }
     setmetatable(frame, SliderFrame)
 

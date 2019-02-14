@@ -18,6 +18,7 @@ setmetatable(Signal, {
 
 function Signal.typecheck(obj, where)
   local kind  = obj.kind
+  assertf(is_callable(obj.on_connect), "Error in %s: Missing/invalid property: 'on_connect' must be callable.", where)
   assertf(type(kind) == "table", "Error in %s: Missing/invalid property: 'kind' must be a table representing a Kind.", where)
   assertf(is_callable(kind.is), "Error in %s: Missing/invalid property: 'kind' must be a table representing a Kind ('kind.is' should be callable).", where)
   assertf(is_callable(kind.to_shader_value), "Error in %s: Missing/invalid property: 'kind' must be a table representing a Kind ('kind.to_shader_value' should be callable).", where)

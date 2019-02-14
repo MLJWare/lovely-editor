@@ -7,7 +7,9 @@ local alpha_shader            = require "shader.gradient.alpha"
 local shader_fill             = require "shader_fill"
 local rgb2hsv                 = require "color.rgb2hsv"
 local hsv2rgb                 = require "color.hsv2rgb"
-local Color                   = require "color.Color"
+local pack_color              = require "util.color.pack"
+local unpack_color            = require "util.color.unpack"
+local Signal                  = require "Signal"
 local Vector4Kind             = require "Kind.Vector4"
 local vec2                    = require "linear-algebra.Vector2"
 local MouseButton             = require "const.MouseButton"
@@ -44,30 +46,6 @@ local function contains(x, y, w, h, mx, my)
      and y <= my and my < y + h
 end
 
-local function get_rgba()
-  return unpack(PropertyStore.get("core.graphics", "paint.color"))
-end
-
-local function set_color_hue(h)
-  local r, g, b, a = get_rgba()
-  local _, s, v = rgb2hsv(r, g, b)
-  r, g, b = hsv2rgb(h, s, v)
-  return PropertyStore.set("core.graphics", "paint.color", Color{r, g, b, a})
-end
-
-local function set_color_sat_val(s, v)
-  local r, g, b, a = get_rgba()
-  local h, _, _ = rgb2hsv(r, g, b)
-  r, g, b = hsv2rgb(h, s, v)
-  return PropertyStore.set("core.graphics", "paint.color", Color{r, g, b, a})
-end
-
-local function set_color_alpha(a)
-  local r, g, b, _ = get_rgba()
-  return PropertyStore.set("core.graphics", "paint.color", Color{r, g, b, a})
-end
-
-
 local ColorPickerFrame = {}
 ColorPickerFrame.__index = ColorPickerFrame
 
@@ -81,14 +59,25 @@ setmetatable(ColorPickerFrame, {
     ColorPickerFrame.typecheck(frame, "ColorPickerFrame constructor")
     setmetatable(frame, ColorPickerFrame)
 
-    local r, g, b, a = get_rgba()
-    frame:_set_text_from_rgba(r, g, b, a)
+    frame.hue = 0
+    frame.sat = 1
+    frame.val = 1
+    frame.alpha = 1
+    frame.color = {1,1,1,1}
+
+    frame.color_signal = Signal{
+      kind = Vector4Kind;
+      on_connect = function ()
+        return frame.color
+      end;
+    }
+
     return frame
   end;
 })
 
 ColorPickerFrame.gives = IOs{
-  {id = "color"; kind = Vector4Kind ;}
+  {id = "color_signal"; kind = Vector4Kind ;}
 }
 
 function ColorPickerFrame.typecheck(obj, where)
@@ -134,11 +123,34 @@ local function draw_field(x, y, width, height, shader, pct_x, pct_y)
   draw_field_knob(knob_x, knob_y)
 end
 
-function ColorPickerFrame:_set_text_from_rgba(r, g, b, a)
-  self.text = ("rgba(%d, %d, %d, %d)"):format(r*255, g*255, b*255, a*255)
+
+function ColorPickerFrame:set_color_hue(hue)
+  self.hue = clamp(hue, 0, 6)
+  self:_on_change()
 end
 
-function ColorPickerFrame.draw(_, size, _)
+function ColorPickerFrame:set_color_sat_val(sat, val)
+  self.sat = clamp(sat, 0, 1)
+  self.val = clamp(val, 0, 1)
+  self:_on_change()
+end
+
+function ColorPickerFrame:set_color_alpha(alpha)
+  self.alpha = alpha
+  self:_on_change()
+end
+
+function ColorPickerFrame:_on_change()
+  local hue = self.hue
+  local sat = self.sat
+  local val = self.val
+  local color = self.color
+  color[1], color[2], color[3] = hsv2rgb(hue, sat, val)
+  color[4] = self.alpha
+  self.color_signal:inform(color)
+end
+
+function ColorPickerFrame:draw(size, _)
   local width, height = size.x, size.y
 
   love.graphics.setColor(0.3, 0.3, 0.3)
@@ -146,8 +158,11 @@ function ColorPickerFrame.draw(_, size, _)
 
   love.graphics.push()
   love.graphics.scale(size.x / FULL_WIDTH, size.y / FULL_HEIGHT)
-  local r, g, b, alpha = get_rgba()
-  local hue, sat, val = rgb2hsv(r, g, b)
+  local hue = self.hue
+  local sat = self.sat
+  local val = self.val
+  local alpha = self.alpha
+  local r, g, b = hsv2rgb(hue, sat, val)
 
   gradient_shader:send("hue", hue)
   alpha_shader:send("hue", hue)
@@ -163,30 +178,21 @@ function ColorPickerFrame.draw(_, size, _)
   love.graphics.pop()
 end
 
-function ColorPickerFrame:_on_change()
-  local r, g, b, a = get_rgba()
-  self:_set_text_from_rgba(r, g, b, a)
-  --try_invoke(self, "on_change", r, g, b, a)
-end
-
 function ColorPickerFrame:mousepressed(mx, my, button)
   if button ~= MouseButton.LEFT then return end
   if contains(HUE_X, HUE_Y, SLIDER_WIDTH, SLIDER_HEIGHT, mx, my) then
-    local hue = 6*clamp(1 - (my - HUE_Y)/SLIDER_HEIGHT, 0, 1)
-    set_color_hue(hue)
+    local hue = 6*(1 - (my - HUE_Y)/SLIDER_HEIGHT)
+    self:set_color_hue(hue)
     self.picked = "hue"
-    self:_on_change()
   elseif contains(FIELD_X, FIELD_Y, FIELD_WIDTH, FIELD_HEIGHT, mx, my) then
-    local sat = clamp(    (mx - FIELD_X)/FIELD_WIDTH , 0, 1)
-    local val = clamp(1 - (my - FIELD_Y)/FIELD_HEIGHT, 0, 1)
-    set_color_sat_val(sat, val)
+    local sat =     (mx - FIELD_X)/FIELD_WIDTH
+    local val = 1 - (my - FIELD_Y)/FIELD_HEIGHT
+    self:set_color_sat_val(sat, val)
     self.picked = "sat-val"
-    self:_on_change()
   elseif contains(ALPHA_X, ALPHA_Y, SLIDER_WIDTH, SLIDER_HEIGHT, mx, my) then
-    local alpha = clamp(1 - (my - ALPHA_Y)/SLIDER_HEIGHT, 0, 1)
-    set_color_alpha(alpha)
+    local alpha = 1 - (my - ALPHA_Y)/SLIDER_HEIGHT
+    self:set_color_alpha(alpha)
     self.picked = "alpha"
-    self:_on_change()
   --elseif contains(INDICATOR_X, INDICATOR_Y, INDICATOR_WIDTH, INDICATOR_HEIGHT, mx, my) then
     --self.picked = "text"
     ---- active text
@@ -203,18 +209,15 @@ end
 function ColorPickerFrame:mousedragged1(mx, my, _, _)
   local picked = self.picked
   if picked == "hue" then
-    local hue = 6*clamp(1 - (my - HUE_Y)/SLIDER_HEIGHT, 0, 1)
-    set_color_hue(hue)
-    self:_on_change()
+    local hue = 6*(1 - (my - HUE_Y)/SLIDER_HEIGHT)
+    self:set_color_hue(hue)
   elseif picked == "sat-val" then
-    local sat = clamp(    (mx - FIELD_X)/FIELD_WIDTH , 0, 1)
-    local val = clamp(1 - (my - FIELD_Y)/FIELD_HEIGHT, 0, 1)
-    set_color_sat_val(sat, val)
-    self:_on_change()
+    local sat =     (mx - FIELD_X)/FIELD_WIDTH
+    local val = 1 - (my - FIELD_Y)/FIELD_HEIGHT
+    self:set_color_sat_val(sat, val)
   elseif picked == "alpha" then
-    local alpha = clamp(1 - (my - ALPHA_Y)/SLIDER_HEIGHT, 0, 1)
-    set_color_alpha(alpha)
-    self:_on_change()
+    local alpha = 1 - (my - ALPHA_Y)/SLIDER_HEIGHT
+    self:set_color_alpha(alpha)
   --elseif picked == "text" and self.active then
     ---- highlight text
   end

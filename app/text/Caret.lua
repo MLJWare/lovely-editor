@@ -68,9 +68,9 @@ function TextCaret:selection_content()
     -- from-to
     local line  = buffer:get(row1)
     local delta = column2 - column1
-    local left, _, right = extract(line, column1, delta)
+    local _, mid, _ = extract(line, column1, delta)
     content = {
-      left..right
+      mid
     }
   else
     local _, right = split(buffer:get(row1), column1) --from-tail

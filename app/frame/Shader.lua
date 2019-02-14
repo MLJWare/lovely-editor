@@ -8,6 +8,7 @@ local ImagePacket             = require "packet.Image"
 local Signal                  = require "Signal"
 local ImageKind               = require "Kind.Image"
 local NumberKind              = require "Kind.Number"
+local Vector4Kind             = require "Kind.Vector4"
 local StringKind              = require "Kind.String"
 local try_invoke              = require "pleasure.try".invoke
 
@@ -29,12 +30,15 @@ setmetatable(ShaderFrame, {
 
     ShaderFrame.typecheck(frame, "ShaderFrame constructor")
 
-    frame.signal_out = Signal {
-      kind = ImageKind;
-    }
-
     frame.image = ImagePacket {
       value = love.graphics.newCanvas(default_size_x, default_size_y);
+    }
+
+    frame.signal_out = Signal {
+      kind = ImageKind;
+      on_connect = function ()
+        return frame.image
+      end;
     }
 
     frame._uniforms_in    = {}
@@ -213,6 +217,7 @@ end
 local known_uniform_kinds = {
   ["float"] = NumberKind;
   ["Image"] = ImageKind;
+  ["vec4" ] = Vector4Kind;
 }
 
 function ShaderFrame:detect_uniforms(code)

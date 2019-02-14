@@ -75,19 +75,16 @@ function app.restart()
   app.view_pressed3  = nil
 end
 
-local _delta_ = vec2(0)
-
-
 local pin_radius_small = 5
 local pin_radius_large = 9
 local pin_offset_x = pin_radius_small + 4
 
 local function _io_takes_pos(view, index)
-  local pos, size = app.project.viewport:view_bounds(view)
+  local pos_x, pos_y, _, size_y = app.project.viewport:view_bounds(view)
   local sectors = view.frame:takes_count() + 1
 
-  local x = pos.x - pin_offset_x
-  local y = pos.y + ((index or 0)/sectors)*size.y
+  local x = pos_x - pin_offset_x
+  local y = pos_y + ((index or 0)/sectors)*size_y
   return x, y
 end
 
@@ -99,11 +96,11 @@ local function io_takes_pos(ref)
 end
 
 local function _io_gives_pos(view, index)
-  local pos, size = app.project.viewport:view_bounds(view)
+  local pos_x, pos_y, size_x, size_y = app.project.viewport:view_bounds(view)
   local sectors = view.frame:gives_count() + 1
 
-  local x = pos.x + size.x + pin_offset_x
-  local y = pos.y + (index/sectors)*size.y
+  local x = pos_x + size_x + pin_offset_x
+  local y = pos_y + (index/sectors)*size_y
   return x, y
 end
 
@@ -121,13 +118,13 @@ local function _pin_gives_at(mx, my)
   local viewport = app.project.viewport
   for i = 1, #views do
     local view = views[i]
-    local pos, size = viewport:view_bounds(view)
+    local pos_x, pos_y, size_x, size_y = viewport:view_bounds(view)
 
-    local dx  = mx - pos.x - size.x - pin_dx
-    local dy  = my - pos.y
+    local dx  = mx - pos_x - size_x - pin_dx
+    local dy  = my - pos_y
 
     if  0 <= dx and dx < 2*pin_radius_large
-    and 0 <= dy and dy < size.y then
+    and 0 <= dy and dy < size_y then
       for index = 1, view.frame:gives_count() do
         local x, y = _io_gives_pos(view, index)
         local dist = math.abs(x - mx) + math.abs(y - my)
@@ -146,13 +143,13 @@ local function _pin_takes_at(mx, my)
   local viewport = app.project.viewport
   for i = 1, #views do
     local view = views[i]
-    local pos, size = viewport:view_bounds(view)
+    local pos_x, pos_y, _, size_y = viewport:view_bounds(view)
 
-    local dx  = mx - pos.x + pin_dx
-    local dy  = my - pos.y
+    local dx  = mx - pos_x + pin_dx
+    local dy  = my - pos_y
 
     if  0 <= dx and dx < 2*pin_radius_large
-    and 0 <= dy and dy < size.y then
+    and 0 <= dy and dy < size_y then
       for index = 1, view.frame:takes_count() do
         local x, y = _io_takes_pos(view, index)
         local dist = math.abs(x - mx) + math.abs(y - my)
@@ -270,14 +267,18 @@ function app.mousepressed(mx, my, button)
   local popups = app.popups
   if #popups > 0 then
     local top = popups[#popups]
-    _delta_:setn(mx, my):subv(top.pos)
-    if 0 <= _delta_ and _delta_ < top.frame.size then
-      try_invoke(top.frame, "mousepressed", _delta_.x, _delta_.y, button)
+    local top_pos = top.pos
+    local top_size = top.frame.size
+    local dx = mx - top_pos.x
+    local dy = my - top_pos.y
+    if  0 <= dx and dx < top_size.x
+    and 0 <= dy and dy < top_size.y then
+      try_invoke(top.frame, "mousepressed", dx, dy, button)
       if button == MouseButton.LEFT then
         app.popup_pressed1 = top
       end
     else
-      try_invoke(top.frame, "globalmousepressed", _delta_.x, _delta_.y, button)
+      try_invoke(top.frame, "globalmousepressed", dx, dy, button)
       if app.focus_handler:has_focus() then
         app.focus_handler:request_focus(nil)
       end
@@ -285,7 +286,7 @@ function app.mousepressed(mx, my, button)
     return
   end
 
-  local view = app.project.viewport:view_at_global_pos(vec2(mx, my), app.project.views)
+  local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views)
 
   if app.global_mode() then
     if button == MouseButton.LEFT then
@@ -331,8 +332,10 @@ function app.mousepressed(mx, my, button)
   if button == MouseButton.RIGHT  then app.view_pressed2 = view end
   if button == MouseButton.MIDDLE then app.view_pressed3 = view end
   if view then
-    local pos, _, scale = app.project.viewport:view_bounds(view)
-    try_invoke(view.frame, "mousepressed", (mx - pos.x)/scale, (my - pos.y)/scale, button)
+    local pos_x, pos_y
+        , _, _
+        , scale = app.project.viewport:view_bounds(view)
+    try_invoke(view.frame, "mousepressed", (mx - pos_x)/scale, (my - pos_y)/scale, button)
   end
 end
 
@@ -362,8 +365,10 @@ function app.mousereleased(mx, my, button)
   end
 
   if app.popup_pressed1 then
-    _delta_:setn(mx, my):subv(app.popup_pressed1.pos)
-    try_invoke(app.popup_pressed1.frame, "mousereleased", _delta_.x, _delta_.y, button)
+    local popup_pos = app.popup_pressed1.pos
+    local dx = mx - popup_pos.x
+    local dy = my - popup_pos.y
+    try_invoke(app.popup_pressed1.frame, "mousereleased", dx, dy, button)
     app.popup_pressed1 = nil
     return
   end
@@ -371,20 +376,20 @@ function app.mousereleased(mx, my, button)
   if button == MouseButton.LEFT then
     app.view_dragged = nil
     if app.view_pressed1 then
-      local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed1)
-      try_invoke(app.view_pressed1.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
+      local pos_x, pos_y, _, _, scale = app.project.viewport:view_bounds(app.view_pressed1)
+      try_invoke(app.view_pressed1.frame, "mousereleased", (mx - pos_x)/scale, (my - pos_y)/scale, button)
     end
     app.view_pressed1 = nil
   elseif button == MouseButton.RIGHT then
     if app.view_pressed2 then
-      local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed2)
-      try_invoke(app.view_pressed2.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
+      local pos_x, pos_y, _, _, scale = app.project.viewport:view_bounds(app.view_pressed2)
+      try_invoke(app.view_pressed2.frame, "mousereleased", (mx - pos_x)/scale, (my - pos_y)/scale, button)
     end
     app.view_pressed2 = nil
   elseif button == MouseButton.MIDDLE then
     if app.view_pressed3 then
-      local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed3)
-      try_invoke(app.view_pressed3.frame, "mousereleased", (mx - pos.x)/scale, (my - pos.y)/scale, button)
+      local pos_x, pos_y, _,_, scale = app.project.viewport:view_bounds(app.view_pressed3)
+      try_invoke(app.view_pressed3.frame, "mousereleased", (mx - pos_x)/scale, (my - pos_y)/scale, button)
     end
     app.view_pressed3 = nil
   end
@@ -394,33 +399,38 @@ function app.mousemoved(mx, my, dx, dy)
   local popups = app.popups
   if #popups > 0 then
     if app.popup_pressed1 then
-      _delta_:setn(mx, my):subv(app.popup_pressed1.pos)
-      try_invoke(app.popup_pressed1.frame, "mousedragged1", _delta_.x, _delta_.y, dx, dy)
+      local popup_pos = app.popup_pressed1.pos
+      local popup_dx = mx - popup_pos.x
+      local popup_dy = my - popup_pos.y
+      try_invoke(app.popup_pressed1.frame, "mousedragged1", popup_dx, popup_dy, dx, dy)
     else
       local top = popups[#popups]
-      _delta_:setn(mx, my):subv(top.pos)
-      if 0 <= _delta_ and _delta_ <= top.frame.size then
-        try_invoke(top.frame, "mousemoved", _delta_.x, _delta_.y, dx, dy)
+      local top_pos = top.pos
+      local top_dx = mx - top_pos.x
+      local top_dy = my - top_pos.y
+      local top_size = top.frame.size
+      if  0 <= top_dx and top_dx <= top_size.x
+      and 0 <= top_dy and top_dy <= top_size.y then
+        try_invoke(top.frame, "mousemoved", top_dx, top_dy, dx, dy)
       end
     end
     return
   end
 
-  local view = app.project.viewport:view_at_global_pos(vec2(mx, my), app.project.views)
+  local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views)
   if app.global_mode() then
-    local delta = vec2(dx, dy)
     local drag = app.view_dragged
     if app.mouse.isDown(MouseButton.MIDDLE) then
-      app.project.viewport:pan_viewport(delta)
+      app.project.viewport:pan_viewport(dx, dy)
     elseif drag then
-      app.project.viewport:move_view(drag, delta)
+      app.project.viewport:move_view(drag, dx, dy)
     end
   elseif app.view_pressed1 then
-    local pos, _, scale = app.project.viewport:view_bounds(app.view_pressed1)
-    try_invoke(app.view_pressed1.frame, "mousedragged1", (mx - pos.x)/scale, (my - pos.y)/scale, dx/scale, dy/scale)
+    local pos_x, pos_y, _,_, scale = app.project.viewport:view_bounds(app.view_pressed1)
+    try_invoke(app.view_pressed1.frame, "mousedragged1", (mx - pos_x)/scale, (my - pos_y)/scale, dx/scale, dy/scale)
   elseif view then
-    local pos, _, scale = app.project.viewport:view_bounds(view)
-    try_invoke(view.frame, "mousemoved", (mx - pos.x)/scale, (my - pos.y)/scale, dx/scale, dy/scale)
+    local pos_x, pos_y, _,_, scale = app.project.viewport:view_bounds(view)
+    try_invoke(view.frame, "mousemoved", (mx - pos_x)/scale, (my - pos_y)/scale, dx/scale, dy/scale)
   end
 end
 
@@ -672,10 +682,10 @@ function app.draw()
     love.graphics.setLineStyle("rough")
     love.graphics.setLineWidth(2*pad)
 
-    local pos, size, scale = viewport:view_bounds(view)
+    local pos_x, pos_y, size_x, size_y, scale = viewport:view_bounds(view)
 
-    local x1, y1 = pos.x - pad, pos.y - pad
-    love.graphics.rectangle("line", x1, y1, size.x + 2*pad, size.y + 2*pad)
+    local x1, y1 = pos_x - pad, pos_y - pad
+    love.graphics.rectangle("line", x1, y1, size_x + 2*pad, size_y + 2*pad)
 
     local view_id = view:id()
     local w = text_width(view_id)
@@ -687,9 +697,9 @@ function app.draw()
 
     if type(frame) == "table" and type(frame.draw) == "function" then
       pleasure.push_region()
-      pleasure.translate(pos.x, pos.y)
+      pleasure.translate(pos_x, pos_y)
       love.graphics.setColor(1.0, 1.0, 1.0)
-      frame:draw(size, scale, mx - pos.x, my - pos.y)
+      frame:draw(vec2(size_x, size_y), scale, mx - pos_x, my - pos_y) -- NOTE runtime vec2
       pleasure.pop_region()
     end
 
@@ -699,7 +709,7 @@ function app.draw()
       else
         love.graphics.setColor(0.7, 1.0, 1.0)
       end
-      love.graphics.rectangle("fill", pos.x + size.x, pos.y + size.y, 3*pad, 3*pad)
+      love.graphics.rectangle("fill", pos_x + size_x, pos_y + size_y, 3*pad, 3*pad)
     end
 
     if show_connectors then
@@ -708,7 +718,7 @@ function app.draw()
   end
 
   if pin_dragged.view then
-    draw_link(vec2(_io_gives_pos(pin_dragged.view, pin_dragged.index)), vec2(mx, my))
+    draw_link(vec2(_io_gives_pos(pin_dragged.view, pin_dragged.index)), vec2(mx, my))-- NOTE runtime vec2
   end
 
   -- draw popups

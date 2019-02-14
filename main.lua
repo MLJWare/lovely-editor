@@ -45,11 +45,11 @@ function love.filedropped(file)
       frame.filename = file:getFilename()
       local mx, my = love.mouse.getPosition()
       local size = frame.size
-      local pos = app.project.viewport:global_to_local_pos(vec2(mx - size.x/2, my - size.y/2))
+      local pos_x, pos_y = app.project.viewport:global_to_local_pos(mx - size.x/2, my - size.y/2)
 
       app.add_view (1, {
         frame = frame;
-        pos   = pos;
+        pos   = vec2(pos_x, pos_y);
         scale = 1;
       })
     end

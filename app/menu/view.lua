@@ -1,4 +1,5 @@
 local app                     = require "app"
+local vec2                    = require "linear-algebra.Vector2"
 local clone                   = require "util.clone"
 local SaveFileFrame           = require "frame.SaveFile"
 local YesNoFrame              = require "frame.YesNo"
@@ -73,9 +74,10 @@ return MenuListFrame {
     {
       text   = "Clone View (using same Frame)";
       action = function (_, menu)
+        local view_pos = menu.view.pos
         app.add_view(1, {
           frame = menu.view.frame;
-          pos   = app.project.viewport:global_to_local_pos(menu.view.pos + 10);
+          pos   = vec2(app.project.viewport:global_to_local_pos(view_pos.x + 10, view_pos.y + 10));
           scale = menu.view.scale;
         })
       end;
@@ -84,9 +86,10 @@ return MenuListFrame {
     {
       text   = "Clone View and Frame";
       action = function (_, menu)
+        local view_pos = menu.view.pos
         app.add_view(1, {
           frame = clone(menu.view.frame);
-          pos   = app.project.viewport:global_to_local_pos(menu.view.pos + 10);
+          pos   = vec2(app.project.viewport:global_to_local_pos(view_pos.x + 10, view_pos.y + 10));
           scale = menu.view.scale;
         })
       end;

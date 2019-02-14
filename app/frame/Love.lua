@@ -140,18 +140,24 @@ function LoveFrame:refresh_code(code)
       mouse = {
         getX = function ()
           local mx = love.mouse.getX()
-          local pos, _, scale = app.project.viewport:view_bounds(self._view_)
-          return (mx - pos.x)/scale
+          local pos_x, _
+              , _, _
+              , scale = app.project.viewport:view_bounds(self._view_)
+          return (mx - pos_x)/scale
         end;
         getY = function ()
           local my = love.mouse.getY()
-          local pos, _, scale = app.project.viewport:view_bounds(self._view_)
-          return (my - pos.y)/scale
+          local _, pos_y
+              , _, _
+              , scale = app.project.viewport:view_bounds(self._view_)
+          return (my - pos_y)/scale
         end;
         getPosition = function ()
           local mx, my = love.mouse.getPosition()
-          local pos, _, scale = app.project.viewport:view_bounds(self._view_)
-          return (mx - pos.x)/scale, (my - pos.y)/scale
+          local pos_x, pos_y
+              , _, _
+              , scale = app.project.viewport:view_bounds(self._view_)
+          return (mx - pos_x)/scale, (my - pos_y)/scale
         end;
       };
       graphics = {

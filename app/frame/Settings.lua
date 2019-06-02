@@ -53,9 +53,12 @@ function SettingsFrame.is(obj)
      and meta._kind:find(";SettingsFrame;")
 end
 
-function SettingsFrame:draw(size_x, size_y)
-  Images.ninepatch("menu", 0, 16, size_x, size_y - 16)
-  Images.ninepatch("menu", 0,  0, size_x, 20)
+function SettingsFrame:draw(size_x, size_y, scale)
+  pleasure.push_region(0, 0, size_x, size_y)
+  pleasure.scale(scale, scale)
+  -- FIXME doesnt scale content!!!
+  Images.ninepatch("menu", 0, 16, self.size_x, self.size_y - 16)
+  Images.ninepatch("menu", 0,  0, self.size_x, 20)
   love.graphics.print("Settings:", 6, 4)
 
   for i, element in ipairs(self._ui) do
@@ -64,6 +67,7 @@ function SettingsFrame:draw(size_x, size_y)
     try_invoke(element, "draw", self)
     pleasure.pop_region()
   end
+  pleasure.pop_region()
 end
 
 function SettingsFrame:_element_bounds(index)

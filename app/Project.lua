@@ -1,3 +1,5 @@
+local assertf = require "assertf"
+
 local Project = {}
 Project.__index = Project
 
@@ -6,6 +8,7 @@ Project._kind = ";Project;"
 setmetatable(Project, {
   __call = function (_, project)
     assert(type(project) == "table", "Project constructor must be a table.")
+    project._version = project._version or "legacy"
     Project.typecheck(project, "Project constructor")
     setmetatable(project, Project)
 
@@ -24,6 +27,7 @@ function Project:prepare(app)
 end
 
 function Project.typecheck(obj, where)
+  assertf(type(obj._version) == "string", "Error in %s: Missing/invalid property: '_version' must be a versioning string.", where)
 end
 
 function Project.is(obj)
@@ -91,7 +95,7 @@ function Project:serialize()
     append(result, "}\n\n")
   end
 
-  append(result, "return Project {\n")
+  append(result, "return Project {\n  _version = %q;\n", self._version)
   if viewport then
     append(result, "  viewport = %s;\n", viewport:_serialize())
   end

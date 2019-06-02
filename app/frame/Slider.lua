@@ -1,6 +1,5 @@
 local Frame                   = require "Frame"
 local clamp                   = require "math.clamp"
-local MouseButton             = require "const.MouseButton"
 local Signal                  = require "Signal"
 local NumberKind              = require "Kind.Number"
 local IOs                     = require "IOs"
@@ -67,7 +66,7 @@ function SliderFrame:refresh()
 end
 
 function SliderFrame:mousepressed(_, my, button)
-  if button ~= MouseButton.LEFT then return end
+  if button ~= 1 then return end
   self.pct = clamp(1 - my/self.size_y, 0, 1)
   self:refresh()
 end

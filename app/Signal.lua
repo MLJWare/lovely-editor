@@ -57,10 +57,10 @@ function Signal:unlisten(listener, prop, callback)
   end
 end
 
-function Signal:inform(a, b, c, d, e, f, g)
+function Signal:inform(a, b, c, d, e, f, g, h)
   local listeners = self.listeners
   for i = 1, #listeners, 3 do
-    listeners[i + 2](listeners[i], listeners[i + 1], a, b, c, d, e, f, g)
+    listeners[i + 2](listeners[i], listeners[i + 1], a, b, c, d, e, f, g, h)
   end
 end
 

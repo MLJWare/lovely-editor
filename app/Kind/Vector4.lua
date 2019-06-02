@@ -9,6 +9,7 @@ local tmp_vec4 = {0,0,0,0}
 
 return {
   is = is;
+  IS_VECTOR = 4;
   to_shader_value = function (x, y, z, w)
     if is(x, y, z, w) then
       tmp_vec4[1] = x

@@ -5,7 +5,7 @@ local EditImageKind           = require "Kind.EditImage"
 local StringKind              = require "Kind.String"
 local NumberKind              = require "Kind.Number"
 local Vector4Kind             = require "Kind.Vector4"
-local MouseButton             = require "const.MouseButton"
+local VectorNKind             = require "Kind.VectorN"
 local PixelFrame              = require "frame.Pixel"
 local pleasure                = require "pleasure"
 local Popup                   = require "Popup"
@@ -199,12 +199,18 @@ function app.pin_color(kind)
   end
 end
 
-function app.show_popup(frame, pos_x, pos_y)
+function app.show_popup(frame, pos_x, pos_y, allow_outside)
   local display_size_x, display_size_y = love.graphics.getDimensions()
+  pos_x = pos_x or (display_size_x - frame.size_x)/2
+  pos_y = pos_y or (display_size_y - frame.size_y)/2
+  if not allow_outside then
+    pos_x, pos_y = frame:_pos(pos_x, pos_y)
+  end
+
   local popup = Popup {
     frame = frame;
-    pos_x = pos_x or (display_size_x-frame.size_x)/2;
-    pos_y = pos_y or (display_size_y-frame.size_y)/2;
+    pos_x = pos_x;
+    pos_y = pos_y;
   }
   table.insert(app.popups, popup)
   frame._focus_handler = app.focus_handler
@@ -282,7 +288,7 @@ function app.mousepressed(mx, my, button)
     if  0 <= dx and dx < frame.size_x
     and 0 <= dy and dy < frame.size_y then
       try_invoke(top.frame, "mousepressed", dx, dy, button)
-      if button == MouseButton.LEFT then
+      if button == 1 then
         app.popup_pressed1 = top
       end
     else
@@ -297,7 +303,7 @@ function app.mousepressed(mx, my, button)
   local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views)
 
   if app.global_mode() then
-    if button == MouseButton.LEFT then
+    if button == 1 then
       local pin_view, pin_index = _pin_gives_at(mx, my)
       local pin_above = pin_view and is_above(pin_view, view)
       if pin_above then
@@ -323,7 +329,7 @@ function app.mousepressed(mx, my, button)
         app._push_to_top(app.view_dragged)
       end
 
-    elseif button == MouseButton.RIGHT and view then
+    elseif button == 2 and view then
       if not view.anchored then
         app.project.viewport:lock_view(view)
       else
@@ -331,14 +337,14 @@ function app.mousepressed(mx, my, button)
       end
     end
     return
-  elseif button == MouseButton.RIGHT then
+  elseif button == 2 then
     app.open_context_menu(mx, my, view)
     return
   end
 
-  if button == MouseButton.LEFT   then app.view_pressed1 = view end
-  if button == MouseButton.RIGHT  then app.view_pressed2 = view end
-  if button == MouseButton.MIDDLE then app.view_pressed3 = view end
+  if button == 1 then app.view_pressed1 = view end
+  if button == 2 then app.view_pressed2 = view end
+  if button == 3 then app.view_pressed3 = view end
   if view then
     local pos_x, pos_y
         , _, _
@@ -349,8 +355,8 @@ end
 
 local function compatible(give_kind, take_kind)
   if give_kind == take_kind then return true end
-  return give_kind == EditImageKind
-     and take_kind == ImageKind
+  return (take_kind == VectorNKind and give_kind.IS_VECTOR)
+      or (give_kind == EditImageKind and take_kind == ImageKind)
 end
 
 function app.mousereleased(mx, my, button)
@@ -381,20 +387,20 @@ function app.mousereleased(mx, my, button)
     return
   end
 
-  if button == MouseButton.LEFT then
+  if button == 1 then
     app.view_dragged = nil
     if app.view_pressed1 then
       local pos_x, pos_y, _, _, scale = app.project.viewport:view_bounds(app.view_pressed1)
       try_invoke(app.view_pressed1.frame, "mousereleased", (mx - pos_x)/scale, (my - pos_y)/scale, button)
     end
     app.view_pressed1 = nil
-  elseif button == MouseButton.RIGHT then
+  elseif button == 2 then
     if app.view_pressed2 then
       local pos_x, pos_y, _, _, scale = app.project.viewport:view_bounds(app.view_pressed2)
       try_invoke(app.view_pressed2.frame, "mousereleased", (mx - pos_x)/scale, (my - pos_y)/scale, button)
     end
     app.view_pressed2 = nil
-  elseif button == MouseButton.MIDDLE then
+  elseif button == 3 then
     if app.view_pressed3 then
       local pos_x, pos_y, _,_, scale = app.project.viewport:view_bounds(app.view_pressed3)
       try_invoke(app.view_pressed3.frame, "mousereleased", (mx - pos_x)/scale, (my - pos_y)/scale, button)
@@ -427,7 +433,7 @@ function app.mousemoved(mx, my, dx, dy)
   local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views)
   if app.global_mode() then
     local drag = app.view_dragged
-    if app.mouse.isDown(MouseButton.MIDDLE) then
+    if app.mouse.isDown(3) then
       app.project.viewport:pan_viewport(dx, dy)
     elseif drag then
       app.project.viewport:move_view(drag, dx, dy)
@@ -522,7 +528,7 @@ function app.open_context_menu(mx, my, view)
   else
     menu = app.menu.default
   end
-  app.show_popup(menu, menu:_pos(mx, my))
+  app.show_popup(menu, mx, my)
 end
 
 function app.update(dt)
@@ -530,6 +536,8 @@ function app.update(dt)
     try_invoke(view.frame, "update", dt)
   end
 end
+
+local bez = love.math.newBezierCurve(0,0, 0,0, 0,0, 0,0)
 
 local function draw_link(from_x, from_y, to_x, to_y, kind)
   love.graphics.push()
@@ -543,7 +551,7 @@ local function draw_link(from_x, from_y, to_x, to_y, kind)
   love.graphics.setLineStyle("smooth")
 
   local dx = (to_x - from_x)/2
-  local bez, x1, y1, x2, y2
+  local x1, y1, x2, y2
   if dx > 0 then
     x1, y1 = from_x + dx, from_y
     x2, y2 = to_x   - dx, to_y
@@ -552,10 +560,11 @@ local function draw_link(from_x, from_y, to_x, to_y, kind)
     x1, y1 = from_x - dx, from_y + dy*2
     x2, y2 = to_x   + dx, to_y   - dy*2
   end
-  bez = love.math.newBezierCurve(from_x, from_y, x1, y1, x2, y2, to_x, to_y)
+  bez:setControlPoint(1, from_x, from_y)
+  bez:setControlPoint(2, x1, y1)
+  bez:setControlPoint(3, x2, y2)
+  bez:setControlPoint(4, to_x, to_y)
   love.graphics.line(bez:render())
-  bez:release()
-
   love.graphics.pop()
 end
 
@@ -682,30 +691,33 @@ function app.draw()
   -- draw views
   local views    = app.project.views
   local viewport = app.project.viewport
+
   for i = #views, 1, -1 do
     local view = views[i]
     local frame = view.frame
 
-    if view.anchored then
-      love.graphics.setColor(0.5, 0.0, 0.0)
-    else
-      love.graphics.setColor(0.0, 0.5, 1.0)
-    end
-    love.graphics.setLineStyle("rough")
-    love.graphics.setLineWidth(2*pad)
-
     local pos_x, pos_y, size_x, size_y, scale = viewport:view_bounds(view)
-
     local x1, y1 = pos_x - pad, pos_y - pad
-    love.graphics.rectangle("line", x1, y1, size_x + 2*pad, size_y + 2*pad)
 
-    local view_id = view:id()
-    local w = text_width(view_id)
-    local h = font_height()
+    if show_connectors then
+      if view.anchored then
+        love.graphics.setColor(0.5, 0.0, 0.0)
+      else
+        love.graphics.setColor(0.0, 0.5, 1.0)
+      end
+      love.graphics.setLineStyle("rough")
+      love.graphics.setLineWidth(2*pad)
 
-    love.graphics.rectangle("fill", x1 - pad, y1 - h, w + 2*pad, h)
-    love.graphics.setColor(1.0, 1.0, 1.0)
-    love.graphics.print(view_id, x1, y1 - h)
+      love.graphics.rectangle("line", x1, y1, size_x + 2*pad, size_y + 2*pad)
+
+      local view_id = view:id()
+      local w = text_width(view_id)
+      local h = font_height()
+
+      love.graphics.rectangle("fill", x1 - pad, y1 - h, w + 2*pad, h)
+      love.graphics.setColor(1.0, 1.0, 1.0)
+      love.graphics.print(view_id, x1, y1 - h)
+    end
 
     if type(frame) == "table" and type(frame.draw) == "function" then
       pleasure.push_region()

@@ -69,18 +69,6 @@ function ToolboxFrame.refresh_color(_, _, r, g, b, a)
   PropertyStore.set("core.graphics", "paint.color", color)
 end
 
-function ToolboxFrame:buttons()
-  local rows = math.floor((self.size_x - PAD)/BTN_OFFSET_X)
-
-  return coroutine.wrap(function()
-    for i = 0, #Toolbox - 1 do
-      local x =           ((i + 1)%rows)*BTN_OFFSET_X + PAD
-      local y = math.floor(i/rows)*BTN_OFFSET_Y + PAD
-      coroutine.yield(i + 1, x, y)
-    end
-  end)
-end
-
 local function get_rgba()
   return unpack_color(PropertyStore.get("core.graphics", "paint.color"))
 end
@@ -95,16 +83,19 @@ function ToolboxFrame:draw(size_x, size_y, scale)
   love.graphics.setColor(get_rgba())
   love.graphics.rectangle("fill", PAD, PAD, BTN_WIDTH, BTN_HEIGHT)
 
-  for i, x, y in self:buttons() do
-    self:_draw_button(i, x, y)
+  local active_tool = PropertyStore.get("core.graphics", "paint.tool")
+  local rows = math.floor((self.size_x - PAD)/BTN_OFFSET_X)
+  for i = 1, #Toolbox do
+    local x = (i%rows)*BTN_OFFSET_X + PAD
+    local y = math.floor((i-1)/rows)*BTN_OFFSET_Y + PAD
+    self:_draw_button(i, x, y, active_tool)
   end
   love.graphics.pop()
 end
 
-function ToolboxFrame._draw_button(_, index, x, y)
+function ToolboxFrame._draw_button(_, index, x, y, active_tool)
   local tool = Toolbox[index]
-  local active = PropertyStore.get("core.graphics", "paint.tool") == tool
-  if active then
+  if active_tool == tool then
     love.graphics.setColor(1, 1, 1)
     Images.draw("button-pressed", x, y)
     Images.draw(tool.id, x, y)
@@ -123,10 +114,13 @@ end
 function ToolboxFrame:mousepressed(mx, my, button)
   if button ~= 1 then return end
 
-  for index, x, y in self:buttons() do
+  local rows = math.floor((self.size_x - PAD)/BTN_OFFSET_X)
+  for index = 1, #Toolbox do
+    local x = (index%rows)*BTN_OFFSET_X + PAD
+    local y = math.floor((index-1)/rows)*BTN_OFFSET_Y + PAD
     if btn_contains(x, y, mx, my) then
       PropertyStore.set("core.graphics", "paint.tool", Toolbox[index])
-      break
+      return
     end
   end
 end

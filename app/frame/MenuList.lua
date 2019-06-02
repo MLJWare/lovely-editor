@@ -1,6 +1,5 @@
 local Frame                   = require "Frame"
 local Images                  = require "Images"
-local MouseButton             = require "const.MouseButton"
 local find_max                = require "fn.find_max"
 local try_invoke              = require "pleasure.try".invoke
 
@@ -65,18 +64,6 @@ function MenuListFrame.is(obj)
   and meta._kind:find(";MenuListFrame;")
 end
 
-function MenuListFrame:_pos(mx, my)
-  local display_width, display_height = love.graphics.getDimensions()
-
-  local width  = self.size_x
-  local height = self.size_y
-
-  local x = math.min(mx, display_width  - width)
-  local y = math.min(my, display_height - height)
-
-  return x, y
-end
-
 function MenuListFrame:option_at(mx, my)
   local row_size_x = self.row_size_x
   local row_size_y = self.row_size_y
@@ -98,7 +85,7 @@ function MenuListFrame:_is_disabled(option)
 end
 
 function MenuListFrame:mousepressed(mx, my, button)
-  if button ~= MouseButton.LEFT then return end
+  if button ~= 1 then return end
   local option = self:option_at(mx, my)
   if not option or self:_is_disabled(option) then return end
   try_invoke(option, "action", self)

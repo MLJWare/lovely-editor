@@ -7,7 +7,6 @@ local shader_fill             = require "shader_fill"
 local hsv2rgb                 = require "color.hsv2rgb"
 local Signal                  = require "Signal"
 local Vector4Kind             = require "Kind.Vector4"
-local MouseButton             = require "const.MouseButton"
 local IOs                     = require "IOs"
 local PAD = 4
 
@@ -137,7 +136,7 @@ function ColorPickerFrame:set_color_sat_val(sat, val)
 end
 
 function ColorPickerFrame:set_color_alpha(alpha)
-  self._alpha = alpha
+  self._alpha = clamp(alpha, 0, 1)
   self:_on_change()
 end
 
@@ -172,17 +171,18 @@ function ColorPickerFrame:draw(size_x, size_y, _)
   alpha_shader:send("sat", sat)
   alpha_shader:send("val", val)
 
+  love.graphics.setColor(r, g, b)
+  love.graphics.rectangle("fill", INDICATOR_X, INDICATOR_Y, INDICATOR_WIDTH, INDICATOR_HEIGHT)
+
   draw_slider(HUE_X, HUE_Y, SLIDER_WIDTH, SLIDER_HEIGHT, hue_shader, hue/6)
   draw_slider(ALPHA_X, ALPHA_Y, SLIDER_WIDTH, SLIDER_HEIGHT, alpha_shader, alpha)
   draw_field(FIELD_X, FIELD_Y, FIELD_WIDTH, FIELD_HEIGHT, gradient_shader, sat, val)
 
-  love.graphics.setColor(r, g, b)
-  love.graphics.rectangle("fill", INDICATOR_X, INDICATOR_Y, INDICATOR_WIDTH, INDICATOR_HEIGHT)
   love.graphics.pop()
 end
 
 function ColorPickerFrame:mousepressed(mx, my, button)
-  if button ~= MouseButton.LEFT then return end
+  if button ~= 1 then return end
   if contains(HUE_X, HUE_Y, SLIDER_WIDTH, SLIDER_HEIGHT, mx, my) then
     local hue = 6*(1 - (my - HUE_Y)/SLIDER_HEIGHT)
     self:set_color_hue(hue)

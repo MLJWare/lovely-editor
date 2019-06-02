@@ -59,18 +59,25 @@ local load_project = LoadFileFrame {
         SumFrame         = require "frame.math.Sum";
         TickerFrame      = require "frame.math.Ticker";
         TimerFrame       = require "frame.math.Timer";
-        -- other frames
+        -- graphics frames
         ColorPickerFrame = require "frame.ColorPicker";
-        LoveFrame        = require "frame.Love";
         PixelFrame       = require "frame.Pixel";
-        SliderFrame      = require "frame.Slider";
         ShaderFrame      = require "frame.Shader";
         ParticlesFrame   = require "frame.Particles";
-        TextBufferFrame  = require "frame.TextBuffer";
         ToolboxFrame     = require "frame.Toolbox";
-        ViewGroupFrame   = require "frame.ViewGroup";
         TimelineFrame    = require "frame.Timeline";
+        -- control frames
+        SliderFrame      = require "frame.Slider";
+        Vector2Frame     = require "frame.Vector2";
+        VectorSplitFrame = require "frame.VectorSplit";
+        RotationFrame    = require "frame.Rotation";
+        AnglesFrame      = require "frame.Angles";
+        GraphFrame       = require "frame.Graph";
         ConditionalFrame = require "frame.Conditional";
+        -- other frames
+        LoveFrame        = require "frame.Love";
+        TextBufferFrame  = require "frame.TextBuffer";
+        ViewGroupFrame   = require "frame.ViewGroup";
         -- other stuff
         Viewport        = require "Viewport";
         View            = require "View";

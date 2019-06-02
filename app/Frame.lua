@@ -46,6 +46,15 @@ function Frame:clone()
   }
 end
 
+function Frame:_pos(mx, my)
+  local display_size_x, display_size_y = love.graphics.getDimensions()
+
+  local x = math.max(0, math.min(mx, display_size_x - self.size_x))
+  local y = math.max(0, math.min(my, display_size_y - self.size_y))
+
+  return x, y
+end
+
 function Frame:takes_count()
   local takes = self.takes
   return type(takes) == "table" and #takes or 0

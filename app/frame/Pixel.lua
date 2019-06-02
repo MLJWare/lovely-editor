@@ -3,7 +3,6 @@ local shift_is_down           = require "util.shift_is_down"
 local Frame                   = require "Frame"
 local assertf                 = require "assertf"
 local clone                   = require "pleasure.clone"
-local MouseButton             = require "const.MouseButton"
 local PropertyStore           = require "PropertyStore"
 local Signal                  = require "Signal"
 local ImageKind               = require "Kind.Image"
@@ -144,7 +143,7 @@ function PixelFrame:redo()
 end
 
 function PixelFrame:mousepressed(mx, my, button)
-  if button ~= MouseButton.LEFT then return end
+  if button ~= 1 then return end
   self:request_focus()
 
   local tool = self:tool()
@@ -166,7 +165,7 @@ function PixelFrame:mousedragged1(mx, my, dx, dy)
 end
 
 function PixelFrame:mousereleased(mx, my, button)
-  if button ~= MouseButton.LEFT then return end
+  if button ~= 1 then return end
   local tool = self:tool()
   if not tool then return end
 

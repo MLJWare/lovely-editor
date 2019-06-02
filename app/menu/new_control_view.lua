@@ -1,28 +1,35 @@
 local app                     = require "app"
 local View                    = require "View"
 local MenuListFrame           = require "frame.MenuList"
-local ViewGroupFrame          = require "frame.ViewGroup"
 local RotationFrame           = require "frame.Rotation"
+local AnglesFrame             = require "frame.Angles"
+local Vector2Frame            = require "frame.Vector2"
+local VectorSplitFrame        = require "frame.VectorSplit"
 local GraphFrame              = require "frame.Graph"
-local LoveFrame               = require "frame.Love"
 local ConditionalFrame        = require "frame.Conditional"
-local TextBufferFrame         = require "frame.TextBuffer"
-local SettingsFrame           = require "frame.Settings"
 local SliderFrame             = require "frame.Slider"
-local new_math_view           = require "menu.new_math_view"
-local new_control_view        = require "menu.new_control_view"
-local new_graphics_view       = require "menu.new_graphics_view"
 
 return MenuListFrame {
   options = {
     {
-      text   = "New Settings View";
+      text   = "New Slider View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position()
         app.add_view (View {
-          frame = SettingsFrame {
-            size_x = 128;
-            size_y = 128;
+          frame = SliderFrame {};
+          pos_x = popup_x;
+          pos_y = popup_y;
+        })
+      end;
+    };
+    {
+      text   = "New Rotation View";
+      action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
+        app.add_view (View {
+          frame = RotationFrame {
+            size_x = 64;
+            size_y = 64;
           };
           pos_x = popup_x;
           pos_y = popup_y;
@@ -30,13 +37,13 @@ return MenuListFrame {
       end;
     };
     {
-      text   = "New Text Buffer View";
+      text   = "New Angles View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position()
         app.add_view (View {
-          frame = TextBufferFrame {
-            size_x = 128;
-            size_y = 128;
+          frame = AnglesFrame {
+            size_x = 64;
+            size_y = 64;
           };
           pos_x = popup_x;
           pos_y = popup_y;
@@ -44,43 +51,47 @@ return MenuListFrame {
       end;
     };
     {
-      text   = "New Love View";
+      text   = "New Graph View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position()
         app.add_view (View {
-          frame = LoveFrame {};
+          frame = GraphFrame {
+            size_x = 64;
+            size_y = 64;
+          };
           pos_x = popup_x;
           pos_y = popup_y;
         })
       end;
     };
     {
-      text   = "Math Views";
-      action = function (_, _)
-        app.show_popup( new_math_view, app.popup_position())
-      end;
-    };
-    {
-      text   = "Graphics Views";
-      action = function (_, _)
-        app.show_popup( new_graphics_view, app.popup_position())
-      end;
-    };
-    {
-      text   = "Control Views";
-      action = function (_, _)
-        app.show_popup( new_control_view, app.popup_position())
-      end;
-    };
-    {
-      text   = "New Group View";
+      text   = "New VectorSplit View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position()
-        app.add_view(View {
-          frame = ViewGroupFrame {
-            size_x = 128;
-            size_y = 128;
-          };
+        app.add_view (View {
+          frame = VectorSplitFrame {};
+          pos_x = popup_x;
+          pos_y = popup_y;
+        })
+      end;
+    };
+    {
+      text   = "New Vector2 View";
+      action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
+        app.add_view (View {
+          frame = Vector2Frame {};
+          pos_x = popup_x;
+          pos_y = popup_y;
+        })
+      end;
+    };
+    {
+      text   = "New Conditional View";
+      action = function (_, _)
+        local popup_x, popup_y = app.popup_position()
+        app.add_view (View {
+          frame = ConditionalFrame {};
           pos_x = popup_x;
           pos_y = popup_y;
         })

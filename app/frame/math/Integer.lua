@@ -47,7 +47,7 @@ setmetatable(IntegerFrame, {
 
 function IntegerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a number.", where)
+  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Invalid optional property: 'value' must be a number.", where)
 end
 
 function IntegerFrame.is(obj)

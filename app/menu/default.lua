@@ -18,7 +18,7 @@ local load_as_view = LoadFileFrame{
     local frame = app.try_create_frame(format, data)
     if frame then
       frame.filename = filename
-      local popup_x, popup_y = app.popup_position()
+      local popup_x, popup_y = app.popup_position_as_local()
       app.add_view (1, {
         frame = frame;
         pos_x = popup_x;

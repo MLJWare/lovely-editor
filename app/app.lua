@@ -25,6 +25,13 @@ local   alt_is_down           = require "util.alt_is_down"
 
 local try_invoke              = pleasure.try.invoke
 
+local BORDER_PAD = 2
+local BORDER_COLOR_ANCHORED = {0.5, 0.0, 0.0}
+local BORDER_COLOR_NORMAL   = {0.0, 0.5, 1.0}
+
+local RESIZER_SIZE = 5*BORDER_PAD
+local RESIZER_OFFSET = RESIZER_SIZE - 2*BORDER_PAD
+
 local pin_dragged = {
   view = nil;
   index = -1;
@@ -300,8 +307,8 @@ function app.mousepressed(mx, my, button)
     return
   end
 
-  local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views)
-
+  local viewport = app.project.viewport
+  local view = viewport:view_at_global_pos(mx, my, app.project.views, app.global_mode() or app.show_connections)
   if app.global_mode() then
     if button == 1 then
       local pin_view, pin_index = _pin_gives_at(mx, my)
@@ -324,9 +331,19 @@ function app.mousepressed(mx, my, button)
       end
 
       if view and not pin_above then
-        app.view_dragged = view
-        app.focus_handler:request_focus(view)
-        app._push_to_top(app.view_dragged)
+        local do_resize = false
+        if view.frame.resize then
+          local pos2_x, pos2_y, size_x, size_y = viewport:view_bounds(view)
+          do_resize = mx >= pos2_x + size_x - RESIZER_OFFSET
+                  and my >= pos2_y + size_y - RESIZER_OFFSET
+        end
+        if do_resize then
+          print "RESIZE"
+        else
+          app.view_dragged = view
+          app.focus_handler:request_focus(view)
+          app._push_to_top(app.view_dragged)
+        end
       end
 
     elseif button == 2 and view then
@@ -430,7 +447,7 @@ function app.mousemoved(mx, my, dx, dy)
     return
   end
 
-  local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views)
+  local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views, app.global_mode() or app.show_connections)
   if app.global_mode() then
     local drag = app.view_dragged
     if app.mouse.isDown(3) then
@@ -466,6 +483,12 @@ function app.popup_position()
   local popup = app.popups[#app.popups]
   if not popup then return end
   return popup.pos_x, popup.pos_y
+end
+
+function app.popup_position_as_local()
+  local popup = app.popups[#app.popups]
+  if not popup then return end
+  return app.project.viewport:global_to_local_pos(popup.pos_x, popup.pos_y)
 end
 
 function app.global_mode()
@@ -668,15 +691,14 @@ function app.textinput(text)
   end
 end
 
-local pad = 2
-
 function app.draw()
   local display_width, display_height = love.graphics.getDimensions()
   local mx, my = love.mouse.getPosition()
 
   draw_transparency_pattern(display_width, display_height)
 
-  local show_connections = app.global_mode() or app.show_connections
+  local global_mode = app.global_mode()
+  local show_connections = global_mode or app.show_connections
   local show_connectors  = show_connections
 
   if show_connections then
@@ -697,24 +719,24 @@ function app.draw()
     local frame = view.frame
 
     local pos_x, pos_y, size_x, size_y, scale = viewport:view_bounds(view)
-    local x1, y1 = pos_x - pad, pos_y - pad
+    local x1, y1 = pos_x - BORDER_PAD, pos_y - BORDER_PAD
 
     if show_connectors then
       if view.anchored then
-        love.graphics.setColor(0.5, 0.0, 0.0)
+        love.graphics.setColor(BORDER_COLOR_ANCHORED)
       else
-        love.graphics.setColor(0.0, 0.5, 1.0)
+        love.graphics.setColor(BORDER_COLOR_NORMAL)
       end
       love.graphics.setLineStyle("rough")
-      love.graphics.setLineWidth(2*pad)
+      love.graphics.setLineWidth(2*BORDER_PAD)
 
-      love.graphics.rectangle("line", x1, y1, size_x + 2*pad, size_y + 2*pad)
+      love.graphics.rectangle("line", x1, y1, size_x + 2*BORDER_PAD, size_y + 2*BORDER_PAD)
 
       local view_id = view:id()
       local w = text_width(view_id)
       local h = font_height()
 
-      love.graphics.rectangle("fill", x1 - pad, y1 - h, w + 2*pad, h)
+      love.graphics.rectangle("fill", x1 - BORDER_PAD, y1 - h, math.max(size_x + 2*BORDER_PAD, w) + 2*BORDER_PAD, h)
       love.graphics.setColor(1.0, 1.0, 1.0)
       love.graphics.print(view_id, x1, y1 - h)
     end
@@ -727,13 +749,13 @@ function app.draw()
       pleasure.pop_region()
     end
 
-    if frame.resize then
+    if global_mode and frame.resize then
       if view.anchored then
-        love.graphics.setColor(1.0, 0.5, 0.5)
+        love.graphics.setColor(BORDER_COLOR_ANCHORED)
       else
-        love.graphics.setColor(0.7, 1.0, 1.0)
+        love.graphics.setColor(BORDER_COLOR_NORMAL)
       end
-      love.graphics.rectangle("fill", pos_x + size_x, pos_y + size_y, 3*pad, 3*pad)
+      love.graphics.rectangle("fill", pos_x + size_x - RESIZER_OFFSET, pos_y + size_y - RESIZER_OFFSET, RESIZER_SIZE, RESIZER_SIZE)
     end
 
     if show_connectors then

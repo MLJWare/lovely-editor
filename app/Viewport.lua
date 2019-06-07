@@ -54,23 +54,11 @@ function Viewport:position_in_view_space(pos_x, pos_y, view)
        , (pos_y - view.pos_y)/view_scale
 end
 
-function Viewport:view_at_global_pos(pos_x, pos_y, views)
-  local pos2_x, pos2_y, size_x, size_y
-
+function Viewport:view_at_global_pos(pos_x, pos_y, views, include_border)
   for _, view in ipairs(views) do
-     if view.anchored then
-      local frame = view.frame
-      local view_scale = view.scale
-      pos2_x = view.pos_x
-      pos2_y = view.pos_y
-      size_x = frame.size_x*view_scale
-      size_y = frame.size_y*view_scale
-    else
-      pos2_x, pos2_y = self:local_to_global_pos(view.pos_x, view.pos_y)
-      size_x, size_y = self:global_size_of(view)
-    end
+    local pos2_x, pos2_y, size_x, size_y = self:view_bounds(view, include_border)
     if  pos2_x <= pos_x
-    and pos2_y - 20 <= pos_y
+    and pos2_y <= pos_y
     and pos_x < pos2_x + size_x
     and pos_y < pos2_y + size_y then
       return view
@@ -135,18 +123,27 @@ function Viewport:set_viewport_scale(new_scale)
   self.pos_y = mouse_y - (mouse_y - self.pos_y)*delta_scale
 end
 
-function Viewport:view_bounds(view)
+function Viewport:view_bounds(view, include_border)
+  local pos2_x, pos2_y, size_x, size_y, scale
   local view_scale = view.scale
 
   if view.anchored then
     local frame = view.frame
-    return view.pos_x, view.pos_y
-         , frame.size_x*view_scale, frame.size_y*view_scale
-         , view_scale
+    pos2_x = view.pos_x
+    pos2_y = view.pos_y
+    size_x = frame.size_x*view_scale
+    size_y = frame.size_y*view_scale
+    scale = view_scale
+  else
+    pos2_x, pos2_y = self:local_to_global_pos(view.pos_x, view.pos_y)
+    size_x, size_y = self:global_size_of(view)
+    scale = view_scale*self.scale
   end
-  local pos_x, pos_y = self:local_to_global_pos(view.pos_x, view.pos_y)
-  local size_x, size_y = self:global_size_of(view)
-  return pos_x, pos_y, size_x, size_y, view_scale*self.scale
+  if include_border then
+    return pos2_x - 4, pos2_y - 20, size_x + 8, size_y + 28, scale
+  else
+    return pos2_x, pos2_y, size_x, size_y, scale
+  end
 end
 
 function Viewport:view_render_scale(view)

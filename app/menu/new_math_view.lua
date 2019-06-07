@@ -16,7 +16,7 @@ return MenuListFrame {
     {
       text   = "New Integer View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = IntegerFrame {};
           pos_x = popup_x;
@@ -27,7 +27,7 @@ return MenuListFrame {
     {
       text   = "New Number View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = NumberFrame {};
           pos_x = popup_x;
@@ -38,7 +38,7 @@ return MenuListFrame {
     {
       text   = "New Multiply View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = MultiplyFrame {};
           pos_x = popup_x;
@@ -49,7 +49,7 @@ return MenuListFrame {
     {
       text   = "New Divide View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = DivideFrame {};
           pos_x = popup_x;
@@ -60,7 +60,7 @@ return MenuListFrame {
     {
       text   = "New Modulo View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = ModuloFrame {};
           pos_x = popup_x;
@@ -71,7 +71,7 @@ return MenuListFrame {
     {
       text   = "New Sum View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = SumFrame {};
           pos_x = popup_x;
@@ -82,7 +82,7 @@ return MenuListFrame {
     {
       text   = "New Subtract View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = SubtractFrame {};
           pos_x = popup_x;
@@ -93,7 +93,7 @@ return MenuListFrame {
     {
       text   = "New Timer View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = TimerFrame {};
           pos_x = popup_x;
@@ -104,7 +104,7 @@ return MenuListFrame {
     {
       text   = "New Ticker View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = TickerFrame {};
           pos_x = popup_x;

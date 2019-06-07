@@ -14,7 +14,7 @@ return MenuListFrame {
     {
       text   = "New Slider View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = SliderFrame {};
           pos_x = popup_x;
@@ -25,7 +25,7 @@ return MenuListFrame {
     {
       text   = "New Rotation View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = RotationFrame {
             size_x = 64;
@@ -39,7 +39,7 @@ return MenuListFrame {
     {
       text   = "New Angles View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = AnglesFrame {
             size_x = 64;
@@ -53,7 +53,7 @@ return MenuListFrame {
     {
       text   = "New Graph View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = GraphFrame {
             size_x = 64;
@@ -67,7 +67,7 @@ return MenuListFrame {
     {
       text   = "New VectorSplit View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = VectorSplitFrame {};
           pos_x = popup_x;
@@ -78,7 +78,7 @@ return MenuListFrame {
     {
       text   = "New Vector2 View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = Vector2Frame {};
           pos_x = popup_x;
@@ -89,7 +89,7 @@ return MenuListFrame {
     {
       text   = "New Conditional View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = ConditionalFrame {};
           pos_x = popup_x;

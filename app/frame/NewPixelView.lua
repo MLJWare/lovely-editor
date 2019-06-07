@@ -64,7 +64,7 @@ setmetatable(NewPixelViewFrame, {
         local height = tonumber(edit_height.text)
         if not height or height <= 0 then height = DEFAULT_VIEW_HEIGHT end
 
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (1, {
           frame = PixelFrame {
             data = love.image.newImageData(width, height);

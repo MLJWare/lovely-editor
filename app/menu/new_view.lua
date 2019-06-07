@@ -2,13 +2,9 @@ local app                     = require "app"
 local View                    = require "View"
 local MenuListFrame           = require "frame.MenuList"
 local ViewGroupFrame          = require "frame.ViewGroup"
-local RotationFrame           = require "frame.Rotation"
-local GraphFrame              = require "frame.Graph"
 local LoveFrame               = require "frame.Love"
-local ConditionalFrame        = require "frame.Conditional"
 local TextBufferFrame         = require "frame.TextBuffer"
 local SettingsFrame           = require "frame.Settings"
-local SliderFrame             = require "frame.Slider"
 local new_math_view           = require "menu.new_math_view"
 local new_control_view        = require "menu.new_control_view"
 local new_graphics_view       = require "menu.new_graphics_view"
@@ -18,7 +14,7 @@ return MenuListFrame {
     {
       text   = "New Settings View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = SettingsFrame {
             size_x = 128;
@@ -32,7 +28,7 @@ return MenuListFrame {
     {
       text   = "New Text Buffer View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = TextBufferFrame {
             size_x = 128;
@@ -46,7 +42,7 @@ return MenuListFrame {
     {
       text   = "New Love View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
           frame = LoveFrame {};
           pos_x = popup_x;
@@ -75,7 +71,7 @@ return MenuListFrame {
     {
       text   = "New Group View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View {
           frame = ViewGroupFrame {
             size_x = 128;

@@ -47,7 +47,7 @@ local data = {
   {1, 1, 0, 1}, " 100";
 }
 function ViewGroupFrame:draw(size_x, _, scale)
-  local font = fonts[math.max(1, math.ceil(scale))]
+  local font = fonts[math.max(1, math.min(#fonts, math.ceil(scale)))]
   scale = scale/(font[1]/16)
   text:setFont(font[2])
   text:setf(data, size_x/scale, "left", 10, 10)

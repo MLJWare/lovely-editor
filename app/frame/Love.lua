@@ -4,7 +4,7 @@ local IOs                     = require "IOs"
 local sandbox                 = require "util.sandbox"
 local NumberKind              = require "Kind.Number"
 local StringKind              = require "Kind.String"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 
 local LoveFrame = {}
 LoveFrame.__index = LoveFrame
@@ -78,7 +78,10 @@ function LoveFrame:check_action(action_id)
 end
 
 function LoveFrame:on_save()
-  return self._canvas:newImageData():encode("png")
+  local data = self._canvas:newImageData()
+  local result = data:encode("png")
+  data:release()
+  return result
 end
 
 function LoveFrame:refresh_tick()
@@ -208,6 +211,10 @@ end
 
 function LoveFrame.serialize()
   return "LoveFrame {}"
+end
+
+function LoveFrame.id(_)
+  return "Love"
 end
 
 return LoveFrame

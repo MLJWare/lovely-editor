@@ -1,4 +1,4 @@
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 
 local FocusHandler = {}
 FocusHandler.__index = FocusHandler
@@ -22,6 +22,13 @@ function FocusHandler:unassign(item)
   end
 end
 
+function FocusHandler:ensure_unfocused(item)
+    if not item then return end
+    if self._has_focus == item then
+        self._has_focus = nil
+    end
+end
+
 function FocusHandler:request_focus(item)
   if item ~= self._has_focus then
     local has_focus = self._has_focus
@@ -29,11 +36,11 @@ function FocusHandler:request_focus(item)
       try_invoke(has_focus, "focuslost")
       self._has_focus = nil
     end
-  end
-  if type(item) == "table" then
-    self._has_focus = item
-    try_invoke(item, "focusgained")
-    return true
+    if type(item) == "table" then
+      self._has_focus = item
+      try_invoke(item, "focusgained")
+      return true
+    end
   end
   return false
 end

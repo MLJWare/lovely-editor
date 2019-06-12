@@ -5,7 +5,7 @@ local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pack_color              = require "util.color.pack"
 local pleasure                = require "pleasure"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 
 local YesNoCancelFrame = {}
 YesNoCancelFrame.__index = YesNoCancelFrame

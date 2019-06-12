@@ -6,7 +6,7 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 local YesNoFrame              = require "frame.YesNo"
 
 local _info_ = {}
@@ -51,7 +51,7 @@ setmetatable(SaveFileFrame, {
         if love.filesystem.getInfo(filename, _info_) then
           app.show_popup(YesNoFrame {
             title = "Override?";
-            text  = ("File %q already exists. Override?"):format(filename);
+            text  = (("File %q already exists. Override?"):format(filename));
             option_yes = function ()
               frame:_save_and_close(filename)
             end;
@@ -125,6 +125,16 @@ function SaveFileFrame:_element_bounds(index)
     local y = size_y - PAD_Y - btn_size_y
     return x, y, btn_size_x, btn_size_y
   end
+end
+
+function SaveFileFrame:init_popup()
+  self:request_focus()
+
+  local ui = self._ui
+  for i = 1, #ui do
+    ui[i].focused = false
+  end
+  self._edit.focused = true
 end
 
 function SaveFileFrame:mousepressed(mx, my, button)

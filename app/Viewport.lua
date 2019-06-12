@@ -1,4 +1,6 @@
-local Viewport = {}
+local Viewport = {
+  show_connections = true;
+}
 Viewport.__index = Viewport
 
 setmetatable(Viewport, {
@@ -19,7 +21,8 @@ function Viewport:_serialize()
     pos_x = %s;
     pos_y = %s;
     scale = %s;
-  }]]):format(self.pos_x, self.pos_y, self.scale)
+    show_connections = %s;
+  }]]):format(self.pos_x, self.pos_y, self.scale, self.show_connections)
 end
 
 function Viewport:set_position(x, y)

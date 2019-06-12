@@ -1,22 +1,12 @@
-local pack_color              = require "util.color.pack"
-local unpack_color            = require "util.color.unpack"
-local paint_iter              = require "paint_iter"
-
 local Action = {}
 Action.__index = Action
 
 function Action:undo(buffer)
-  local pixels = self._pixels
-  for i, x, y in paint_iter.rectangle(self._x1, self._y1, self._x2, self._y2, buffer:getDimensions()) do
-    buffer:setPixel(x, y, unpack_color(pixels[i]))
-  end
+  -- TODO
 end
 
 function Action:redo(buffer)
-  local r, g, b, a = unpack_color(self._color)
-  for _, x, y in paint_iter.rectangle(self._x1, self._y1, self._x2, self._y2, buffer:getDimensions()) do
-    buffer:setPixel(x, y, r, g, b, a)
-  end
+  -- TODO
 end
 
 --[[
@@ -38,9 +28,8 @@ format: {
 
 function Action.apply(buffer, line, remove_count, ...)
   for i = 0, remove_count do
-
-
-
+    -- TODO
+  end
   return setmetatable({line, remove_count, ...}, Action)
 end
 

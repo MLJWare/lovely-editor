@@ -9,7 +9,7 @@ local ImageKind               = require "Kind.Image"
 local EditImageKind           = require "Kind.EditImage"
 local EditImage               = require "packet.EditImage"
 local IOs                     = require "IOs"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 
 local PixelFrame = {}
 PixelFrame.__index = PixelFrame
@@ -99,7 +99,7 @@ end
 function PixelFrame:draw(size_x, size_y, scale)
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(self.image_edit.value, 0, 0, 0, scale, scale)
-  try_invoke(self:tool(), "draw_hint", self.image_edit.value, size_x, size_y, scale)
+  try_invoke(self:tool(), "draw_hint", self.image_edit.data, size_x, size_y, scale)
 end
 
 function PixelFrame.tool()
@@ -115,9 +115,9 @@ end
 
 function PixelFrame:refresh_internal()
   local image = self.image_edit
-  if image ~= self.image then
+  --if image ~= self.image then
     --image:inform_except(self) -- FIXME!!!!!
-  end
+  --end
   self:refresh(image)
 end
 

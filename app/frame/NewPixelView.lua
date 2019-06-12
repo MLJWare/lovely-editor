@@ -7,7 +7,7 @@ local Frame                   = require "Frame"
 local PixelFrame              = require "frame.Pixel"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = pleasure.try.invoke
 local integer_filter          = require "input.filter.non-negative-integer"
 local NewPixelViewFrame = {}
 NewPixelViewFrame.__index = NewPixelViewFrame
@@ -38,7 +38,7 @@ setmetatable(NewPixelViewFrame, {
       text = "";
       size_x = frame.size_x/2 - OFFSET_X*2;
       size_y = 20;
-      hint = ("width (%d)"):format(DEFAULT_VIEW_WIDTH);
+      hint = (("width (%d)"):format(DEFAULT_VIEW_WIDTH));
       filter = integer_filter;
     }
     frame._edit_width = edit_width
@@ -47,7 +47,7 @@ setmetatable(NewPixelViewFrame, {
       text = "";
       size_x = frame.size_x/2 - OFFSET_X*2;
       size_y = 20;
-      hint = ("height (%d)"):format(DEFAULT_VIEW_HEIGHT);
+      hint = (("height (%d)"):format(DEFAULT_VIEW_HEIGHT));
       filter = integer_filter;
     }
     frame._edit_height = edit_height

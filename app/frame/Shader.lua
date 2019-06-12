@@ -9,7 +9,7 @@ local ImageKind               = require "Kind.Image"
 local NumberKind              = require "Kind.Number"
 local Vector4Kind             = require "Kind.Vector4"
 local StringKind              = require "Kind.String"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 
 local ShaderFrame = {}
 ShaderFrame.__index = ShaderFrame
@@ -233,9 +233,9 @@ function ShaderFrame:detect_uniforms(code)
   for statement in code:gmatch "[^;]+" do
     local words = statement:gmatch"[a-zA-Z0-9_,]+"
     for word in words do
-      if word ~= "uniform" and word ~= "extern" then goto next_statement end
+      if word ~= "uniform" and word ~= "extern" then break end
       local kind = known_uniform_kinds[ words() ]
-      if not kind then goto next_statement end
+      if not kind then break end
       for id in words():gmatch"[a-zA-Z0-9_]+" do
         local index = #uniform_ids2 + 1
         uniform_ids2  [index] = id
@@ -243,7 +243,6 @@ function ShaderFrame:detect_uniforms(code)
         uniform_kind_by_id[id] = kind
       end
     end
-    ::next_statement::
   end
 
   local uniform_ids = self._uniform_ids
@@ -276,6 +275,10 @@ function ShaderFrame:draw(_, _, scale)
 
   love.graphics.setColor(1, 1, 1)
   love.graphics.draw(self.image.value, 0, 0, 0, scale, scale)
+end
+
+function ShaderFrame.id(_)
+  return "Shader"
 end
 
 function ShaderFrame.serialize()

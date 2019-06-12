@@ -5,8 +5,9 @@ local Signal                  = require "Signal"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
 local font_writer             = require "util.font_writer"
+local fontstore              = require "fontstore"
 
-local font = love.graphics.newFont(12)
+local font = fontstore.default[12]
 
 local ModuloFrame = {}
 ModuloFrame.__index = ModuloFrame

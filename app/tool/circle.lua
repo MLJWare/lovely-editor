@@ -4,7 +4,7 @@ local unpack_color            = require "util.color.unpack"
 
 return {
   id = "tool.circle";
-  draw_hint = function (self, _, data, scale) -- might need to swap `_` and `data`
+  draw_hint = function (self, data, _, _, scale)
     if data ~= self._owner then return end
     local cx, cy = self._cx, self._cy
     local  x,  y = self._hint_x, self._hint_y

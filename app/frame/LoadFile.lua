@@ -7,7 +7,7 @@ local Images                  = require "Images"
 local MessageFrame            = require "frame.Message"
 local pleasure                = require "pleasure"
 local pack_color              = require "util.color.pack"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = pleasure.try.invoke
 
 local _info_ = {}
 
@@ -131,6 +131,16 @@ function LoadFileFrame:_element_bounds(index)
     local y = size_y - PAD_Y - btn_size_y
     return x, y, btn_size_x, btn_size_y
   end
+end
+
+function LoadFileFrame:init_popup()
+  self:request_focus()
+
+  local ui = self._ui
+  for i = 1, #ui do
+    ui[i].focused = false
+  end
+  self._edit.focused = true
 end
 
 function LoadFileFrame:mousepressed(mx, my, button)

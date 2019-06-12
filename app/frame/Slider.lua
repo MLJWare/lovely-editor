@@ -56,6 +56,8 @@ function SliderFrame:draw(size_x, size_y, _)
   love.graphics.setColor(1, 1, 1)
   love.graphics.rectangle( "fill", 0, knob_y, size_x, knob_h)
   love.graphics.setColor(0.6, 0.6, 0.6)
+  love.graphics.setLineWidth(1)
+  love.graphics.setLineStyle("rough")
   love.graphics.rectangle( "line", 0.5, knob_y + 0.5, size_x - 1, knob_h - 1)
 
   love.graphics.pop()

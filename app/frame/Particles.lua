@@ -6,7 +6,7 @@ local ImageKind               = require "Kind.Image"
 local NumberKind              = require "Kind.Number"
 local Vector2Kind             = require "Kind.Vector2"
 local VectorNKind             = require "Kind.VectorN"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 local clamp                   = require "math.clamp"
 
 local FULL_ROTATION = 2*math.pi

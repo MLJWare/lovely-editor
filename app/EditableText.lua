@@ -8,6 +8,7 @@ local unpack_color            = require "util.color.unpack"
 local clamp                   = require "math.clamp"
 local minmax                  = require "math.minmax"
 local unicode                 = require "unicode"
+local fontstore               = require "fontstore"
 
 local function is_ctrl_down () return love.keyboard.isDown("lctrl" , "rctrl" ) end
 local function is_shift_down() return love.keyboard.isDown("lshift", "rshift") end
@@ -20,7 +21,7 @@ local EditableText = {
   text_color         = pack_color(0, 0, 0, 1.0);
   hint_color         = pack_color(0, 0, 0, 0.3);
   double_click_delay = 0.5;
-  font               = love.graphics.newFont(12);
+  font               = fontstore.default[12];
 }
 EditableText.__index = EditableText
 

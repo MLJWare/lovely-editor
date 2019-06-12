@@ -5,8 +5,8 @@ local Signal                  = require "Signal"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
 local font_writer             = require "util.font_writer"
-
-local font = love.graphics.newFont(12)
+local fontstore               = require "fontstore"
+local font = fontstore.default[12]
 
 local SubtractFrame = {}
 SubtractFrame.__index = SubtractFrame

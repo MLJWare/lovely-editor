@@ -9,7 +9,7 @@ local NumberKind              = require "Kind.Number"
 local StringKind              = require "Kind.String"
 local font_writer             = require "util.font_writer"
 local generate_clause         = require "frame.comp.generate_clause"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = pleasure.try.invoke
 
 local default_condition = function () return true end
 

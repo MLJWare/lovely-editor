@@ -2,9 +2,9 @@ local font_writer             = require "util.font_writer"
 local Images                  = require "Images"
 local assertf                 = require "assertf"
 local unpack_color            = require "util.color.unpack"
-local is_non_negative         = require "pleasure.is".non_negative_number
-local font = love.graphics.newFont(12)
-
+local is_non_negative         = require ("pleasure.is").non_negative_number
+local fontstore               = require "fontstore"
+local font = fontstore.default[12]
 
 local Button = {}
 Button.__index = Button

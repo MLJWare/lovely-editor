@@ -367,7 +367,7 @@ function TextBufferFrame:id()
   if filename then
     return filename:match("[^/]*$")
   end
-  return Frame.id(self)
+  return "TextBuffer"
 end
 
 return TextBufferFrame

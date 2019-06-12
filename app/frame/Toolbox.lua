@@ -6,7 +6,7 @@ local pack_color              = require "util.color.pack"
 local unpack_color            = require "util.color.unpack"
 local Vector4Kind             = require "Kind.Vector4"
 
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 
 local IOs                     = require "IOs"
 

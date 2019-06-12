@@ -1,7 +1,8 @@
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local find_max                = require "fn.find_max"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
+local fontstore               = require "fontstore"
 
 local MenuListFrame = {}
 MenuListFrame.__index = MenuListFrame
@@ -13,7 +14,7 @@ MenuListFrame.x = -1
 MenuListFrame.y = -1
 
 local menu_pad = 4
-local font = love.graphics.newFont(12)
+local font = fontstore.default[12]
 
 local function _option_text(i, option)
   if i == 10 then

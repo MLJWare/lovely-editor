@@ -1,6 +1,6 @@
 local assertf                 = require "assertf"
-local try_invoke              = require "pleasure.try".invoke
-local is_non_negative         = require "pleasure.is".non_negative_number
+local try_invoke              = require ("pleasure.try").invoke
+local is_non_negative         = require ("pleasure.is").non_negative_number
 
 local Frame = {}
 Frame.__index = Frame

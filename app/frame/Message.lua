@@ -5,7 +5,7 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = pleasure.try.invoke
 
 local MessageFrame = {}
 MessageFrame.__index = MessageFrame

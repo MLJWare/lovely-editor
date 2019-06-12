@@ -41,7 +41,7 @@ function View.is(obj)
 end
 
 function View:id()
-  return self._id or self.frame:id()
+  return self._id or (" %s"):format(self.frame:id())
 end
 
 function View:_serialize(frame2index, frames)

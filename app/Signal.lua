@@ -1,5 +1,5 @@
 local assertf                 = require "assertf"
-local is_callable             = require "pleasure.is".callable
+local is_callable             = require ("pleasure.is").callable
 
 local Signal = {}
 Signal.__index = Signal

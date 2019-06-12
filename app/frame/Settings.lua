@@ -3,7 +3,7 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require "pleasure.try".invoke
+local try_invoke              = require ("pleasure.try").invoke
 local settings                = require "settings"
 
 local SettingsFrame = {}
@@ -28,7 +28,7 @@ setmetatable(SettingsFrame, {
       text = "";
       size_x = frame.size_x - OFFSET_X*2;
       size_y = 20;
-      hint = "filename";
+      hint = "text";
     }
     frame._edit = edit
 

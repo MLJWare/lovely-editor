@@ -41,7 +41,7 @@ local EMPTY = {}
 
 local settings = require "settings"
 
-local default_checker_color      = pack_color(0.8, 0.8, 0.8, 1.0)
+local default_checker_color      = pack_color(0.8, 0.8, 0.8, 1)
 local default_transparency_color = pack_color(0.6, 0.6, 0.6, 1.0)
 local default_checker_scale      = 8
 
@@ -54,14 +54,13 @@ local app = {
     };
     views  = {};
     _links = {};
+    show_connections = true;
   };
   popups = {};
 
   menu   = {};
 
   focus_handler = FocusHandler ();
-
-  show_connections = true;
 
   view_dragged   = nil;
   view_pressed1  = nil;
@@ -229,6 +228,7 @@ function app.show_popup(frame, pos_x, pos_y, allow_outside)
     end
     popup.frame = nil
   end
+  try_invoke(frame, "init_popup")
 end
 
 function app.keypressed(key, scancode, isrepeat)
@@ -238,7 +238,8 @@ function app.keypressed(key, scancode, isrepeat)
     return
   elseif app.global_mode() then
     if key == "s" then
-      app.show_connections = not app.show_connections
+      local project = app.project
+      project.show_connections = not project.show_connections
     elseif key == "space" and app.view_dragged then
       app.project.viewport:set_view_scale(app.view_dragged, 1)
     elseif key == "return" then
@@ -307,8 +308,9 @@ function app.mousepressed(mx, my, button)
     return
   end
 
-  local viewport = app.project.viewport
-  local view = viewport:view_at_global_pos(mx, my, app.project.views, app.global_mode() or app.show_connections)
+  local project = app.project
+  local viewport = project.viewport
+  local view = viewport:view_at_global_pos(mx, my, project.views, app.global_mode() or project.show_connections)
   if app.global_mode() then
     if button == 1 then
       local pin_view, pin_index = _pin_gives_at(mx, my)
@@ -348,9 +350,9 @@ function app.mousepressed(mx, my, button)
 
     elseif button == 2 and view then
       if not view.anchored then
-        app.project.viewport:lock_view(view)
+        project.viewport:lock_view(view)
       else
-        app.project.viewport:unlock_view(view)
+        project.viewport:unlock_view(view)
       end
     end
     return
@@ -447,19 +449,20 @@ function app.mousemoved(mx, my, dx, dy)
     return
   end
 
-  local view = app.project.viewport:view_at_global_pos(mx, my, app.project.views, app.global_mode() or app.show_connections)
+  local project = app.project
+  local view = project.viewport:view_at_global_pos(mx, my, project.views, app.global_mode() or project.show_connections)
   if app.global_mode() then
     local drag = app.view_dragged
     if app.mouse.isDown(3) then
-      app.project.viewport:pan_viewport(dx, dy)
+      project.viewport:pan_viewport(dx, dy)
     elseif drag then
-      app.project.viewport:move_view(drag, dx, dy)
+      project.viewport:move_view(drag, dx, dy)
     end
   elseif app.view_pressed1 then
-    local pos_x, pos_y, _,_, scale = app.project.viewport:view_bounds(app.view_pressed1)
+    local pos_x, pos_y, _,_, scale = project.viewport:view_bounds(app.view_pressed1)
     try_invoke(app.view_pressed1.frame, "mousedragged1", (mx - pos_x)/scale, (my - pos_y)/scale, dx/scale, dy/scale)
   elseif view then
-    local pos_x, pos_y, _,_, scale = app.project.viewport:view_bounds(view)
+    local pos_x, pos_y, _,_, scale = project.viewport:view_bounds(view)
     try_invoke(view.frame, "mousemoved", (mx - pos_x)/scale, (my - pos_y)/scale, dx/scale, dy/scale)
   end
 end
@@ -518,7 +521,7 @@ end
 
 function app.remove_view(view)
   remove_once(app.project.views, view)
-  app.focus_handler:unassign(view.frame)
+  app.focus_handler:ensure_unfocused(view.frame)
 
   for to, from in pairs(app.project._links) do
     if to.____view____   == view
@@ -527,6 +530,7 @@ function app.remove_view(view)
     end
   end
   view.frame = nil
+  collectgarbage()
 end
 
 function app.try_create_frame(format, data)
@@ -566,9 +570,9 @@ local function draw_link(from_x, from_y, to_x, to_y, kind)
   love.graphics.push()
   if kind then
     local r, g, b = app.pin_color(kind)
-    love.graphics.setColor(r, g, b, app.show_connections and 0.8 or 0.4)
+    love.graphics.setColor(r, g, b, app.project.show_connections and 0.8 or 0.4)
   else
-    love.graphics.setColor(0.1, 0.7, 0.4, app.show_connections and 0.8 or 0.4)
+    love.graphics.setColor(0.1, 0.7, 0.4, app.project.show_connections and 0.8 or 0.4)
   end
   love.graphics.setLineWidth(4)
   love.graphics.setLineStyle("smooth")
@@ -698,8 +702,7 @@ function app.draw()
   draw_transparency_pattern(display_width, display_height)
 
   local global_mode = app.global_mode()
-  local show_connections = global_mode or app.show_connections
-  local show_connectors  = show_connections
+  local show_connections = global_mode or app.project.show_connections
 
   if show_connections then
     for to, from in pairs(app.project._links) do
@@ -721,7 +724,7 @@ function app.draw()
     local pos_x, pos_y, size_x, size_y, scale = viewport:view_bounds(view)
     local x1, y1 = pos_x - BORDER_PAD, pos_y - BORDER_PAD
 
-    if show_connectors then
+    if show_connections then
       if view.anchored then
         love.graphics.setColor(BORDER_COLOR_ANCHORED)
       else
@@ -729,8 +732,8 @@ function app.draw()
       end
       love.graphics.setLineStyle("rough")
       love.graphics.setLineWidth(2*BORDER_PAD)
-
       love.graphics.rectangle("line", x1, y1, size_x + 2*BORDER_PAD, size_y + 2*BORDER_PAD)
+      love.graphics.setLineWidth(1)
 
       local view_id = view:id()
       local w = text_width(view_id)
@@ -739,6 +742,12 @@ function app.draw()
       love.graphics.rectangle("fill", x1 - BORDER_PAD, y1 - h, math.max(size_x + 2*BORDER_PAD, w) + 2*BORDER_PAD, h)
       love.graphics.setColor(1.0, 1.0, 1.0)
       love.graphics.print(view_id, x1, y1 - h)
+    else
+      local view_id = view._id
+      if view_id and view_id:sub(1,1) ~= " " then
+        love.graphics.setColor(1.0, 1.0, 1.0)
+        love.graphics.print(view_id, x1, y1 - font_height())
+      end
     end
 
     if type(frame) == "table" and type(frame.draw) == "function" then
@@ -758,7 +767,7 @@ function app.draw()
       love.graphics.rectangle("fill", pos_x + size_x - RESIZER_OFFSET, pos_y + size_y - RESIZER_OFFSET, RESIZER_SIZE, RESIZER_SIZE)
     end
 
-    if show_connectors then
+    if show_connections then
       draw_connectors(view, frame)
     end
   end
@@ -791,6 +800,8 @@ function app.draw()
   if top then
     app.focus_handler:request_focus(top.frame)
   end
+
+  --collectgarbage()
 end
 
 return app

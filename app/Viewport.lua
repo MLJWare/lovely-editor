@@ -105,25 +105,27 @@ function Viewport:set_view_scale(view, new_scale)
 end
 
 function Viewport:scale_viewport(scalar)
-  local mouse_x, mouse_y = self.global_mouse()
-  local old_scale = self.scale
-  local new_scale = math.max(0.1, old_scale * (1 + scalar))
-  local delta_scale = old_scale/new_scale
-
-  self.scale = new_scale
-  self.pos_x = mouse_x - (mouse_x - self.pos_x)*delta_scale
-  self.pos_y = mouse_y - (mouse_y - self.pos_y)*delta_scale
+  self:set_viewport_scale(self.scale*(1 + scalar))
 end
 
 function Viewport:set_viewport_scale(new_scale)
   local mouse_x, mouse_y = self.global_mouse()
   local old_scale = self.scale
   new_scale = math.max(0.1, new_scale)
-  local delta_scale = old_scale/new_scale
+
+  local viewport_w, viewport_h = love.graphics.getDimensions()
+  local old_w = viewport_w/old_scale
+  local old_h = viewport_h/old_scale
+
+  local new_w = viewport_w/new_scale
+  local new_h = viewport_h/new_scale
+
+  local pct_x = mouse_x / viewport_w
+  local pct_y = mouse_y / viewport_h
 
   self.scale = new_scale
-  self.pos_x = mouse_x - (mouse_x - self.pos_x)*delta_scale
-  self.pos_y = mouse_y - (mouse_y - self.pos_y)*delta_scale
+  self.pos_x = self.pos_x + (old_w - new_w)*pct_x
+  self.pos_y = self.pos_y + (old_h - new_h)*pct_y
 end
 
 function Viewport:view_bounds(view, include_border)

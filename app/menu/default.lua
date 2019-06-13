@@ -4,9 +4,8 @@ local LoadFileFrame           = require "frame.LoadFile"
 local SaveFileFrame           = require "frame.SaveFile"
 local YesNoCancelFrame        = require "frame.YesNoCancel"
 local new_view_menu           = require "menu.new_view"
-local sandbox                 = require "util.sandbox"
-local Project                 = require "Project"
 local load_data               = require "util.file.load_data"
+local try_create_project      = require "internal.try_create_project"
 
 local load_as_view = LoadFileFrame{
   on_load = function (_, file, filename)
@@ -29,72 +28,25 @@ local load_as_view = LoadFileFrame{
   end;
 }
 
-local function load_imagedata(encoded)
-  return love.image.newImageData(love.data.decode("data", "base64", encoded))
-end
-
 local load_project = LoadFileFrame {
   on_load = function (_, file, filename)
-    local success, code
+    local data
     if file:open("r") then
-      local data = file:read()
+      data = file:read()
       file:close()
-
-      if filename:find("%.lp_raw$") then
-        success, code = true, data
-      else
-        success, code = pcall(love.data.decompress, "string", "lz4", data)
-      end
     end
 
-    if success and code then
-      local _, project = sandbox(code, {
-        -- math frames
-        NumberFrame      = require "frame.math.Number";
-        IntegerFrame     = require "frame.math.Integer";
-        MultiplyFrame    = require "frame.math.Multiply";
-        DivideFrame      = require "frame.math.Divide";
-        ModuloFrame      = require "frame.math.Modulo";
-        SubtractFrame    = require "frame.math.Subtract";
-        SumFrame         = require "frame.math.Sum";
-        TickerFrame      = require "frame.math.Ticker";
-        TimerFrame       = require "frame.math.Timer";
-        -- graphics frames
-        ColorPickerFrame = require "frame.ColorPicker";
-        PixelFrame       = require "frame.Pixel";
-        ShaderFrame      = require "frame.Shader";
-        ParticlesFrame   = require "frame.Particles";
-        ToolboxFrame     = require "frame.Toolbox";
-        TimelineFrame    = require "frame.Timeline";
-        -- control frames
-        SliderFrame      = require "frame.Slider";
-        Vector2Frame     = require "frame.Vector2";
-        VectorSplitFrame = require "frame.VectorSplit";
-        RotationFrame    = require "frame.Rotation";
-        AnglesFrame      = require "frame.Angles";
-        GraphFrame       = require "frame.Graph";
-        ConditionalFrame = require "frame.Conditional";
-        -- other frames
-        LoveFrame        = require "frame.Love";
-        TextBufferFrame  = require "frame.TextBuffer";
-        ViewGroupFrame   = require "frame.ViewGroup";
-        -- other stuff
-        Viewport        = require "Viewport";
-        View            = require "View";
-        Ref             = require "Ref";
-        Project         = Project;
-        imagedata       = load_imagedata;
-      })
-      if Project.is(project) then
-        project:prepare(app)
-        app.project = project
+    if data then
+      local project, msg = try_create_project(data, filename)
+
+      if project then
+        app._set_project(project)
         return
-      else print(_, project)
+      else
+        print(msg)
       end
     end
-
-
-    error(("Invalid project file: %s"):format(filename))
+    print(("Invalid project file: %s"):format(filename))
   end;
 }
 

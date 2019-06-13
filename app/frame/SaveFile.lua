@@ -98,9 +98,10 @@ end
 function SaveFileFrame:_save_and_close(filename)
   local data = self.action(self.data, filename)
   love.filesystem.write(filename, data)
-  self:close()
   try_invoke(self, "on_saved")
+  self:close()
 end
+
 function SaveFileFrame:draw(size_x, size_y)
   Images.ninepatch("menu", 0, 16, size_x, size_y - 16)
   Images.ninepatch("menu", 0,  0, size_x, 20)

@@ -16,6 +16,8 @@ love.keyboard.setKeyRepeat(true)
 
 local app                     = require "app"
 local YesNoFrame              = require "frame.YesNo"
+local YesNoCancelFrame        = require "frame.YesNoCancel"
+local SaveFileFrame           = require "frame.SaveFile"
 local load_data               = require "util.file.load_data"
 
 app.menu.view                 = require "menu.view"
@@ -36,6 +38,37 @@ function love.keyreleased(key, scancode)
   app.keyreleased(key, scancode)
 end
 
+local save_project_before_load = SaveFileFrame {
+  action = function(_, filename)
+    local data = app.project:serialize()
+    if filename:find("%.lp_raw$") then
+      return data
+    end
+    return love.data.compress("data", "lz4", data)
+  end;
+  on_saved = function (self)
+    app._set_project(self._project)
+  end;
+  on_close = function (self)
+    self._project = nil
+  end;
+}
+
+local ask_save_before_load = YesNoCancelFrame {
+  title = "Save current project?";
+  text  = "Do you want to save the current project before loading?";
+  option_yes = function (self)
+    save_project_before_load._project = self._project
+    app.show_popup(save_project_before_load)
+  end;
+  option_no  = function (self)
+    app._set_project(self._project)
+  end;
+  on_close = function (self)
+    self._project = nil
+  end;
+}
+
 function love.filedropped(file)
   local data, format = load_data(file)
   if format and data then
@@ -51,6 +84,13 @@ function love.filedropped(file)
         pos_y = pos_y;
         scale = 1;
       })
+    elseif format == "project" then
+      if #app.project.views > 0 then
+        ask_save_before_load._project = data
+        app.show_popup(ask_save_before_load)
+      else
+        app._set_project(data)
+      end
     end
   end
 end

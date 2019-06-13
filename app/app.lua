@@ -221,6 +221,7 @@ function app.show_popup(frame, pos_x, pos_y, allow_outside)
   table.insert(app.popups, popup)
   frame._focus_handler = app.focus_handler
   frame.close = function ()
+    try_invoke(frame, "on_close")
     remove_once(app.popups, popup)
     app.focus_handler:unassign(frame)
     if app.popup_pressed1 == popup then
@@ -229,6 +230,12 @@ function app.show_popup(frame, pos_x, pos_y, allow_outside)
     popup.frame = nil
   end
   try_invoke(frame, "init_popup")
+end
+
+-- assumes a valid project is provided
+function app._set_project(project)
+  project:prepare(app)
+  app.project = project
 end
 
 function app.keypressed(key, scancode, isrepeat)

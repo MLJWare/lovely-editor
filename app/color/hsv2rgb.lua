@@ -1,7 +1,7 @@
 return function (hue, sat, val)
   hue = hue % 6
-  sat = sat < 0 and 0 or sat > 1 and 1 or sat
-  val = val < 0 and 0 or val > 1 and 1 or val
+  sat = math.min(math.max(sat, 0), 1)
+  val = math.min(math.max(val, 0), 1)
 
   local intensity  = sat * val
   local amount     = (1-math.abs((hue%2)-1))*intensity

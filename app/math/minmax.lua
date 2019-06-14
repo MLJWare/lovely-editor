@@ -1,6 +1,3 @@
 return function (a, b)
-  if a < b then
-    return a, b
-  end
-  return b, a
+  return math.min(a, b), math.max(a, b)
 end

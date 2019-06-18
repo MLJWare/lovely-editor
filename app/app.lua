@@ -4,8 +4,6 @@ local ImageKind               = require "Kind.Image"
 local EditImageKind           = require "Kind.EditImage"
 local StringKind              = require "Kind.String"
 local NumberKind              = require "Kind.Number"
-local Vector4Kind             = require "Kind.Vector4"
-local VectorNKind             = require "Kind.VectorN"
 local PixelFrame              = require "frame.Pixel"
 local pleasure                = require "pleasure"
 local Popup                   = require "Popup"
@@ -200,13 +198,15 @@ do
 end
 
 function app.pin_color(kind)
-  if     kind == EditImageKind   then return 0.95, 0.50, 0.60, 1
-  elseif kind == ImageKind       then return 0.80, 0.30, 0.20, 1
-  elseif kind == StringKind      then return 0.80, 0.90, 0.20, 1
-  elseif kind == NumberKind      then return 0.60, 0.40, 0.90, 1
-  elseif kind == Vector4Kind     then return 0.40, 0.20, 0.70, 1
-  else                                return 0.75, 0.75, 0.75, 1
+  if kind then
+    if     kind == EditImageKind   then return 0.95, 0.50, 0.60, 1
+    elseif kind == ImageKind       then return 0.80, 0.30, 0.20, 1
+    elseif kind == StringKind      then return 0.80, 0.90, 0.20, 1
+    elseif kind == NumberKind      then return 0.60, 0.40, 0.90, 1
+    elseif kind.IS_VECTOR          then return 0.40, 0.20, 0.70, 1
+    end
   end
+  return 0.75, 0.75, 0.75, 1
 end
 
 function app.show_popup(frame, pos_x, pos_y, allow_outside)
@@ -385,7 +385,7 @@ end
 
 local function compatible(give_kind, take_kind)
   if give_kind == take_kind then return true end
-  return (take_kind == VectorNKind and give_kind.IS_VECTOR)
+  return (take_kind.IS_VECTOR and give_kind.IS_VECTOR)
       or (give_kind == EditImageKind and take_kind == ImageKind)
 end
 

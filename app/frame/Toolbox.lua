@@ -64,7 +64,7 @@ function ToolboxFrame:on_disconnect(prop)
 end
 
 function ToolboxFrame.refresh_color(_, _, r, g, b, a)
-  local color = pack_color(r, g, b, a)
+  local color = pack_color(r or 0, g or 0, b or 0, a or 1)
   PropertyStore.set("core.graphics", "paint.color", color)
 end
 

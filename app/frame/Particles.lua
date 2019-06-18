@@ -207,7 +207,7 @@ function ParticlesFrame:refresh_sizes(_, v1, v2, v3, v4, v5, v6, v7, v8)
 end
 
 function ParticlesFrame:refresh_sizeVariation(_, variation)
-  self.psystem:setSizeVariation(clamp(variation or 0), 0, 1)
+  self.psystem:setSizeVariation(clamp(variation or 0, 0, 1))
   self:_redraw_image()
 end
 

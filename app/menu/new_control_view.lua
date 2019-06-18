@@ -3,7 +3,7 @@ local View                    = require "View"
 local MenuListFrame           = require "frame.MenuList"
 local RotationFrame           = require "frame.Rotation"
 local AnglesFrame             = require "frame.Angles"
-local Vector2Frame            = require "frame.Vector2"
+local VectorJoinFrame         = require "frame.VectorJoin"
 local VectorSplitFrame        = require "frame.VectorSplit"
 local GraphFrame              = require "frame.Graph"
 --local ConditionalFrame        = require "frame.Conditional"
@@ -76,11 +76,11 @@ return MenuListFrame {
       end;
     };
     {
-      text   = "New Vector2 View";
+      text   = "New VectorJoin View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position_as_local()
         app.add_view (View {
-          frame = Vector2Frame {};
+          frame = VectorJoinFrame {};
           pos_x = popup_x;
           pos_y = popup_y;
         })

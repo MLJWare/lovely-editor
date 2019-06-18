@@ -35,7 +35,7 @@ return function (filedata, filename)
       TimelineFrame = require "frame.Timeline";
       -- control frames
       SliderFrame = require "frame.Slider";
-      Vector2Frame = require "frame.Vector2";
+      VectorJoinFrame = require "frame.VectorJoin";
       VectorSplitFrame = require "frame.VectorSplit";
       RotationFrame = require "frame.Rotation";
       AnglesFrame = require "frame.Angles";

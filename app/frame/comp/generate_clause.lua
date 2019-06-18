@@ -1,6 +1,5 @@
-local sandbox = require "util.sandbox"
-
-local fail_clause = function () return false end
+local fail_clause             = require "fn.fail"
+local sandbox                 = require "util.sandbox"
 
 return function (code)
   if not code:find("%S") then return fail_clause end

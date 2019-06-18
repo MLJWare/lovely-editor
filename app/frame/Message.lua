@@ -5,11 +5,16 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_string = pleasure.is.string
+local is_metakind = pleasure.is.metakind
 
 local MessageFrame = {}
 MessageFrame.__index = MessageFrame
-
 MessageFrame._kind = ";MessageFrame;Frame;"
 
 local PAD_X =  6
@@ -22,7 +27,8 @@ local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 setmetatable(MessageFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "MessageFrame constructor must be a table.")
+    assert(is_table(frame), "MessageFrame constructor must be a table.")
+
     frame.size_x = 400
     frame.size_y = 88
     MessageFrame.typecheck(frame, "MessageFrame constructor")
@@ -37,7 +43,6 @@ setmetatable(MessageFrame, {
         frame:close()
       end;
     }
-
     frame._pressed_index = nil
 
     setmetatable(frame, MessageFrame)
@@ -47,15 +52,12 @@ setmetatable(MessageFrame, {
 
 function MessageFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(type(obj.title) == "string", "Error in %s: Missing/invalid property: 'title' must be a string.", where)
-  assertf(not obj.text or type(obj.text) == "string", "Error in %s: Invalid optional property: 'text' must be a string (or nil).", where)
+  assertf(is_string(obj.title), "Error in %s: Missing/invalid property: 'title' must be a string.", where)
+  assertf(is_opt(obj.text, is_string), "Error in %s: Invalid optional property: 'text' must be a string (or nil).", where)
 end
 
 function MessageFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";MessageFrame;")
+  return is_metakind(obj, ";MessageFrame;")
 end
 
 function MessageFrame:draw(size_x, size_y)

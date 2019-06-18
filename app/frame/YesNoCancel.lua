@@ -5,11 +5,16 @@ local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pack_color              = require "util.color.pack"
 local pleasure                = require "pleasure"
-local try_invoke              = require ("pleasure.try").invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_string = pleasure.is.string
+local is_metakind = pleasure.is.metakind
 
 local YesNoCancelFrame = {}
 YesNoCancelFrame.__index = YesNoCancelFrame
-
 YesNoCancelFrame._kind = ";YesNoCancelFrame;Frame;"
 
 local PAD_X =  6
@@ -22,7 +27,7 @@ local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 setmetatable(YesNoCancelFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "YesNoCancelFrame constructor must be a table.")
+    assert(is_table(frame), "YesNoCancelFrame constructor must be a table.")
     frame.size_x = 400
     frame.size_y = 88
     YesNoCancelFrame.typecheck(frame, "YesNoCancelFrame constructor")
@@ -75,15 +80,12 @@ setmetatable(YesNoCancelFrame, {
 
 function YesNoCancelFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(type(obj.title) == "string", "Error in %s: Missing/invalid property: 'title' must be a string.", where)
-  assertf(not obj.text or type(obj.text) == "string", "Error in %s: Invalid optional property: 'text' must be a string (or nil).", where)
+  assertf(is_string(obj.title), "Error in %s: Missing/invalid property: 'title' must be a string.", where)
+  assertf(is_opt(obj.text, is_string), "Error in %s: Invalid optional property: 'text' must be a string (or nil).", where)
 end
 
 function YesNoCancelFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";YesNoCancelFrame;")
+  return is_metakind(obj, ";YesNoCancelFrame;")
 end
 
 function YesNoCancelFrame:draw(size_x, size_y)

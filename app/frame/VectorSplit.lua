@@ -5,18 +5,21 @@ local VectorNKind             = require "Kind.VectorN"
 local Signal                  = require "Signal"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local VectorSplitFrame = {}
 VectorSplitFrame.__index = VectorSplitFrame
-
 VectorSplitFrame._kind = ";VectorSplitFrame;Frame;"
 
 setmetatable(VectorSplitFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "VectorSplitFrame constructor must be a table.")
-
+    assert(is_table(frame), "VectorSplitFrame constructor must be a table.")
     frame.size_x = 20
     frame.size_y = 96
     VectorSplitFrame.typecheck(frame, "VectorSplitFrame constructor")
@@ -77,21 +80,18 @@ setmetatable(VectorSplitFrame, {
 
 function VectorSplitFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value1 or NumberKind.is(obj.value1), "Error in %s: Invalid optional property: 'value1' must be a number.", where)
-  assertf(not obj.value2 or NumberKind.is(obj.value2), "Error in %s: Invalid optional property: 'value2' must be a number.", where)
-  assertf(not obj.value3 or NumberKind.is(obj.value3), "Error in %s: Invalid optional property: 'value3' must be a number.", where)
-  assertf(not obj.value4 or NumberKind.is(obj.value4), "Error in %s: Invalid optional property: 'value4' must be a number.", where)
-  assertf(not obj.value5 or NumberKind.is(obj.value5), "Error in %s: Invalid optional property: 'value5' must be a number.", where)
-  assertf(not obj.value6 or NumberKind.is(obj.value6), "Error in %s: Invalid optional property: 'value6' must be a number.", where)
-  assertf(not obj.value7 or NumberKind.is(obj.value7), "Error in %s: Invalid optional property: 'value7' must be a number.", where)
-  assertf(not obj.value8 or NumberKind.is(obj.value8), "Error in %s: Invalid optional property: 'value8' must be a number.", where)
+  assertf(is_opt(obj.value1, NumberKind.is), "Error in %s: Invalid optional property: 'value1' must be a number.", where)
+  assertf(is_opt(obj.value2, NumberKind.is), "Error in %s: Invalid optional property: 'value2' must be a number.", where)
+  assertf(is_opt(obj.value3, NumberKind.is), "Error in %s: Invalid optional property: 'value3' must be a number.", where)
+  assertf(is_opt(obj.value4, NumberKind.is), "Error in %s: Invalid optional property: 'value4' must be a number.", where)
+  assertf(is_opt(obj.value5, NumberKind.is), "Error in %s: Invalid optional property: 'value5' must be a number.", where)
+  assertf(is_opt(obj.value6, NumberKind.is), "Error in %s: Invalid optional property: 'value6' must be a number.", where)
+  assertf(is_opt(obj.value7, NumberKind.is), "Error in %s: Invalid optional property: 'value7' must be a number.", where)
+  assertf(is_opt(obj.value8, NumberKind.is), "Error in %s: Invalid optional property: 'value8' must be a number.", where)
 end
 
 function VectorSplitFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";VectorSplitFrame;")
+  return is_metakind(obj, ";VectorSplitFrame;")
 end
 
 VectorSplitFrame.gives = IOs{

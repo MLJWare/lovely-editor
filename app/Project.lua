@@ -1,17 +1,20 @@
-local assertf = require "assertf"
+local assertf                 = require "assertf"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_string = is.string
+local is_metakind = is.metakind
 
 local Project = {}
 Project.__index = Project
-
 Project._kind = ";Project;"
 
 setmetatable(Project, {
   __call = function (_, project)
-    assert(type(project) == "table", "Project constructor must be a table.")
+    assert(is_table(project), "Project constructor must be a table.")
     project._version = project._version or "legacy"
     Project.typecheck(project, "Project constructor")
     setmetatable(project, Project)
-
     return project
   end;
 })
@@ -27,14 +30,11 @@ function Project:prepare(app)
 end
 
 function Project.typecheck(obj, where)
-  assertf(type(obj._version) == "string", "Error in %s: Missing/invalid property: '_version' must be a versioning string.", where)
+  assertf(is_string(obj._version), "Error in %s: Missing/invalid property: '_version' must be a versioning string.", where)
 end
 
 function Project.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";Project;")
+  return is_metakind(obj, ";Project;")
 end
 
 local function as_strings(a, ...)
@@ -71,7 +71,7 @@ function Project:serialize()
     append(result, "}\n\n")
 
     append(result, "local views = {\n")
-    -- serialize frame lookuphttps://fontstruct.com/
+    -- serialize view lookup
     for index = 1, #views_data do
       append(result, "  [%d] = %s;\n", index, views_data[index])
     end

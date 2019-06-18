@@ -1,11 +1,15 @@
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
+
 local TextBuffer = {}
 TextBuffer.__index = TextBuffer
-
 TextBuffer._kind = ";TextBuffer;"
 
 setmetatable(TextBuffer, {
   __call = function (_, buffer)
-    assert(type(buffer) == "table", "TextBuffer constructor must be a table.")
+    assert(is_table(buffer), "TextBuffer constructor must be a table.")
     TextBuffer.typecheck(buffer, "TextBuffer constructor")
     buffer[1] = ""
     setmetatable(buffer, TextBuffer)
@@ -18,10 +22,7 @@ function TextBuffer.typecheck(--[[obj, where]])
 end
 
 function TextBuffer.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";TextBuffer;")
+  return is_metakind(obj, ";TextBuffer;")
 end
 
 function TextBuffer:get(lineNumber)

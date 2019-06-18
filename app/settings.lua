@@ -1,6 +1,8 @@
+local is                      = require "pleasure.is"
 local pack_color              = require "util.color.pack"
+local sandbox                 = require "util.sandbox"
 
-local sandbox = require "util.sandbox"
+local is_table = is.table
 
 local function setup_settings(default, user)
   for key, user_value in pairs(user) do
@@ -36,7 +38,7 @@ local settings = {
 do
   local code = love.filesystem.read("config/settings.lua")
   local success, user_settings = sandbox(code or "")
-  if success and type(user_settings) == "table" then
+  if success and is_table(user_settings) then
     setup_settings(settings, user_settings)
   end
 end

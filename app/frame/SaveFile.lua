@@ -6,14 +6,17 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require ("pleasure.try").invoke
 local YesNoFrame              = require "frame.YesNo"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local _info_ = {}
 
 local SaveFileFrame = {}
 SaveFileFrame.__index = SaveFileFrame
-
 SaveFileFrame._kind = ";SaveFileFrame;Frame;"
 
 local PAD_X    = 10
@@ -28,7 +31,7 @@ local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 setmetatable(SaveFileFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "SaveFileFrame constructor must be a table.")
+    assert(is_table(frame), "SaveFileFrame constructor must be a table.")
     frame.size_x = 400
     frame.size_y = 88
     SaveFileFrame.typecheck(frame, "SaveFileFrame constructor")
@@ -89,10 +92,7 @@ function SaveFileFrame.typecheck(obj, where)
 end
 
 function SaveFileFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";SaveFileFrame;")
+  return is_metakind(obj, ";SaveFileFrame;")
 end
 
 function SaveFileFrame:_save_and_close(filename)
@@ -130,7 +130,6 @@ end
 
 function SaveFileFrame:init_popup()
   self:request_focus()
-
   local ui = self._ui
   for i = 1, #ui do
     ui[i].focused = false

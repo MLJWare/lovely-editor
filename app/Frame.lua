@@ -1,15 +1,19 @@
 local assertf                 = require "assertf"
-local try_invoke              = require ("pleasure.try").invoke
-local is_non_negative         = require ("pleasure.is").non_negative_number
+local pleasure                = require "pleasure"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
+local is_non_negative = pleasure.is.non_negative_number
 
 local Frame = {}
 Frame.__index = Frame
-
 Frame._kind = ";Frame;"
 
 setmetatable(Frame, {
   __call = function (_, frame)
-    assert(type(frame) == "table", "Frame constructor must be a table.")
+    assert(is_table(frame), "Frame constructor must be a table.")
     Frame.typecheck(frame, "Frame constructor")
     setmetatable(frame, Frame)
     return frame
@@ -22,10 +26,7 @@ function Frame.typecheck(obj, where)
 end
 
 function Frame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";Frame;")
+  return is_metakind(obj, ";Frame;")
 end
 
 function Frame:serialize()
@@ -57,12 +58,12 @@ end
 
 function Frame:takes_count()
   local takes = self.takes
-  return type(takes) == "table" and #takes or 0
+  return is_table(takes) and #takes or 0
 end
 
 function Frame:take_by_index(index)
   local takes = self.takes
-  if type(takes) ~= "table" then return end
+  if not is_table(takes) then return end
   local take = takes[index]
   if not take then return end
   return take.id, take.kind
@@ -70,7 +71,7 @@ end
 
 function Frame:take_by_id(id)
   local takes = self.takes
-  if type(takes) ~= "table" then return end
+  if not is_table(takes) then return end
   for index = 1, #takes do
     local take = takes[index]
     if take.id == id then
@@ -81,12 +82,12 @@ end
 
 function Frame:gives_count()
   local gives = self.gives
-  return type(gives) == "table" and #gives or 0
+  return is_table(gives) and #gives or 0
 end
 
 function Frame:give_by_index(index)
   local gives = self.gives
-  if type(gives) ~= "table" then return end
+  if not is_table(gives) then return end
   local give = gives[index]
   if not give then return end
   return give.id, give.kind
@@ -94,7 +95,7 @@ end
 
 function Frame:give_by_id(id)
   local gives = self.gives
-  if type(gives) ~= "table" then return end
+  if not is_table(gives) then return end
   for index = 1, #gives do
     local give = gives[index]
     if give.id == id then

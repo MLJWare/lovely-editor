@@ -1,3 +1,12 @@
+local clamp                   = require "math.clamp"
+local is                      = require "pleasure.is"
+
+local is_table  = is.table
+local is_number = is.number
+
+local MIN_SCALE = 0.1
+local MAX_SCALE = 100
+
 local Viewport = {
   show_connections = true;
 }
@@ -7,10 +16,10 @@ setmetatable(Viewport, {
   __call = function (_, viewport)
     local self = setmetatable(viewport, Viewport)
 
-    assert(type(viewport      ) == "table", "Viewport must be a table.")
-    assert(type(viewport.pos_x) == "number", "Viewport must have a numeric `pos_x` property.")
-    assert(type(viewport.pos_y) == "number", "Viewport must have a numeric `pos_y` property.")
-    assert(type(viewport.scale) == "number", "Viewport must have a numeric `scale` property.")
+    assert(is_table(viewport), "Viewport must be a table.")
+    assert(is_number(viewport.pos_x), "Viewport must have a numeric `pos_x` property.")
+    assert(is_number(viewport.pos_y), "Viewport must have a numeric `pos_y` property.")
+    assert(is_number(viewport.scale), "Viewport must have a numeric `scale` property.")
 
     return self
   end;
@@ -74,29 +83,17 @@ function Viewport.global_mouse()
 end
 
 function Viewport:scale_view(view, scalar)
-  local mouse_x, mouse_y = self.global_mouse()
-  if not view.anchored then
-    mouse_x, mouse_y = self:global_to_local_pos(mouse_x, mouse_y)
-  end
-
-  local old_scale = view.scale
-  local new_scale = math.max(0.1, old_scale * (1 + scalar))
-  local delta_scale = new_scale/old_scale
-
-  view.scale = new_scale
-  view.pos_x = mouse_x - (mouse_x - view.pos_x)*delta_scale
-  view.pos_y = mouse_y - (mouse_y - view.pos_y)*delta_scale
+  self:set_view_scale(view, view.scale*(1 + scalar))
 end
 
 function Viewport:set_view_scale(view, new_scale)
-  if not view then return end
   local mouse_x, mouse_y = self.global_mouse()
   if not view.anchored then
     mouse_x, mouse_y = self:global_to_local_pos(mouse_x, mouse_y)
   end
 
   local old_scale = view.scale
-  new_scale = math.max(0.1, new_scale)
+  new_scale = clamp(new_scale, MIN_SCALE, MAX_SCALE)
   local delta_scale = new_scale/old_scale
 
   view.scale = new_scale
@@ -111,7 +108,7 @@ end
 function Viewport:set_viewport_scale(new_scale)
   local mouse_x, mouse_y = self.global_mouse()
   local old_scale = self.scale
-  new_scale = math.max(0.1, new_scale)
+  new_scale = clamp(new_scale, MIN_SCALE, MAX_SCALE)
 
   local viewport_w, viewport_h = love.graphics.getDimensions()
   local old_w = viewport_w/old_scale
@@ -144,6 +141,9 @@ function Viewport:view_bounds(view, include_border)
     size_x, size_y = self:global_size_of(view)
     scale = view_scale*self.scale
   end
+
+  assert(size_x >= 0 and size_y >= 0)
+
   if include_border then
     return pos2_x - 4, pos2_y - 20, size_x + 8, size_y + 28, scale
   else

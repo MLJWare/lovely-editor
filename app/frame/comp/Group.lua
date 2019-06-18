@@ -1,14 +1,19 @@
-local clamp                   = require "math.clamp"
 local assertf                 = require "assertf"
+local clamp                   = require "math.clamp"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_string = is.string
+local is_table_of = is.table_of
+local is_metakind = is.metakind
 
 local Group = {}
 Group.__index = Group
-
 Group._kind = ";Group;"
 
 setmetatable(Group, {
   __call = function (_, group)
-    assert(type(group) == "table", "Group constructor must be a table.")
+    assert(is_table(group), "Group constructor must be a table.")
     if not group._data then
       group._data = {}
     end
@@ -19,18 +24,11 @@ setmetatable(Group, {
 })
 
 function Group.typecheck(obj, where)
-  local data = obj._data
-  assertf(type(data) == "table", "Error in %s: Missing/invalid property: '_data must be a table of strings.", where)
-  for i = 1, #data do
-    assertf(type(data[i]) == "string", "Error in %s: Missing/invalid property: '_data must be a table of strings.", where)
-  end
+  assertf(is_table_of(obj._data, is_string), "Error in %s: Missing/invalid property: '_data' must be a table of strings.", where)
 end
 
 function Group.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";Group;")
+  return is_metakind(obj, ";Group;")
 end
 
 function Group:insert_row(condition, value, row_index)

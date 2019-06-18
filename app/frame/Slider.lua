@@ -3,16 +3,19 @@ local clamp                   = require "math.clamp"
 local Signal                  = require "Signal"
 local NumberKind              = require "Kind.Number"
 local IOs                     = require "IOs"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local SliderFrame = {}
 SliderFrame.__index = SliderFrame
-
 SliderFrame._kind = ";SliderFrame;Frame;"
 
 setmetatable(SliderFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "SliderFrame constructor must be a table.")
+    assert(is_table(frame), "SliderFrame constructor must be a table.")
     frame.size_x = frame.size_x or 32
     frame.size_y = frame.size_y or 128
 
@@ -39,10 +42,7 @@ function SliderFrame.typecheck(obj, where)
 end
 
 function SliderFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";SliderFrame;")
+  return is_metakind(obj, ";SliderFrame;")
 end
 
 local knob_h = 8

@@ -2,23 +2,26 @@ local font_writer             = require "util.font_writer"
 local Images                  = require "Images"
 local assertf                 = require "assertf"
 local unpack_color            = require "util.color.unpack"
-local is_non_negative         = require ("pleasure.is").non_negative_number
+local is                      = require "pleasure.is"
 local fontstore               = require "fontstore"
+
 local font = fontstore.default[12]
+
+local is_table = is.table
+local is_string = is.string
+local is_non_negative = is.non_negative_number
 
 local Button = {}
 Button.__index = Button
 
 Button.text_color = 0x000000FF
 
-
-
 setmetatable(Button, {
   __call = function (_, button)
-    assert(type(button) == "table", "Button constructor must be a table.")
+    assert(is_table(button), "Button constructor must be a table.")
     assertf(is_non_negative(button.size_x), "Missing/invalid property: 'size_x' must be a non-negative number.")
     assertf(is_non_negative(button.size_y), "Missing/invalid property: 'size_y' must be a non-negative number.")
-    assertf(type(button.text) == "string" , "Missing/invalid property: 'text' must be a string.")
+    assertf(is_string(button.text) , "Missing/invalid property: 'text' must be a string.")
     setmetatable(button, Button)
     return button
   end;

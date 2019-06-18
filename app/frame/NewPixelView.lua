@@ -7,11 +7,15 @@ local Frame                   = require "Frame"
 local PixelFrame              = require "frame.Pixel"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = pleasure.try.invoke
 local integer_filter          = require "input.filter.non-negative-integer"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
+
 local NewPixelViewFrame = {}
 NewPixelViewFrame.__index = NewPixelViewFrame
-
 NewPixelViewFrame._kind = ";NewPixelViewFrame;Frame;"
 
 local PAD_X    = 10
@@ -29,7 +33,7 @@ local DEFAULT_VIEW_HEIGHT = 64
 setmetatable(NewPixelViewFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "NewPixelViewFrame constructor must be a table.")
+    assert(is_table(frame), "NewPixelViewFrame constructor must be a table.")
     frame.size_x = 400
     frame.size_y = 88
     NewPixelViewFrame.typecheck(frame, "NewPixelViewFrame constructor")
@@ -58,9 +62,8 @@ setmetatable(NewPixelViewFrame, {
       size_y = btn_size_y;
       text_color = btn_text_color;
       mouseclicked = function ()
-        local width  = tonumber(edit_width .text)
-        if not width  or width  <= 0 then width  = DEFAULT_VIEW_WIDTH  end
-
+        local width = tonumber(edit_width .text)
+        if not width or width <= 0 then width = DEFAULT_VIEW_WIDTH  end
         local height = tonumber(edit_height.text)
         if not height or height <= 0 then height = DEFAULT_VIEW_HEIGHT end
 
@@ -103,10 +106,7 @@ function NewPixelViewFrame.typecheck(obj, where)
 end
 
 function NewPixelViewFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";NewPixelViewFrame;")
+  return is_metakind(obj, ";NewPixelViewFrame;")
 end
 
 function NewPixelViewFrame:draw(size_x, size_y)

@@ -1,13 +1,16 @@
-local assertf = require "assertf"
+local assertf                 = require "assertf"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local ImagePacket = {}
 ImagePacket.__index = ImagePacket
-
 ImagePacket._kind = ";ImagePacket;"
 
 setmetatable(ImagePacket, {
   __call = function (_, packet)
-    assert(type(packet) == "table", "ImagePacket constructor must be a table.")
+    assert(is_table(packet), "ImagePacket constructor must be a table.")
     ImagePacket.typecheck(packet, "ImagePacket constructor")
     setmetatable(packet, ImagePacket)
     return packet
@@ -53,10 +56,7 @@ function ImagePacket.typecheck(obj, where)
 end
 
 function ImagePacket.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";ImagePacket;")
+  return is_metakind(obj, ";ImagePacket;")
 end
 
 return ImagePacket

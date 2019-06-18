@@ -8,18 +8,20 @@ local InputFrame              = require "frame.Input"
 local pleasure                = require "pleasure"
 local unpack_color            = require "util.color.unpack"
 local font_writer             = require "util.font_writer"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local NumberFrame = {}
 NumberFrame.__index = NumberFrame
-
 NumberFrame._kind = ";NumberFrame;InputFrame;Frame;"
 
 setmetatable(NumberFrame, {
   __index = InputFrame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "NumberFrame constructor must be a table.")
-
+    assert(is_table(frame), "NumberFrame constructor must be a table.")
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or 20
     NumberFrame.typecheck(frame, "NumberFrame constructor")
@@ -30,7 +32,6 @@ setmetatable(NumberFrame, {
         return frame.value;
       end;
     }
-
     frame.filter = number_filter
     frame.value = frame.value or 0
 
@@ -46,14 +47,11 @@ setmetatable(NumberFrame, {
 
 function NumberFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Invalid optional property: 'value' must be a number.", where)
+  assertf(is_opt(obj.value, NumberKind.is), "Error in %s: Invalid optional property: 'value' must be a number.", where)
 end
 
 function NumberFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";NumberFrame;")
+  return is_metakind(obj, ";NumberFrame;")
 end
 
 NumberFrame.gives = IOs{

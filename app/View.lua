@@ -1,9 +1,14 @@
 local Frame   = require "Frame"
 local assertf = require "assertf"
+local is = require "pleasure.is"
+
+local is_opt = is.opt
+local is_table = is.table
+local is_number = is.number
+local is_metakind = is.metakind
 
 local View = {}
 View.__index = View
-
 View._kind = ";View;"
 
 View.frame = setmetatable({}, {
@@ -15,7 +20,7 @@ View.frame = setmetatable({}, {
 
 setmetatable(View, {
   __call = function (_, view)
-    assert(type(view) == "table", "View constructor must be a table.")
+    assert(is_table(view), "View constructor must be a table.")
     View.typecheck(view, "View constructor")
 
     view.scale = view.scale or 1
@@ -27,17 +32,14 @@ setmetatable(View, {
 })
 
 function View.typecheck(obj, where)
-  assertf(type(obj.pos_x) == "number", "Error in %s: Missing/invalid property: 'pos_x' must be a number.", where)
-  assertf(type(obj.pos_y) == "number", "Error in %s: Missing/invalid property: 'pos_y' must be a number.", where)
-  assertf(not obj.scale or type(obj.scale) == "number", "Error in %s: Invalid optional property: 'scale' must be of a number.", where)
-  assertf(not obj.frame or Frame.is(obj.frame), "Error in %s: invalid optional property: 'frame' must be a Frame.", where)
+  assertf(is_number(obj.pos_x), "Error in %s: Missing/invalid property: 'pos_x' must be a number.", where)
+  assertf(is_number(obj.pos_y), "Error in %s: Missing/invalid property: 'pos_y' must be a number.", where)
+  assertf(is_opt(obj.scale, is_number), "Error in %s: Invalid optional property: 'scale' must be of a number.", where)
+  assertf(is_opt(obj.frame, Frame.is), "Error in %s: invalid optional property: 'frame' must be a Frame.", where)
 end
 
 function View.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";View;")
+  return is_metakind(obj, ";View;")
 end
 
 function View:id()

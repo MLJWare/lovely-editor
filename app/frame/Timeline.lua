@@ -5,16 +5,19 @@ local NumberKind              = require "Kind.Number"
 local ImageKind               = require "Kind.Image"
 local EditImageKind           = require "Kind.EditImage"
 local EditImagePacket         = require "packet.EditImage"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local TimelineFrame = {}
 TimelineFrame.__index = TimelineFrame
-
 TimelineFrame._kind = ";TimelineFrame;Frame;"
 
 setmetatable(TimelineFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "TimelineFrame constructor must be a table.")
+    assert(is_table(frame), "TimelineFrame constructor must be a table.")
 
     frame.size_x = frame.size_x or 32
     frame.size_y = frame.size_y or 512
@@ -55,14 +58,10 @@ setmetatable(TimelineFrame, {
 
 function TimelineFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  --assertf(type(obj.value) == "number", "Error in %s: Missing/invalid property: 'value' must be a number.", where)
 end
 
 function TimelineFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";TimelineFrame;")
+  return is_metakind(obj, ";TimelineFrame;")
 end
 
 TimelineFrame.takes = IOs{
@@ -141,6 +140,10 @@ end
 
 function TimelineFrame.serialize()
   return "TimelineFrame {}"
+end
+
+function TimelineFrame.id()
+  return " Timeline"
 end
 
 return TimelineFrame

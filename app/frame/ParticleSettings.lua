@@ -3,7 +3,11 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local ParticleSettingsFrame = {}
 ParticleSettingsFrame.__index = ParticleSettingsFrame
@@ -79,7 +83,7 @@ end
 setmetatable(ParticleSettingsFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "ParticleSettingsFrame constructor must be a table.")
+    assert(is_table(frame), "ParticleSettingsFrame constructor must be a table.")
     frame.size_x = 400
     local ui = {
       label(frame, "Buffer Size"), number_input(frame);
@@ -129,16 +133,12 @@ function ParticleSettingsFrame.typecheck(obj, where)
 end
 
 function ParticleSettingsFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";ParticleSettingsFrame;")
+  return is_metakind(obj, ";ParticleSettingsFrame;")
 end
 
 function ParticleSettingsFrame:draw(size_x, size_y, scale)
   pleasure.push_region(0, 0, size_x, size_y)
   pleasure.scale(scale, scale)
-  -- FIXME doesnt scale content!!!
   Images.ninepatch("menu", 0, 0, self.size_x, self.size_y)
   for i, element in ipairs(self._ui) do
     pleasure.push_region(self:_element_bounds(i))
@@ -154,7 +154,7 @@ function ParticleSettingsFrame:_element_bounds(index)
   local ii = index-1
   local xx = ii%2
   local yy = math.floor(ii/2)
-  return OFFSET_X + xx*(2*segment + OFFSET_X), OFFSET_Y + 24*yy, 2*segment --[[+ xx*segment]], 20
+  return OFFSET_X + xx*(2*segment + OFFSET_X), OFFSET_Y + 24*yy, 2*segment, 20
 end
 
 function ParticleSettingsFrame:mousepressed(mx, my, button)

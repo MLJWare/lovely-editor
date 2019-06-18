@@ -6,18 +6,21 @@ local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
 local font_writer             = require "util.font_writer"
 local fontstore               = require "fontstore"
+
 local font = fontstore.default[12]
+
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local TimerFrame = {}
 TimerFrame.__index = TimerFrame
-
 TimerFrame._kind = ";TimerFrame;Frame;"
 
 setmetatable(TimerFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "TimerFrame constructor must be a table.")
-
+    assert(is_table(frame), "TimerFrame constructor must be a table.")
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or 20
     TimerFrame.typecheck(frame, "TimerFrame constructor")
@@ -39,14 +42,11 @@ setmetatable(TimerFrame, {
 
 function TimerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a number.", where)
+  assertf(is_opt(obj.value, NumberKind.is), "Error in %s: Invalid optional property: 'value' must be a number.", where)
 end
 
 function TimerFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";TimerFrame;")
+  return is_metakind(obj, ";TimerFrame;")
 end
 
 TimerFrame.gives = IOs{

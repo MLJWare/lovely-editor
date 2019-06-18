@@ -6,8 +6,8 @@ local ColorPickerFrame        = require "frame.ColorPicker"
 local ToolboxFrame            = require "frame.Toolbox"
 local ShaderFrame             = require "frame.Shader"
 local NewParticlesViewFrame   = require "frame.NewParticlesView"
-local ParticleSettingsFrame   = require "frame.ParticleSettings"
-local TimelineFrame           = require "frame.Timeline"
+--local ParticleSettingsFrame   = require "frame.ParticleSettings"
+--local TimelineFrame           = require "frame.Timeline"
 
 return MenuListFrame {
   options = {
@@ -21,7 +21,7 @@ return MenuListFrame {
         })
       end;
     };
-    {
+    --[[{
       text   = "New Timeline View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position_as_local()
@@ -31,7 +31,7 @@ return MenuListFrame {
           pos_y = popup_y;
         })
       end;
-    };
+    };--]]
     {
       text   = "New Shader View";
       action = function (_, _)
@@ -53,7 +53,7 @@ return MenuListFrame {
         })
       end;
     };
-    {
+    --[[{
       text   = "New Particles Settings View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position_as_local()
@@ -63,7 +63,7 @@ return MenuListFrame {
           pos_y = popup_y;
         })
       end;
-    };
+    };--]]
     {
       text   = "New Color Picker View";
       action = function (_, _)
@@ -72,7 +72,6 @@ return MenuListFrame {
           frame = ColorPickerFrame {};
           pos_x = popup_x;
           pos_y = popup_y;
-          anchored = true;
         })
       end;
     };
@@ -84,7 +83,6 @@ return MenuListFrame {
           frame = ToolboxFrame {};
           pos_x = popup_x;
           pos_y = popup_y;
-          anchored = true;
         })
       end;
     };

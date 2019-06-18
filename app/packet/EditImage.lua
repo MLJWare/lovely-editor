@@ -1,16 +1,19 @@
 local assertf                 = require "assertf"
 local UndoStack               = require "UndoStack"
 local ImagePacket             = require "packet.Image"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local EditImagePacket = {}
 EditImagePacket.__index = EditImagePacket
-
 EditImagePacket._kind = ";EditImagePacket;ImagePacket;"
 
 setmetatable(EditImagePacket, {
   __index = ImagePacket;
   __call = function (_, packet)
-    assert(type(packet) == "table", "EditImagePacket constructor must be a table.")
+    assert(is_table(packet), "EditImagePacket constructor must be a table.")
     EditImagePacket.typecheck(packet, "EditImagePacket constructor")
 
     packet.value = love.graphics.newCanvas(packet.data:getDimensions())
@@ -71,10 +74,7 @@ function EditImagePacket.typecheck(obj, where)
 end
 
 function EditImagePacket.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";EditImagePacket;")
+  return is_metakind(obj, ";EditImagePacket;")
 end
 
 return EditImagePacket

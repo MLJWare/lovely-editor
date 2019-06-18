@@ -6,7 +6,7 @@ local AnglesFrame             = require "frame.Angles"
 local Vector2Frame            = require "frame.Vector2"
 local VectorSplitFrame        = require "frame.VectorSplit"
 local GraphFrame              = require "frame.Graph"
-local ConditionalFrame        = require "frame.Conditional"
+--local ConditionalFrame        = require "frame.Conditional"
 local SliderFrame             = require "frame.Slider"
 
 return MenuListFrame {
@@ -86,7 +86,7 @@ return MenuListFrame {
         })
       end;
     };
-    {
+    --[[{
       text   = "New Conditional View";
       action = function (_, _)
         local popup_x, popup_y = app.popup_position_as_local()
@@ -96,7 +96,7 @@ return MenuListFrame {
           pos_y = popup_y;
         })
       end;
-    };
+    };--]]
     { text = "Cancel"; }
   };
 }

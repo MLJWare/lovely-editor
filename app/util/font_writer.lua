@@ -1,3 +1,7 @@
+local is                      = require "pleasure.is"
+
+local is_string = is.string
+
 local font_writer = {}
 
 local alignment = {
@@ -17,8 +21,8 @@ function font_writer.print_aligned(font, text, x, y, align_x, align_y)
   local width  = font:getWidth(text)
   local height = font:getHeight()*line_count
 
-  local dx = type(align_x) == "string" and alignment[align_x or "left"] or align_x or 0
-  local dy = type(align_y) == "string" and alignment[align_y or "top" ] or align_y or 0
+  local dx = is_string(align_x) and alignment[align_x or "left"] or align_x or 0
+  local dy = is_string(align_y) and alignment[align_y or "top" ] or align_y or 0
 
   local old_font = love.graphics.getFont()
   love.graphics.setFont(font)

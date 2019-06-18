@@ -21,7 +21,6 @@ function P.set(domain, property, value)
   _set(_current, domain, property, value)
 end
 
--- QUESTION should this function be globally accessable?
 function P.set_default(domain, property, value)
   assert(domain, "Missing first argument, 'domain', of `PropertyStore.set_default`")
   assert(property, "Missing second argument, 'property', of `PropertyStore.set_default`")

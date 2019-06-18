@@ -2,19 +2,20 @@ local Frame                   = require "Frame"
 local pleasure                = require "pleasure"
 local EditableText            = require "EditableText"
 
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
+
 local InputFrame = {}
 InputFrame.__index = InputFrame
-
 InputFrame._kind = ";InputFrame;Frame;"
 
 setmetatable(InputFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "InputFrame constructor must be a table.")
+    assert(is_table(frame), "InputFrame constructor must be a table.")
 
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or 20
-
     InputFrame.typecheck(frame, "InputFrame constructor")
 
     frame._edit = EditableText{
@@ -32,14 +33,10 @@ setmetatable(InputFrame, {
 
 function InputFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  --assertf(type(obj.value) == "number", "Error in %s: Missing/invalid property: 'value' must be a number.", where)
 end
 
 function InputFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";InputFrame;")
+  return is_metakind(obj, ";InputFrame;")
 end
 
 function InputFrame:draw(_, _, scale)

@@ -5,10 +5,13 @@ local Toolbox                 = require "Toolbox"
 local pack_color              = require "util.color.pack"
 local unpack_color            = require "util.color.unpack"
 local Vector4Kind             = require "Kind.Vector4"
-
-local try_invoke              = require ("pleasure.try").invoke
-
+local pleasure                = require "pleasure"
 local IOs                     = require "IOs"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local PAD = 4
 
@@ -20,13 +23,12 @@ local BTN_OFFSET_Y = BTN_HEIGHT + PAD
 
 local ToolboxFrame = {}
 ToolboxFrame.__index = ToolboxFrame
-
 ToolboxFrame._kind = ";ToolboxFrame;Frame;"
 
 setmetatable(ToolboxFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "ToolboxFrame constructor must be a table.")
+    assert(is_table(frame), "ToolboxFrame constructor must be a table.")
     frame.size_x = frame.size_x or PAD + (#Toolbox + 1)*BTN_OFFSET_X
     frame.size_y = frame.size_y or PAD + BTN_OFFSET_Y;
 
@@ -41,10 +43,7 @@ function ToolboxFrame.typecheck(obj, where)
 end
 
 function ToolboxFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";ToolboxFrame;")
+  return is_metakind(obj, ";ToolboxFrame;")
 end
 
 ToolboxFrame.takes = IOs {

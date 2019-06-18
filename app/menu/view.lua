@@ -1,10 +1,13 @@
 local app                     = require "app"
-local clone                   = require "util.clone"
 local SaveFileFrame           = require "frame.SaveFile"
 local YesNoFrame              = require "frame.YesNo"
 local MenuListFrame           = require "frame.MenuList"
 local PixelFrame              = require "frame.Pixel"
 local RenameFrame             = require "frame.Rename"
+local clone                   = require "pleasure.clone"
+local is                      = require "pleasure.is"
+
+local is_callable = is.callable
 
 local function is_pixelframe (_, menu)
   return PixelFrame.is(menu.view.frame)
@@ -60,7 +63,7 @@ return MenuListFrame {
       action = function (_, menu)
         local frame = menu.view.frame;
         local action = frame:check_action("core:save")
-        if type(action) == "function" then
+        if is_callable(action) then
           save_file.action = action
           save_file.data   = frame
           app.show_popup(save_file)

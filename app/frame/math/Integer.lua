@@ -8,18 +8,21 @@ local InputFrame              = require "frame.Input"
 local pleasure                = require "pleasure"
 local unpack_color            = require "util.color.unpack"
 local font_writer             = require "util.font_writer"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local IntegerFrame = {}
 IntegerFrame.__index = IntegerFrame
-
 IntegerFrame._kind = ";IntegerFrame;InputFrame;Frame;"
 
 setmetatable(IntegerFrame, {
   __index = InputFrame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "IntegerFrame constructor must be a table.")
-
+    assert(is_table(frame), "IntegerFrame constructor must be a table.")
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or 20
     IntegerFrame.typecheck(frame, "IntegerFrame constructor")
@@ -30,9 +33,7 @@ setmetatable(IntegerFrame, {
         return frame.value;
       end;
     }
-
     frame.filter = integer_filter
-
     frame.value = math.floor(frame.value or 0)
 
     setmetatable(InputFrame(frame), IntegerFrame)
@@ -47,14 +48,11 @@ setmetatable(IntegerFrame, {
 
 function IntegerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Invalid optional property: 'value' must be a number.", where)
+  assertf(is_opt(obj.value, NumberKind.is), "Error in %s: Invalid optional property: 'value' must be a number.", where)
 end
 
 function IntegerFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";IntegerFrame;")
+  return is_metakind(obj, ";IntegerFrame;")
 end
 
 IntegerFrame.gives = IOs{

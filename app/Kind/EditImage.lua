@@ -8,6 +8,6 @@ local is = EditImagePacket.is
 return {
   is = is;
   to_shader_value = function (data)
-    return is(data) and data.value or default -- FIXME
+    return is(data) and data.value or default
   end;
 }

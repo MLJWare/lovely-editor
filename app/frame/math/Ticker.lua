@@ -6,18 +6,21 @@ local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
 local font_writer             = require "util.font_writer"
 local fontstore               = require "fontstore"
+
 local font = fontstore.default[12]
+
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local TickerFrame = {}
 TickerFrame.__index = TickerFrame
-
 TickerFrame._kind = ";TickerFrame;Frame;"
 
 setmetatable(TickerFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "TickerFrame constructor must be a table.")
-
+    assert(is_table(frame), "TickerFrame constructor must be a table.")
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or 20
     TickerFrame.typecheck(frame, "TickerFrame constructor")
@@ -39,14 +42,11 @@ setmetatable(TickerFrame, {
 
 function TickerFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value or NumberKind.is(obj.value), "Error in %s: Missing/invalid property: 'value' must be a number.", where)
+  assertf(is_opt(obj.value, NumberKind.is), "Error in %s: Invalid optional property: 'value' must be a number.", where)
 end
 
 function TickerFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";TickerFrame;")
+  return is_metakind(obj, ";TickerFrame;")
 end
 
 TickerFrame.gives = IOs{

@@ -7,11 +7,15 @@ local Frame                   = require "Frame"
 local ParticlesFrame          = require "frame.Particles"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require ("pleasure.try").invoke
 local integer_filter          = require "input.filter.non-negative-integer"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
+
 local NewParticlesViewFrame = {}
 NewParticlesViewFrame.__index = NewParticlesViewFrame
-
 NewParticlesViewFrame._kind = ";NewParticlesViewFrame;Frame;"
 
 local PAD_X    = 10
@@ -29,7 +33,7 @@ local DEFAULT_VIEW_HEIGHT = 64
 setmetatable(NewParticlesViewFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "NewParticlesViewFrame constructor must be a table.")
+    assert(is_table(frame), "NewParticlesViewFrame constructor must be a table.")
     frame.size_x = 400
     frame.size_y = 88
     NewParticlesViewFrame.typecheck(frame, "NewParticlesViewFrame constructor")
@@ -58,9 +62,8 @@ setmetatable(NewParticlesViewFrame, {
       size_y = btn_size_y;
       text_color = btn_text_color;
       mouseclicked = function ()
-        local width  = tonumber(edit_width .text)
-        if not width  or width  <= 0 then width  = DEFAULT_VIEW_WIDTH  end
-
+        local width = tonumber(edit_width .text)
+        if not width or width <= 0 then width = DEFAULT_VIEW_WIDTH  end
         local height = tonumber(edit_height.text)
         if not height or height <= 0 then height = DEFAULT_VIEW_HEIGHT end
 
@@ -104,10 +107,7 @@ function NewParticlesViewFrame.typecheck(obj, where)
 end
 
 function NewParticlesViewFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";NewParticlesViewFrame;")
+  return is_metakind(obj, ";NewParticlesViewFrame;")
 end
 
 function NewParticlesViewFrame:draw(size_x, size_y)

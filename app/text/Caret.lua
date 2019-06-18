@@ -3,15 +3,18 @@ local clamp                   = require "math.clamp"
 local extract                 = require "util.string.extract"
 local split                   = require "util.string.split"
 local TextBuffer              = require "text.Buffer"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local TextCaret = {}
 TextCaret.__index = TextCaret
-
 TextCaret._kind = ";TextCaret;"
 
 setmetatable(TextCaret, {
   __call = function (_, caret)
-    assert(type(caret) == "table", "TextCaret constructor must be a table.")
+    assert(is_table(caret), "TextCaret constructor must be a table.")
     TextCaret.typecheck(caret, "TextCaret constructor")
     caret._row    = caret._row    or 1
     caret._column = caret._column or 1
@@ -25,10 +28,7 @@ function TextCaret.typecheck(obj, where)
 end
 
 function TextCaret.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";TextCaret;")
+  return is_metakind(obj, ";TextCaret;")
 end
 
 function TextCaret.clone(caret)

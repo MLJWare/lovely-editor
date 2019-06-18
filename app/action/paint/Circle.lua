@@ -1,6 +1,6 @@
+local paint_iter              = require "paint_iter"
 local pack_color              = require "util.color.pack"
 local unpack_color            = require "util.color.unpack"
-local paint_iter              = require "paint_iter"
 
 local Action = {}
 Action.__index = Action

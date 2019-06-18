@@ -9,21 +9,25 @@ local ImageKind               = require "Kind.Image"
 local EditImageKind           = require "Kind.EditImage"
 local EditImage               = require "packet.EditImage"
 local IOs                     = require "IOs"
-local try_invoke              = require ("pleasure.try").invoke
+local pleasure                = require "pleasure"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local PixelFrame = {}
 PixelFrame.__index = PixelFrame
-
 PixelFrame._kind = ";PixelFrame;Frame;"
 
 setmetatable(PixelFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "PixelFrame constructor must be a table.")
+    assert(is_table(frame), "PixelFrame constructor must be a table.")
     frame.size_x = frame.size_x or 0
     frame.size_y = frame.size_y or 0
-
     PixelFrame.typecheck(frame, "PixelFrame constructor")
+
     frame.image = EditImage {
       data = frame.data;
     }
@@ -50,7 +54,6 @@ PixelFrame.takes = IOs{
 PixelFrame.gives = IOs{
   {id = "signal_out", kind = ImageKind};
 }
-
 
 function PixelFrame:on_connect(prop, from, data)
   if prop ~= "signal_in" then return end
@@ -84,10 +87,7 @@ function PixelFrame.typecheck(obj, where)
 end
 
 function PixelFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";PixelFrame;")
+  return is_metakind(obj, ";PixelFrame;")
 end
 
 function PixelFrame:clone()
@@ -109,15 +109,12 @@ end
 function PixelFrame:refresh(_, data)
   local image = data or self.image
   self.image_edit = image
-  image:refresh() -- QUESTION is this correct?
+  image:refresh()
   self.signal_out:inform(image)
 end
 
 function PixelFrame:refresh_internal()
   local image = self.image_edit
-  --if image ~= self.image then
-    --image:inform_except(self) -- FIXME!!!!!
-  --end
   self:refresh(image)
 end
 

@@ -8,6 +8,11 @@ local hsv2rgb                 = require "color.hsv2rgb"
 local Signal                  = require "Signal"
 local Vector4Kind             = require "Kind.Vector4"
 local IOs                     = require "IOs"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
+
 local PAD = 4
 
 local SLIDER_WIDTH  = 16
@@ -42,13 +47,12 @@ end
 
 local ColorPickerFrame = {}
 ColorPickerFrame.__index = ColorPickerFrame
-
 ColorPickerFrame._kind = ";ColorPickerFrame;Frame;"
 
 setmetatable(ColorPickerFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "ColorPickerFrame constructor must be a table.")
+    assert(is_table(frame), "ColorPickerFrame constructor must be a table.")
     frame.size_x = FULL_WIDTH
     frame.size_y = FULL_HEIGHT
     ColorPickerFrame.typecheck(frame, "ColorPickerFrame constructor")
@@ -85,10 +89,7 @@ function ColorPickerFrame.typecheck(obj, where)
 end
 
 function ColorPickerFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";ColorPickerFrame;")
+  return is_metakind(obj, ";ColorPickerFrame;")
 end
 
 local function draw_slider_knob(x, y, width, height)

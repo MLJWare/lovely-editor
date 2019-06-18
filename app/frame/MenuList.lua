@@ -1,17 +1,16 @@
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local find_max                = require "fn.find_max"
-local try_invoke              = require ("pleasure.try").invoke
+local pleasure                = require "pleasure"
 local fontstore               = require "fontstore"
+
+local try_invoke = pleasure.try.invoke
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local MenuListFrame = {}
 MenuListFrame.__index = MenuListFrame
-
 MenuListFrame._kind = ";MenuListFrame;Frame;"
-
--- TODO remove this!!!
-MenuListFrame.x = -1
-MenuListFrame.y = -1
 
 local menu_pad = 4
 local font = fontstore.default[12]
@@ -32,7 +31,7 @@ end
 setmetatable(MenuListFrame, {
   __index = Frame;
   __call = function (_, menu)
-    assert(type(menu) == "table", "MenuListFrame constructor must be a table.")
+    assert(is_table(menu), "MenuListFrame constructor must be a table.")
     menu.size_x = menu.size_x or 0
     menu.size_y = menu.size_y or 0
     MenuListFrame.typecheck(menu, "MenuListFrame constructor")
@@ -59,10 +58,7 @@ function MenuListFrame.typecheck(obj, where)
 end
 
 function MenuListFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";MenuListFrame;")
+  return is_metakind(obj, ";MenuListFrame;")
 end
 
 function MenuListFrame:option_at(mx, my)

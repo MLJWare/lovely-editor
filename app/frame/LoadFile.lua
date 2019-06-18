@@ -7,7 +7,11 @@ local Images                  = require "Images"
 local MessageFrame            = require "frame.Message"
 local pleasure                = require "pleasure"
 local pack_color              = require "util.color.pack"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local _info_ = {}
 
@@ -18,7 +22,6 @@ local error_loading = MessageFrame{
 
 local LoadFileFrame = {}
 LoadFileFrame.__index = LoadFileFrame
-
 LoadFileFrame._kind = ";LoadFileFrame;Frame;"
 
 local PAD_X    = 10
@@ -33,7 +36,8 @@ local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 setmetatable(LoadFileFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "LoadFileFrame constructor must be a table.")
+    assert(is_table(frame), "LoadFileFrame constructor must be a table.")
+
     frame.size_x = 400
     frame.size_y = 88
     LoadFileFrame.typecheck(frame, "LoadFileFrame constructor")
@@ -56,7 +60,7 @@ setmetatable(LoadFileFrame, {
         if not love.filesystem.getInfo(filename, _info_) then
           app.show_popup(MessageFrame {
             title = "No such file";
-            text  = ("File %q does not exists."):format(filename);
+            text  = ("File %q does not exist."):format(filename);
           })
         else
           frame:_try_load(filename)
@@ -91,10 +95,7 @@ function LoadFileFrame.typecheck(obj, where)
 end
 
 function LoadFileFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";LoadFileFrame;")
+  return is_metakind(obj, ";LoadFileFrame;")
 end
 
 function LoadFileFrame:_try_load(filename)

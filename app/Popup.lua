@@ -1,9 +1,14 @@
-local Frame   = require "Frame"
-local assertf = require "assertf"
+local Frame                   = require "Frame"
+local assertf                 = require "assertf"
+local is                      = require "pleasure.is"
+
+local is_opt = is.opt
+local is_table = is.table
+local is_number = is.number
+local is_metakind = is.metakind
 
 local Popup = {}
 Popup.__index = Popup
-
 Popup._kind = ";Popup;"
 
 Popup.frame = setmetatable({}, {
@@ -16,7 +21,7 @@ Popup.frame = setmetatable({}, {
 setmetatable(Popup, {
   __index = Frame;
   __call  = function (_, view)
-    assert(type(view) == "table", "Popup constructor must be a table.")
+    assert(is_table(view), "Popup constructor must be a table.")
     Popup.typecheck(view, "Popup constructor")
 
     view.scale = view.scale or 1
@@ -27,16 +32,13 @@ setmetatable(Popup, {
 })
 
 function Popup.typecheck(obj, where)
-  assertf(type(obj.pos_x) == "number", "Error in %s: Missing/invalid property: 'pos_x' must be a number.", where)
-  assertf(type(obj.pos_y) == "number", "Error in %s: Missing/invalid property: 'pos_y' must be a number.", where)
-  assertf(not obj.frame or Frame.is(obj.frame), "Error in %s: invalid optional property: 'frame' must be a Frame.", where)
+  assertf(is_number(obj.pos_x), "Error in %s: Missing/invalid property: 'pos_x' must be a number.", where)
+  assertf(is_number(obj.pos_y), "Error in %s: Missing/invalid property: 'pos_y' must be a number.", where)
+  assertf(is_opt(obj.frame, Frame.is), "Error in %s: invalid optional property: 'frame' must be a Frame.", where)
 end
 
 function Popup.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";Popup;")
+  return is_metakind(obj, ";Popup;")
 end
 
 return Popup

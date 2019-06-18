@@ -3,18 +3,21 @@ local Signal                  = require "Signal"
 local Vector2Kind             = require "Kind.Vector2"
 local IOs                     = require "IOs"
 local shift_is_down           = require "util.shift_is_down"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local FULL_ROTATION = 2*math.pi
 
 local AnglesFrame = {}
 AnglesFrame.__index = AnglesFrame
-
 AnglesFrame._kind = ";AnglesFrame;Frame;"
 
 setmetatable(AnglesFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "AnglesFrame constructor must be a table.")
+    assert(is_table(frame), "AnglesFrame constructor must be a table.")
 
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or frame.size_x
@@ -26,6 +29,7 @@ setmetatable(AnglesFrame, {
       kind = Vector2Kind;
       on_connect = function () return frame.angle1, frame.angle2 end;
     }
+
     setmetatable(frame, AnglesFrame)
     frame:refresh()
     return frame
@@ -37,10 +41,7 @@ function AnglesFrame.typecheck(obj, where)
 end
 
 function AnglesFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";AnglesFrame;")
+  return is_metakind(obj, ";AnglesFrame;")
 end
 
 AnglesFrame.gives = IOs{

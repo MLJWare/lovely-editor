@@ -5,11 +5,14 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require ("pleasure.try").invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local RenameFrame = {}
 RenameFrame.__index = RenameFrame
-
 RenameFrame._kind = ";RenameFrame;Frame;"
 
 local PAD_X    = 10
@@ -24,7 +27,7 @@ local btn_text_color = pack_color(0.2, 0.2, 0.2, 1.0)
 setmetatable(RenameFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "RenameFrame constructor must be a table.")
+    assert(is_table(frame), "RenameFrame constructor must be a table.")
     frame.size_x = 400
     frame.size_y = 88
     RenameFrame.typecheck(frame, "RenameFrame constructor")
@@ -76,10 +79,7 @@ function RenameFrame.typecheck(obj, where)
 end
 
 function RenameFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";RenameFrame;")
+  return is_metakind(obj, ";RenameFrame;")
 end
 
 function RenameFrame:draw(size_x, size_y)

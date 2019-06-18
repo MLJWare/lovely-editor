@@ -23,7 +23,11 @@ local shift_is_down           = require "util.shift_is_down"
 local  ctrl_is_down           = require "util.ctrl_is_down"
 local   alt_is_down           = require "util.alt_is_down"
 
-local try_invoke              = pleasure.try.invoke
+local try_invoke = pleasure.try.invoke
+
+local is_table  = pleasure.is.table
+local is_number = pleasure.is.number
+local is_function = pleasure.is["function"]
 
 local BORDER_PAD = 2
 local BORDER_COLOR_ANCHORED = {0.5, 0.0, 0.0}
@@ -626,7 +630,7 @@ end
 function app.disconnect_raw(view, prop)
   local frame = view.frame
 
-  if type(prop) == "number" then
+  if is_number(prop) then
     prop = frame:take_by_index(prop)
   end
 
@@ -724,11 +728,13 @@ function app.draw()
   local views    = app.project.views
   local viewport = app.project.viewport
 
+  love.graphics.setScissor(0, 0, love.graphics.getDimensions())
   for i = #views, 1, -1 do
     local view = views[i]
     local frame = view.frame
 
     local pos_x, pos_y, size_x, size_y, scale = viewport:view_bounds(view)
+
     local x1, y1 = pos_x - BORDER_PAD, pos_y - BORDER_PAD
 
     if show_connections then
@@ -757,11 +763,11 @@ function app.draw()
       end
     end
 
-    if type(frame) == "table" and type(frame.draw) == "function" then
+    if is_table(frame) and is_function(frame.draw) then
       pleasure.push_region()
       pleasure.translate(pos_x, pos_y)
       love.graphics.setColor(1.0, 1.0, 1.0)
-      frame:draw(size_x, size_y, scale, mx - pos_x, my - pos_y) -- NOTE runtime vec2
+      frame:draw(size_x, size_y, scale, mx - pos_x, my - pos_y)
       pleasure.pop_region()
     end
 
@@ -790,7 +796,7 @@ function app.draw()
     local popup = popups[i]
     local frame = popup.frame
 
-    if type(frame) == "table" and type(frame.draw) == "function" then
+    if is_table(frame) and is_function(frame.draw) then
       local pos_x = popup.pos_x
       local pos_y = popup.pos_y
       local size_x = frame.size_x

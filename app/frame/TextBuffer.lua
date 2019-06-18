@@ -1,6 +1,5 @@
 local IOs                     = require "IOs"
 local Frame                   = require "Frame"
---local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
 local pack_color              = require "util.color.pack"
 local unpack_color            = require "util.color.unpack"
@@ -10,20 +9,23 @@ local TextBuffer              = require "text.Buffer"
 local TextCaret               = require "text.Caret"
 local unicode                 = require "unicode"
 local topath                  = require "topath"
+local alt_is_down             = require "util.alt_is_down"
 local ctrl_is_down            = require "util.ctrl_is_down"
 local shift_is_down           = require "util.shift_is_down"
 
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
+
 local split   = unicode.split
+local splice  = unicode.splice
 local extract = unicode.extract
 
 -- FIXME doesn't have unicode support yet!!!
 
---local normal_font = love.graphics.newFont(12)
 local monofont    = love.graphics.newFont(topath "res/font/Cousine-Regular.ttf", 12)
 
 local TextBufferFrame = {}
 TextBufferFrame.__index = TextBufferFrame
-
 TextBufferFrame._kind = ";TextBufferFrame;TextFrame;Frame;"
 
 TextBufferFrame._selection_color = pack_color(0.5, 0.5, 0.5, 0.5)
@@ -32,7 +34,7 @@ TextBufferFrame._text_color      = pack_color(1.0, 1.0, 1.0, 1.0)
 setmetatable(TextBufferFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "TextBufferFrame constructor must be a table.")
+    assert(is_table(frame), "TextBufferFrame constructor must be a table.")
     TextBufferFrame.typecheck(frame, "TextBufferFrame constructor")
     frame._font = monofont
     frame._buffer = TextBuffer{}
@@ -62,14 +64,10 @@ setmetatable(TextBufferFrame, {
 
 function TextBufferFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  --assertf(type(obj.text) == "string", "Error in %s: Missing/invalid property: 'text' must be a string.", where)
 end
 
 function TextBufferFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";TextBufferFrame;")
+  return is_metakind(obj, ";TextBufferFrame;")
 end
 
 TextBufferFrame.gives = IOs{
@@ -169,7 +167,7 @@ function TextBufferFrame:_draw_caret(line, caret_column, y)
 end
 
 function TextBufferFrame:textinput(input)
-  if ctrl_is_down() then return end
+  if ctrl_is_down() and not alt_is_down() then return end
 
   local caret = self._caret
   if caret:has_selection() then
@@ -178,9 +176,9 @@ function TextBufferFrame:textinput(input)
 
   local row = caret:get_row()
   local text = self._buffer:get(row)
-
-  local left, right = split(text, caret:get_column())
-  self._buffer:set(row, left..input..right)
+  local column = caret:get_column()
+  print("row:", row, "column:", column, "text:", text, "input:", input)
+  self._buffer:set(row, splice(text, column, input, 0))
 
   caret:move_right()
 end

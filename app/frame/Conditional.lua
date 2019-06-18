@@ -9,19 +9,21 @@ local NumberKind              = require "Kind.Number"
 local StringKind              = require "Kind.String"
 local font_writer             = require "util.font_writer"
 local generate_clause         = require "frame.comp.generate_clause"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local default_condition = function () return true end
 
 local ConditionalFrame = {}
 ConditionalFrame.__index = ConditionalFrame
-
 ConditionalFrame._kind = ";ConditionalFrame;Frame;"
 
 setmetatable(ConditionalFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "ConditionalFrame constructor must be a table.")
+    assert(is_table(frame), "ConditionalFrame constructor must be a table.")
 
     frame.size_x = frame.size_x or 256
     frame.size_y = frame.size_y or 58
@@ -64,14 +66,10 @@ setmetatable(ConditionalFrame, {
 
 function ConditionalFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  --assertf(type(obj.value) == "number", "Error in %s: Missing/invalid property: 'value' must be a number.", where)
 end
 
 function ConditionalFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";ConditionalFrame;")
+  return is_metakind(obj, ";ConditionalFrame;")
 end
 
 function ConditionalFrame:takes_count()

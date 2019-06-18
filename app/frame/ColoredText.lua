@@ -1,16 +1,17 @@
---local ColoredText = require "ColoredText"
-local Frame = require "Frame"
---local assertf = require "assertf"
+local Frame                   = require "Frame"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local ColoredTextFrame = {}
 ColoredTextFrame.__index = ColoredTextFrame
-
 ColoredTextFrame._kind = ";ColoredTextFrame;Frame;"
 
 setmetatable(ColoredTextFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "ColoredTextFrame constructor must be a table.")
+    assert(is_table(frame), "ColoredTextFrame constructor must be a table.")
     ColoredTextFrame.typecheck(frame, "ColoredTextFrame constructor")
 
     setmetatable(frame, ColoredTextFrame)
@@ -20,14 +21,10 @@ setmetatable(ColoredTextFrame, {
 
 function ColoredTextFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  --assertf(ColoredText.is(obj.views), "Error in %s: Missing/invalid property: 'views' must be a ColoredText.", where)
 end
 
 function ColoredTextFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";ColoredTextFrame;")
+  return is_metakind(obj, ";ColoredTextFrame;")
 end
 
 local fonts = {

@@ -1,14 +1,17 @@
 local assertf                 = require "assertf"
-local is_callable             = require ("pleasure.is").callable
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_callable = is.callable
+local is_metakind = is.metakind
 
 local Signal = {}
 Signal.__index = Signal
-
 Signal._kind = ";Signal;"
 
 setmetatable(Signal, {
   __call = function (_, signal)
-    assert(type(signal) == "table", "Signal constructor must be a table.")
+    assert(is_table(signal), "Signal constructor must be a table.")
     Signal.typecheck(signal, "Signal constructor")
     setmetatable(signal, Signal)
     signal.listeners = {}
@@ -17,18 +20,15 @@ setmetatable(Signal, {
 })
 
 function Signal.typecheck(obj, where)
-  local kind  = obj.kind
   assertf(is_callable(obj.on_connect), "Error in %s: Missing/invalid property: 'on_connect' must be callable.", where)
-  assertf(type(kind) == "table", "Error in %s: Missing/invalid property: 'kind' must be a table representing a Kind.", where)
+  local kind  = obj.kind
+  assertf(is_table(kind), "Error in %s: Missing/invalid property: 'kind' must be a table representing a Kind.", where)
   assertf(is_callable(kind.is), "Error in %s: Missing/invalid property: 'kind' must be a table representing a Kind ('kind.is' should be callable).", where)
   assertf(is_callable(kind.to_shader_value), "Error in %s: Missing/invalid property: 'kind' must be a table representing a Kind ('kind.to_shader_value' should be callable).", where)
 end
 
 function Signal.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-  and type(meta._kind) == "string"
-  and meta._kind:find(";Signal;")
+  return is_metakind(obj, ";Signal;")
 end
 
 function Signal:listen(listener, prop, callback)

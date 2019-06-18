@@ -4,11 +4,15 @@ local IOs                     = require "IOs"
 local sandbox                 = require "util.sandbox"
 local NumberKind              = require "Kind.Number"
 local StringKind              = require "Kind.String"
-local try_invoke              = require ("pleasure.try").invoke
+local pleasure                = require "pleasure"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local LoveFrame = {}
 LoveFrame.__index = LoveFrame
-
 LoveFrame._kind = ";LoveFrame;Frame;"
 
 local default_size_x = 640
@@ -17,10 +21,10 @@ local default_size_y = 480
 setmetatable(LoveFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "LoveFrame constructor must be a table.")
+    assert(is_table(frame), "LoveFrame constructor must be a table.")
+
     frame.size_x = frame.size_x or default_size_x
     frame.size_y = frame.size_y or default_size_y
-
     LoveFrame.typecheck(frame, "LoveFrame constructor")
 
     frame._canvas = love.graphics.newCanvas(default_size_x, default_size_y);
@@ -65,10 +69,7 @@ function LoveFrame.typecheck(obj, where)
 end
 
 function LoveFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";LoveFrame;")
+  return is_metakind(obj, ";LoveFrame;")
 end
 
 function LoveFrame:check_action(action_id)
@@ -88,7 +89,7 @@ function LoveFrame:refresh_tick()
   local game = self._game
   if not game then return end
   local game_love = game.love
-  if type(game_love) ~= "table" then return end
+  if not is_table(game_love) then return end
   love.graphics.push("all")
   love.graphics.setCanvas(self._canvas)
   love.graphics.setColor(1, 1, 1)

@@ -4,18 +4,23 @@ local VectorNKind             = require "Kind.VectorN"
 local Signal                  = require "Signal"
 local assertf                 = require "assertf"
 local clamp                   = require "math.clamp"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_number = is.number
+local is_table_of = is.table_of
+local is_metakind = is.metakind
 
 local MAX_SCALE = 8
 
 local GraphFrame = {}
 GraphFrame.__index = GraphFrame
-
 GraphFrame._kind = ";GraphFrame;Frame;"
 
 setmetatable(GraphFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "GraphFrame constructor must be a table.")
+    assert(is_table(frame), "GraphFrame constructor must be a table.")
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or 64
     GraphFrame.typecheck(frame, "GraphFrame constructor")
@@ -39,20 +44,14 @@ setmetatable(GraphFrame, {
 function GraphFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
   if obj.sizes then
-    assertf(type(obj.sizes) == "table", "Error in %s: Invalid/missing property: 'sizes' must be a numeric table with a numeric 'count' property.", where)
-    for i = 1, #obj.sizes do
-      assertf(type(obj.sizes[i]) == "number", "Error in %s: Invalid property: 'sizes' must be a numeric table with a numeric 'count' property.", where)
-    end
-    assertf(type(obj.sizes.count) == "number", "Error in %s: Invalid/missing property: 'count' property of 'sizes' must be a number.", where)
+    assertf(is_table_of(obj.sizes, is_number), "Error in %s: Invalid/missing property: 'sizes' must be a numeric table with a numeric 'count' property.", where)
+    assertf(is_number(obj.sizes.count), "Error in %s: Invalid/missing property: 'count' property of 'sizes' must be a number.", where)
   end
 end
 
 
 function GraphFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";GraphFrame;")
+  return is_metakind(obj, ";GraphFrame;")
 end
 
 GraphFrame.gives = IOs{

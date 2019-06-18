@@ -13,6 +13,9 @@ local fontstore               = require "fontstore"
 local function is_ctrl_down () return love.keyboard.isDown("lctrl" , "rctrl" ) end
 local function is_shift_down() return love.keyboard.isDown("lshift", "rshift") end
 
+local opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_string = pleasure.is.string
 local is_callable = pleasure.is.callable
 local is_non_negative = pleasure.is.non_negative_number
 
@@ -27,10 +30,10 @@ EditableText.__index = EditableText
 
 setmetatable(EditableText, {
   __call = function (_, field)
-    assert(type(field) == "table", "EditableText constructor must be a table.")
-    assert(not field.text or type(field.text) == "string",
+    assert(is_table(field), "EditableText constructor must be a table.")
+    assert(opt(field.text, is_string),
       "Error in EditableText constructor: Invalid property: 'text' must be a string (or nil).")
-    assert(not field.hint or type(field.hint) == "string",
+    assert(opt(field.hint, is_string),
       "Error in EditableText constructor: Invalid property: 'hint' must be a string (or nil).")
     assert(is_non_negative(field.size_x),
       "Error in EditableText constructor: Invalid property: 'size_x' must be a non-negative number.")

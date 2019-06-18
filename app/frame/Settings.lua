@@ -3,12 +3,15 @@ local element_contains        = require "util.element_contains"
 local Frame                   = require "Frame"
 local Images                  = require "Images"
 local pleasure                = require "pleasure"
-local try_invoke              = require ("pleasure.try").invoke
 local settings                = require "settings"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local SettingsFrame = {}
 SettingsFrame.__index = SettingsFrame
-
 SettingsFrame._kind = ";SettingsFrame;Frame;"
 
 local PAD_X    = 10
@@ -19,7 +22,7 @@ local OFFSET_Y = PAD_Y + 20
 setmetatable(SettingsFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "SettingsFrame constructor must be a table.")
+    assert(is_table(frame), "SettingsFrame constructor must be a table.")
     frame.size_x = 400
     frame.size_y = 400
     SettingsFrame.typecheck(frame, "SettingsFrame constructor")
@@ -47,16 +50,12 @@ function SettingsFrame.typecheck(obj, where)
 end
 
 function SettingsFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";SettingsFrame;")
+  return is_metakind(obj, ";SettingsFrame;")
 end
 
 function SettingsFrame:draw(size_x, size_y, scale)
   pleasure.push_region(0, 0, size_x, size_y)
   pleasure.scale(scale, scale)
-  -- FIXME doesnt scale content!!!
   Images.ninepatch("menu", 0, 16, self.size_x, self.size_y - 16)
   Images.ninepatch("menu", 0,  0, self.size_x, 20)
   love.graphics.print("Settings:", 6, 4)
@@ -163,6 +162,10 @@ function SettingsFrame:focuslost()
   for _, element in ipairs(self._ui) do
     element.focused = false
   end
+end
+
+function SettingsFrame.id()
+  return " Settings"
 end
 
 return SettingsFrame

@@ -9,11 +9,15 @@ local ImageKind               = require "Kind.Image"
 local NumberKind              = require "Kind.Number"
 local Vector4Kind             = require "Kind.Vector4"
 local StringKind              = require "Kind.String"
-local try_invoke              = require ("pleasure.try").invoke
+local pleasure                = require "pleasure"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local ShaderFrame = {}
 ShaderFrame.__index = ShaderFrame
-
 ShaderFrame._kind = ";ShaderFrame;Frame;"
 
 local default_size_x = 16
@@ -22,10 +26,9 @@ local default_size_y = 32
 setmetatable(ShaderFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "ShaderFrame constructor must be a table.")
+    assert(is_table(frame), "ShaderFrame constructor must be a table.")
     frame.size_x = frame.size_x or default_size_x
     frame.size_y = frame.size_y or default_size_y
-
     ShaderFrame.typecheck(frame, "ShaderFrame constructor")
 
     frame.image = ImagePacket {
@@ -125,10 +128,7 @@ function ShaderFrame.typecheck(obj, where)
 end
 
 function ShaderFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";ShaderFrame;")
+  return is_metakind(obj, ";ShaderFrame;")
 end
 
 function ShaderFrame:check_action(action_id)

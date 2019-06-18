@@ -2,19 +2,21 @@ local Frame                   = require "Frame"
 local Signal                  = require "Signal"
 local NumberKind              = require "Kind.Number"
 local IOs                     = require "IOs"
+local is                      = require "pleasure.is"
+
+local is_table = is.table
+local is_metakind = is.metakind
 
 local FULL_ROTATION = 2*math.pi
 
 local RotationFrame = {}
 RotationFrame.__index = RotationFrame
-
 RotationFrame._kind = ";RotationFrame;Frame;"
 
 setmetatable(RotationFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "RotationFrame constructor must be a table.")
-
+    assert(is_table(frame), "RotationFrame constructor must be a table.")
     frame.size_x = frame.size_x or 64
     frame.size_y = frame.size_y or frame.size_x
     RotationFrame.typecheck(frame, "RotationFrame constructor")
@@ -35,10 +37,7 @@ function RotationFrame.typecheck(obj, where)
 end
 
 function RotationFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";RotationFrame;")
+  return is_metakind(obj, ";RotationFrame;")
 end
 
 RotationFrame.gives = IOs{

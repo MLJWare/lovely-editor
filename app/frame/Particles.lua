@@ -6,14 +6,18 @@ local ImageKind               = require "Kind.Image"
 local NumberKind              = require "Kind.Number"
 local Vector2Kind             = require "Kind.Vector2"
 local VectorNKind             = require "Kind.VectorN"
-local try_invoke              = require ("pleasure.try").invoke
+local pleasure                = require "pleasure"
 local clamp                   = require "math.clamp"
+
+local try_invoke = pleasure.try.invoke
+
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local FULL_ROTATION = 2*math.pi
 
 local ParticlesFrame = {}
 ParticlesFrame.__index = ParticlesFrame
-
 ParticlesFrame._kind = ";ParticlesFrame;Frame;"
 
 local default_size_x = 128
@@ -26,7 +30,7 @@ default_texture = love.graphics.newImage(default_texture)
 setmetatable(ParticlesFrame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "ParticlesFrame constructor must be a table.")
+    assert(is_table(frame), "ParticlesFrame constructor must be a table.")
     frame.size_x = frame.size_x or default_size_x
     frame.size_y = frame.size_y or default_size_y
 
@@ -162,10 +166,7 @@ function ParticlesFrame.typecheck(obj, where)
 end
 
 function ParticlesFrame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";ParticlesFrame;")
+  return is_metakind(obj, ";ParticlesFrame;")
 end
 
 function ParticlesFrame:check_action(action_id)
@@ -231,13 +232,7 @@ function ParticlesFrame:_redraw_image()
   love.graphics.setCanvas(self.image.value)
   love.graphics.clear   (0,0,0,0)
   love.graphics.setColor(1,1,1,1)
-
-  --local size_x = self.size_x
-  --local size_y = self.size_y
-  --self.psystem:setPosition(size_x/2, size_y/2)
   love.graphics.draw(self.psystem)
-
-  -- TODO update and render particles
   love.graphics.setCanvas(cv)
   self.signal_out:inform(self.image)
 end

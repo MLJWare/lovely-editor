@@ -5,18 +5,21 @@ local Vector2Kind             = require "Kind.Vector2"
 local Signal                  = require "Signal"
 local assertf                 = require "assertf"
 local pleasure                = require "pleasure"
-local try_invoke              = pleasure.try.invoke
+
+local try_invoke = pleasure.try.invoke
+
+local is_opt = pleasure.is.opt
+local is_table = pleasure.is.table
+local is_metakind = pleasure.is.metakind
 
 local Vector2Frame = {}
 Vector2Frame.__index = Vector2Frame
-
 Vector2Frame._kind = ";Vector2Frame;Frame;"
 
 setmetatable(Vector2Frame, {
   __index = Frame;
   __call  = function (_, frame)
-    assert(type(frame) == "table", "Vector2Frame constructor must be a table.")
-
+    assert(is_table(frame), "Vector2Frame constructor must be a table.")
     frame.size_x = 20
     frame.size_y = 32
     Vector2Frame.typecheck(frame, "Vector2Frame constructor")
@@ -36,15 +39,12 @@ setmetatable(Vector2Frame, {
 
 function Vector2Frame.typecheck(obj, where)
   Frame.typecheck(obj, where)
-  assertf(not obj.value1 or NumberKind.is(obj.value1), "Error in %s: Invalid optional property: 'value1' must be a number.", where)
-  assertf(not obj.value2 or NumberKind.is(obj.value2), "Error in %s: Invalid optional property: 'value2' must be a number.", where)
+  assertf(is_opt(obj.value1, NumberKind.is), "Error in %s: Invalid optional property: 'value1' must be a number.", where)
+  assertf(is_opt(obj.value2, NumberKind.is), "Error in %s: Invalid optional property: 'value2' must be a number.", where)
 end
 
 function Vector2Frame.is(obj)
-  local meta = getmetatable(obj)
-  return type(meta) == "table"
-     and type(meta._kind) == "string"
-     and meta._kind:find(";Vector2Frame;")
+  return is_metakind(obj, ";Vector2Frame;")
 end
 
 Vector2Frame.gives = IOs{

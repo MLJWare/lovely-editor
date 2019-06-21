@@ -177,7 +177,6 @@ function TextBufferFrame:textinput(input)
   local row = caret:get_row()
   local text = self._buffer:get(row)
   local column = caret:get_column()
-  print("row:", row, "column:", column, "text:", text, "input:", input)
   self._buffer:set(row, splice(text, column, input, 0))
 
   caret:move_right()

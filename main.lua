@@ -7,6 +7,12 @@ do
   love.filesystem.setRequirePath(path..love.filesystem.getRequirePath())
 end
 
+do
+  if not love.filesystem.getInfo("config", "directory") then 
+    love.filesystem.createDirectory("config")
+  end
+end
+
 function string.is (v)
   return type(v) == "string"
 end
@@ -15,6 +21,7 @@ love.graphics.setDefaultFilter("nearest", "nearest", 0)
 love.keyboard.setKeyRepeat(true)
 
 local app                     = require "app"
+require "app-keypressed"
 local YesNoFrame              = require "frame.YesNo"
 local YesNoCancelFrame        = require "frame.YesNoCancel"
 local SaveFileFrame           = require "frame.SaveFile"
@@ -70,11 +77,16 @@ local ask_save_before_load = YesNoCancelFrame {
 }
 
 function love.filedropped(file)
-  local data, format = load_data(file)
+  if not file:open("r") then return end
+  local filedata = file:read("data")
+  file:close()
+  local filename = file:getFilename()
+
+  local data, format = load_data(filename, filedata)
   if format and data then
     local frame = app.try_create_frame(format, data)
     if frame then
-      frame.filename = file:getFilename()
+      frame.filename = filename:match("[^\\/]*$")
       local mx, my = love.mouse.getPosition()
       local pos_x, pos_y = app.project.viewport:global_to_local_pos(mx - frame.size_x/2, my - frame.size_y/2)
 
@@ -86,6 +98,7 @@ function love.filedropped(file)
       })
     elseif format == "project" then
       if #app.project.views > 0 then
+        data.filename = filename
         ask_save_before_load._project = data
         app.show_popup(ask_save_before_load)
       else

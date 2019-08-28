@@ -19,6 +19,22 @@ local function _draw(id, x, y, sx, sy)
   love.graphics.draw(atlas, info.quad, x, y, 0, sx or 1, sy or 1, info.ox or 0, info.oy or 0)
 end
 
+local function _hbar(id, x, y, w, sy)
+  local info = _info(id)
+  if not info then return end -- NOTE ignores missing textures: Give warning/error instead!
+  local sx = w/info.w
+  sy = sy or 1
+  love.graphics.draw(atlas, info.quad, x, y, 0, sx, sy, info.ox or 0, info.oy or 0)
+end
+
+local function _vbar(id, x, y, h, sx)
+  local info = _info(id)
+  if not info then return end -- NOTE ignores missing textures: Give warning/error instead!
+  sx = sx or 1
+  local sy = h/info.h
+  love.graphics.draw(atlas, info.quad, x, y, 0, sx, sy, info.ox or 0, info.oy or 0)
+end
+
 local function _ninepatch(id, x, y, w, h)
   local infoTL = _info(id.."-top-left")
   local infoMC = _info(id.."-middle-center")
@@ -53,4 +69,6 @@ end
 return {
   draw      = _draw;
   ninepatch = _ninepatch;
+  hbar      = _hbar;
+  vbar      = _vbar;
 }

@@ -67,7 +67,7 @@ return MenuListFrame {
     {
       text   = "New Color Picker View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = ColorPickerFrame {};
           pos_x = popup_x;
@@ -78,7 +78,7 @@ return MenuListFrame {
     {
       text   = "New Toolbox View";
       action = function (_, _)
-        local popup_x, popup_y = app.popup_position()
+        local popup_x, popup_y = app.popup_position_as_local()
         app.add_view(View{
           frame = ToolboxFrame {};
           pos_x = popup_x;

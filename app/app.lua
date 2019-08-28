@@ -242,33 +242,6 @@ function app._set_project(project)
   app.project = project
 end
 
-function app.keypressed(key, scancode, isrepeat)
-  if #app.popups > 0 then
-    local top = app.popups[#app.popups]
-    try_invoke(top.frame, "keypressed", key, scancode, isrepeat)
-    return
-  elseif app.global_mode() then
-    if key == "s" then
-      local project = app.project
-      project.show_connections = not project.show_connections
-    elseif key == "space" and app.view_dragged then
-      app.project.viewport:set_view_scale(app.view_dragged, 1)
-    elseif key == "return" then
-      app.project.viewport:set_viewport_scale(1)
-    elseif key == "home" then
-      app.project.viewport:set_position(0,0)
-    end
-  elseif key == "menu" then
-    local w, h = love.graphics.getDimensions()
-    app.open_context_menu(w/2, h/2, nil)
-  else
-    local has_focus = app.focus_handler:has_focus()
-    if has_focus then
-      try_invoke(has_focus, "keypressed", key, scancode, isrepeat)
-    end
-  end
-end
-
 function app.keyreleased(key, scancode)
   if #app.popups > 0 then
     local top = app.popups[#app.popups]

@@ -8,9 +8,9 @@ end
 return function (filedata, filename)
   local success, code
   if filename:find("%.lp_raw$") then
-    success, code = true, filedata
+    success, code = true, filedata:getString()
   else
-    success, code = pcall(love.data.decompress, "string", "lz4", filedata)
+    success, code = pcall(love.data.decompress, "string", "lz4", filedata:getString())
   end
 
   if not success then return nil, code end

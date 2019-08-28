@@ -8,8 +8,8 @@ local load_data               = require "util.file.load_data"
 local try_create_project      = require "internal.try_create_project"
 
 local load_as_view = LoadFileFrame{
-  on_load = function (_, file, filename)
-    local data, format = load_data(file)
+  on_load = function (_, filename, filedata)
+    local data, format = load_data(filename, filedata)
     if not data then
       error(("Couldn't load file %q; perhaps it isn't an image/text file?"):format(filename))
     end
@@ -28,44 +28,9 @@ local load_as_view = LoadFileFrame{
   end;
 }
 
-local load_project = LoadFileFrame {
-  on_load = function (_, file, filename)
-    local data
-    if file:open("r") then
-      data = file:read()
-      file:close()
-    end
-
-    if data then
-      local project, msg = try_create_project(data, filename)
-
-      if project then
-        app._set_project(project)
-        return
-      else
-        print(msg)
-      end
-    end
-    print(("Invalid project file: %s"):format(filename))
-  end;
-}
-
-local save_project = SaveFileFrame{
-  action = function (_, filename)
-    local data = app.project:serialize()
-    if filename:find("%.lp_raw$") then
-      return data
-    end
-    return love.data.compress("data", "lz4", data)
-  end;
-}
-
-local save_project_before_load = SaveFileFrame{
-  action = save_project.action;
-  on_saved = function ()
-    app.show_popup(load_project)
-  end;
-}
+local load_project = require "dialog.load_project"
+local save_project = require "dialog.save_project"
+local save_project_before_load = require "dialog.save_project_before_load"
 
 local ask_save_before_load = YesNoCancelFrame {
   title = "Save current project?";

@@ -9,6 +9,7 @@ end
 local tmp_vec5 = {0,0,0,0,0}
 
 return {
+  name = "5 Numbers";
   is = is;
   IS_VECTOR = 5;
   to_shader_value = function (x, y, z, w, a)

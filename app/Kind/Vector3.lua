@@ -7,6 +7,7 @@ end
 local tmp_vec3 = {0,0,0}
 
 return {
+  name = "3 Numbers";
   is = is;
   IS_VECTOR = 3;
   to_shader_value = function (x, y, z)

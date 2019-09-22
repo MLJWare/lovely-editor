@@ -12,6 +12,7 @@ end
 local tmp_vec8 = {0,0,0,0,0,0,0,0}
 
 return {
+  name = "8 Numbers";
   is = is;
   IS_VECTOR = 8;
   to_shader_value = function (x, y, z, w, a, b, c, d)

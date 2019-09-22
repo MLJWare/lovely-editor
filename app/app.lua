@@ -21,6 +21,8 @@ local shift_is_down           = require "util.shift_is_down"
 local  ctrl_is_down           = require "util.ctrl_is_down"
 local   alt_is_down           = require "util.alt_is_down"
 
+local clamp                   = require "math.clamp"
+
 local try_invoke = pleasure.try.invoke
 
 local is_table  = pleasure.is.table
@@ -353,6 +355,25 @@ function app.mousepressed(mx, my, button)
         , _, _
         , scale = app.project.viewport:view_bounds(view)
     try_invoke(view.frame, "mousepressed", (mx - pos_x)/scale, (my - pos_y)/scale, button)
+  end
+end
+
+function app._pin_id_at(mx, my)
+  local project = app.project
+  local viewport = project.viewport
+  local view = viewport:view_at_global_pos(mx, my, project.views, app.global_mode() or project.show_connections)
+
+  local pin_view, pin_index = _pin_gives_at(mx, my)
+
+  if pin_view and is_above(pin_view, view) then
+    --return "gives", pin_view, pin_index
+    return pin_view.frame:give_by_index(pin_index)
+  else
+    pin_view, pin_index = _pin_takes_at(mx, my)
+    if pin_view and is_above(pin_view, view) then
+      --return "takes", pin_view, pin_index
+      return pin_view.frame:take_by_index(pin_index)
+    end
   end
 end
 
@@ -785,6 +806,21 @@ function app.draw()
   local top = popups[#popups]
   if top then
     app.focus_handler:request_focus(top.frame)
+  end
+
+  if show_connections then
+    local id, kind = app._pin_id_at(mx, my)
+    if id and kind then
+      local text = ("%s (%s)"):format(id, kind.name)
+      love.graphics.setColor(0.8, 0.8, 0.8)
+      local w = text_width(text) + 4
+      local h = font_height() + 4
+      local x = clamp(mx - w/2, 0, display_width - w)
+      local y = my - h
+      love.graphics.rectangle("fill", x, y, w, h)
+      love.graphics.setColor(0.4, 0.4, 0.4)
+      love.graphics.print(text, x + 2, y + 2)
+    end
   end
 
   --collectgarbage()

@@ -11,6 +11,7 @@ end
 local tmp_vec7 = {0,0,0,0,0,0,0}
 
 return {
+  name = "7 Numbers";
   is = is;
   IS_VECTOR = 7;
   to_shader_value = function (x, y, z, w, a, b, c)

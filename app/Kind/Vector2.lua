@@ -6,6 +6,7 @@ end
 local tmp_vec2 = {0,0}
 
 return {
+  name = "2 Numbers";
   is = is;
   IS_VECTOR = 2;
   to_shader_value = function (x, y)

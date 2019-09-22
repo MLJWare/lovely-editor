@@ -6,6 +6,7 @@ default:setWrap("repeat", "repeat")
 local is = EditImagePacket.is
 
 return {
+  name = "Editable Image";
   is = is;
   to_shader_value = function (data)
     return is(data) and data.value or default

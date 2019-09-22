@@ -3,6 +3,7 @@ local function is (data)
 end
 
 return {
+  name = "Number";
   is = is;
   IS_VECTOR = 1;
   to_shader_value = function (data)

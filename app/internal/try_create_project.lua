@@ -34,6 +34,7 @@ return function (filedata, filename)
       ToolboxFrame = require "frame.Toolbox";
       TimelineFrame = require "frame.Timeline";
       -- control frames
+      ToggleFrame = require "frame.Toggle";
       SliderFrame = require "frame.Slider";
       VectorJoinFrame = require "frame.VectorJoin";
       VectorSplitFrame = require "frame.VectorSplit";

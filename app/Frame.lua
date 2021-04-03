@@ -7,6 +7,11 @@ local is_table = pleasure.is.table
 local is_metakind = pleasure.is.metakind
 local is_non_negative = pleasure.is.non_negative_number
 
+---@class Frame
+---@field x number x-position
+---@field y number y-position
+---@field size_x number width
+---@field size_y number height
 local Frame = {}
 Frame.__index = Frame
 Frame._kind = ";Frame;"

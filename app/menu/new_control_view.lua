@@ -8,9 +8,21 @@ local VectorSplitFrame        = require "frame.VectorSplit"
 local GraphFrame              = require "frame.Graph"
 --local ConditionalFrame        = require "frame.Conditional"
 local SliderFrame             = require "frame.Slider"
+local ToggleFrame             = require "frame.Toggle"
 
 return MenuListFrame {
   options = {
+    {
+      text   = "New Toggle View";
+      action = function (_, _)
+        local popup_x, popup_y = app.popup_position_as_local()
+        app.add_view (View {
+          frame = ToggleFrame {};
+          pos_x = popup_x;
+          pos_y = popup_y;
+        })
+      end;
+    };
     {
       text   = "New Slider View";
       action = function (_, _)

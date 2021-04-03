@@ -5,6 +5,8 @@ local is_table = is.table
 local is_callable = is.callable
 local is_metakind = is.metakind
 
+---@class Signal
+---@field listeners any[]
 local Signal = {}
 Signal.__index = Signal
 Signal._kind = ";Signal;"

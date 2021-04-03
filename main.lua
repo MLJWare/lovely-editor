@@ -8,7 +8,7 @@ do
 end
 
 do
-  if not love.filesystem.getInfo("config", "directory") then 
+  if not love.filesystem.getInfo("config", "directory") then
     love.filesystem.createDirectory("config")
   end
 end

@@ -75,7 +75,6 @@ setmetatable(ColorPickerFrame, {
         return frame._red, frame._green, frame._blue, frame._alpha
       end;
     }
-
     return frame
   end;
 })

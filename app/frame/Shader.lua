@@ -7,6 +7,8 @@ local ImagePacket             = require "packet.Image"
 local Signal                  = require "Signal"
 local ImageKind               = require "Kind.Image"
 local NumberKind              = require "Kind.Number"
+local Vector2Kind             = require "Kind.Vector2"
+local Vector3Kind             = require "Kind.Vector3"
 local Vector4Kind             = require "Kind.Vector4"
 local StringKind              = require "Kind.String"
 local pleasure                = require "pleasure"
@@ -222,6 +224,8 @@ end
 local known_uniform_kinds = {
   ["float"] = NumberKind;
   ["Image"] = ImageKind;
+  ["vec2" ] = Vector2Kind;
+  ["vec3" ] = Vector3Kind;
   ["vec4" ] = Vector4Kind;
 }
 

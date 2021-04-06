@@ -273,6 +273,7 @@ local function is_above(view1, view2)
 end
 
 function app.mousepressed(mx, my, button)
+
   local popups = app.popups
   if #popups > 0 then
     local top = popups[#popups]
@@ -358,6 +359,11 @@ function app.mousepressed(mx, my, button)
   end
 end
 
+---@param mx number x-coordinate on the screen
+---@param my number y-coordinate on the screen
+---@return integer|nil index index of the pin at the given location, or nil if no pin is found.
+---@return table|nil kind kind of the pin at the given location, or nil if no pin is found.
+---@return string|nil hint hint text of the pin at the given location, if any.
 function app._pin_id_at(mx, my)
   local project = app.project
   local viewport = project.viewport
@@ -809,9 +815,9 @@ function app.draw()
   end
 
   if show_connections then
-    local id, kind = app._pin_id_at(mx, my)
+    local id, kind, hint = app._pin_id_at(mx, my)
     if id and kind then
-      local text = ("%s (%s)"):format(id, kind.name)
+      local text = ("%s (%s)"):format(hint or id, kind.name)
       love.graphics.setColor(0.8, 0.8, 0.8)
       local w = text_width(text) + 4
       local h = font_height() + 4

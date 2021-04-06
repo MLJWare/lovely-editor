@@ -28,6 +28,20 @@ local function option_text_width(option, i)
   return love.graphics.getFont():getWidth(_option_text(i, option))
 end
 
+local function determine_size(menu)
+  local options = menu.available_options
+  local row_width  = find_max(option_text_width, options, 0)
+  local row_height = font:getHeight()
+
+  local width  = row_width + 2*menu_pad
+  local height = #options*(row_height + menu_pad) + menu_pad
+
+  menu.size_x = width
+  menu.size_y = height
+  menu.row_size_x = row_width
+  menu.row_size_y = row_height
+end
+
 setmetatable(MenuListFrame, {
   __index = Frame;
   __call = function (_, menu)
@@ -36,22 +50,27 @@ setmetatable(MenuListFrame, {
     menu.size_y = menu.size_y or 0
     MenuListFrame.typecheck(menu, "MenuListFrame constructor")
 
-    local options = menu.options
-    local row_width  = find_max(option_text_width, options, 0)
-    local row_height = font:getHeight()
-
-    local width  = row_width + 2*menu_pad
-    local height = #options*(row_height + menu_pad) + menu_pad
-
-    menu.size_x = width
-    menu.size_y = height
-    menu.row_size_x = row_width
-    menu.row_size_y = row_height
-
+    menu.available_options = menu.options
     setmetatable(Frame(menu), MenuListFrame)
+
+    determine_size(menu)
+
     return menu
   end;
 })
+
+function MenuListFrame:init_popup()
+  local available_options = {}
+  local options = self.options
+  for i = 1, #options do
+    local option = options[i]
+    if not self:_is_disabled(option) then
+      table.insert(available_options, option)
+    end
+  end
+  self.available_options = available_options
+  determine_size(self)
+end
 
 function MenuListFrame.typecheck(obj, where)
   Frame.typecheck(obj, where)
@@ -70,7 +89,7 @@ function MenuListFrame:option_at(mx, my)
   local row_offset = row_size_y + menu_pad
   local index = 1 + math.floor((my - menu_pad)/row_offset)
 
-  return self.options[index]
+  return self.available_options[index]
 end
 
 function MenuListFrame:globalmousepressed()
@@ -84,7 +103,8 @@ end
 function MenuListFrame:mousepressed(mx, my, button)
   if button ~= 1 then return end
   local option = self:option_at(mx, my)
-  if not option or self:_is_disabled(option) then return end
+  --if not option or self:_is_disabled(option) then return end
+  if not option then return end
   try_invoke(option, "action", self)
   self:close()
 end
@@ -94,10 +114,10 @@ function MenuListFrame:keypressed(key)
     return self:close()
   end
 
-  local index = tonumber(key)
+  local index = tonumber(key:gsub("kp", ""), 10)
   if not index then return end
   index = (index - 1)%10 + 1
-  local option = self.options[index]
+  local option = self.available_options[index]
   if option then
     try_invoke(option, "action", self)
     self:close()
@@ -115,13 +135,13 @@ function MenuListFrame:draw(_, _, _, mx, my)
   love.graphics.setColor(1,1,1)
   Images.ninepatch("menu", 0, 0, size_x, size_y)
 
-  local options = self.options
+  local options = self.available_options
   for i = 1, #options do
     local x2 = menu_pad
     local y2 = menu_pad + (i - 1)*row_offset
 
     local option = options[i]
-    local disabled = self:_is_disabled(option)
+    --local disabled = self:_is_disabled(option)
     local contains = x2 <= mx and mx < x2 + row_size_x
                  and y2 <= my and my < y2 + row_offset
 
@@ -130,9 +150,10 @@ function MenuListFrame:draw(_, _, _, mx, my)
       love.graphics.rectangle("fill", x2, y2, row_size_x, row_size_y)
     end
 
-    if disabled then
+    --if disabled then
       love.graphics.setColor(0.6, 0.6, 0.6)
-    elseif contains then
+    --elseif contains then
+    if contains then
       love.graphics.setColor(1.0, 1.0, 1.0)
     else
       love.graphics.setColor(0.0, 0.0, 0.0)

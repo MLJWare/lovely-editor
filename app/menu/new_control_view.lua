@@ -10,6 +10,16 @@ local GraphFrame              = require "frame.Graph"
 local SliderFrame             = require "frame.Slider"
 local ToggleFrame             = require "frame.Toggle"
 
+local new_sized_view_action = require "frame.menu-actions.new_sized_view"
+
+local function create_new_graph_frame(_, width, height)
+  return GraphFrame {
+    size_x = width;
+    size_y = height;
+  }
+end
+
+
 return MenuListFrame {
   options = {
     {
@@ -64,17 +74,8 @@ return MenuListFrame {
     };
     {
       text   = "New Graph View";
-      action = function (_, _)
-        local popup_x, popup_y = app.popup_position_as_local()
-        app.add_view (View {
-          frame = GraphFrame {
-            size_x = 64;
-            size_y = 64;
-          };
-          pos_x = popup_x;
-          pos_y = popup_y;
-        })
-      end;
+      action = new_sized_view_action;
+      create_new_frame = create_new_graph_frame;
     };
     {
       text   = "New VectorSplit View";

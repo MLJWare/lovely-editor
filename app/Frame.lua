@@ -12,6 +12,10 @@ local is_non_negative = pleasure.is.non_negative_number
 ---@field y number y-position
 ---@field size_x number width
 ---@field size_y number height
+---@field _kind string type-info "kind" string
+---@field takes IOs|nil inputs to the frame
+---@field gives IOs|nil outputs from the frame
+---@field _focus_handler FocusHandler focus handler
 local Frame = {}
 Frame.__index = Frame
 Frame._kind = ";Frame;"
@@ -66,21 +70,31 @@ function Frame:takes_count()
   return is_table(takes) and #takes or 0
 end
 
+---@param self Frame
+---@param index integer
+---@return string|nil id id of the pin with the given index, or nil if no pin with that index exists.
+---@return table|nil kind kind of the pin with the given index, or nil if no pin with that index exists.
+---@return string|nil hint hint text of the pin with the given index, if any.
 function Frame:take_by_index(index)
   local takes = self.takes
   if not is_table(takes) then return end
   local take = takes[index]
   if not take then return end
-  return take.id, take.kind
+  return take.id, take.kind, take.hint
 end
 
+---@param self Frame
+---@param id string
+---@return integer|nil index index of the pin with the given index, or nil if no pin with that index exists.
+---@return table|nil kind kind of the pin with the given index, or nil if no pin with that index exists.
+---@return string|nil hint hint text of the pin with the given index, if any.
 function Frame:take_by_id(id)
   local takes = self.takes
   if not is_table(takes) then return end
   for index = 1, #takes do
     local take = takes[index]
     if take.id == id then
-      return index, take.kind
+      return index, take.kind, take.hint
     end
   end
 end
@@ -90,21 +104,32 @@ function Frame:gives_count()
   return is_table(gives) and #gives or 0
 end
 
+---@param self Frame
+---@param index integer
+
+---@return string|nil id id of the pin with the given index, or nil if no pin with that index exists.
+---@return table|nil kind kind of the pin with the given index, or nil if no pin with that index exists.
+---@return string|nil hint hint text of the pin with the given index, if any.
 function Frame:give_by_index(index)
   local gives = self.gives
   if not is_table(gives) then return end
   local give = gives[index]
   if not give then return end
-  return give.id, give.kind
+  return give.id, give.kind, give.hint
 end
 
+---@param self Frame
+---@param id string
+---@return integer|nil index index of the pin with the given index, or nil if no pin with that index exists.
+---@return table|nil kind kind of the pin with the given index, or nil if no pin with that index exists.
+---@return string|nil hint hint text of the pin with the given index, if any.
 function Frame:give_by_id(id)
   local gives = self.gives
   if not is_table(gives) then return end
   for index = 1, #gives do
     local give = gives[index]
     if give.id == id then
-      return index, give.kind
+      return index, give.kind, give.hint
     end
   end
 end

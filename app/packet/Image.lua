@@ -4,6 +4,7 @@ local is                      = require "pleasure.is"
 local is_table = is.table
 local is_metakind = is.metakind
 
+---@class ImagePacket
 local ImagePacket = {}
 ImagePacket.__index = ImagePacket
 ImagePacket._kind = ";ImagePacket;"

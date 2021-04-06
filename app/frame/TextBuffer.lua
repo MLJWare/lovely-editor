@@ -18,34 +18,57 @@ local clamp         = require "math.clamp"
 local is_table = pleasure.is.table
 local is_metakind = pleasure.is.metakind
 
+local try_invoke = pleasure.try.invoke
+
 local split   = unicode.split
 local extract_left  = unicode.split_left
+local is_letters = unicode.is_letters
 local is_alphanumeric = unicode.is_alphanumeric
+local is_whitespace = unicode.is_whitespace
+local is_digits = unicode.is_digits
 local string_len = unicode.len
 local string_sub = unicode.sub
+
+local function is_empty_or_whitespace(text)
+  return text == "" or is_whitespace(text)
+end
+
+local function is_identifier_start(char)
+  return char == "_" or is_letters(char)
+end
+
+local function is_identifier_rest(char)
+  return char == "_" or is_alphanumeric(char)
+end
 
 -- FIXME doesn't have unicode support yet!!!
 
 local FONT_MONO = love.graphics.newFont(topath "res/font/Cousine-Regular.ttf", 12)
 
 ---@class TextBufferFrame : Frame
----@field x number x-position
----@field y number y-position
----@field size_x number width
----@field size_y number height
 ---@field _buffer TextBuffer
 ---@field _caret TextCaret
 ---@field _row_offset integer
 ---@field _x_offset integer
 ---@field signal_out Signal
 local TextBufferFrame = {
-  _font = FONT_MONO
+  _font = FONT_MONO,
+  _syntax_delimiters = "",
+  _syntax_comment_line = "",
+  _syntax_string_start = "",
+  _syntax_string_escape = "",
+  _syntax_string_end = "",
+  _syntax_keywords = {},
+  _syntax_enabled = false,
 }
 TextBufferFrame.__index = TextBufferFrame
 TextBufferFrame._kind = ";TextBufferFrame;TextFrame;Frame;"
 
 TextBufferFrame._selection_color = pack_color(0.5, 0.5, 0.5, 0.5)
 TextBufferFrame._text_color      = pack_color(1.0, 1.0, 1.0, 1.0)
+TextBufferFrame._keyword_color   = pack_color(1.0, 0.5, 0.8, 1.0)
+TextBufferFrame._delimiter_color = pack_color(0.6, 0.7, 1.0, 1.0)
+TextBufferFrame._number_color = pack_color(1.0, 0.55, 0.15, 1.0)
 
 setmetatable(TextBufferFrame, {
   __index = Frame;
@@ -91,6 +114,70 @@ end
 TextBufferFrame.gives = IOs{
   {id = "signal_out", kind = StringKind};
 }
+
+TextBufferFrame.takes = IOs{
+  {id = "syntax", kind = StringKind};
+}
+
+function TextBufferFrame:on_connect(prop, from, data)
+  if prop == "syntax" then
+    self.signal_syntax = from
+    from:listen(self, prop, self.refresh_syntax)
+    self:refresh_syntax(prop, data)
+  end
+end
+
+function TextBufferFrame:refresh_syntax(_, text)
+  self._syntax_enabled = not not text
+  text = text or ""
+  local delimiters = text
+  local comment_line = ""
+  local keywords = {}
+
+  self._syntax_string_start = ""
+  self._syntax_string_end = ""
+  self._syntax_string_escape = ""
+
+  local newline_index = text:find("\n")
+  if newline_index then
+    -- optional delimiters (no separator)
+    delimiters, text = split(text, newline_index, 1)
+    newline_index = text:find("\n")
+    if newline_index then
+      -- optional line comment syntax highlighting
+      comment_line, text = split(text, newline_index, 1)
+
+      newline_index = text:find("\n")
+      if newline_index then
+        -- basic (single-line) string syntax highlighting with optional string escapes (no separators)
+        local string_syntax
+        string_syntax, text = split(text, newline_index, 1)
+        local len = string_len(string_syntax)
+        local start = len >= 1 and string_sub(string_syntax, 1, 1) or ""
+        self._syntax_string_start = start
+        self._syntax_string_end = len >= 2 and string_sub(string_syntax, 2, 2) or start
+        self._syntax_string_escape = len >= 3 and string_sub(string_syntax, 3, 3) or ""
+
+        -- optional keywords (whitespace separated)
+        for token in string.gmatch(text, "%S+") do
+          keywords[token] = true
+        end
+      end
+    end
+  end
+
+  self._syntax_delimiters = delimiters
+  self._syntax_comment_line = comment_line
+  self._syntax_keywords = keywords
+end
+
+function TextBufferFrame:on_disconnect(prop)
+  if prop == "syntax" then
+    try_invoke(self.signal_syntax, "unlisten", self, prop, self.refresh_syntax)
+    self.signal_syntax = nil
+    self:refresh_syntax(prop, nil)
+  end
+end
 
 function TextBufferFrame:check_action(action_id)
   if action_id == "core:save" then
@@ -178,7 +265,10 @@ function TextBufferFrame:draw(size_x, size_y)
   pleasure.push_region(0, 0, size_x, size_y)
   do
     local tr, tg, tb, ta = unpack_color(self._text_color)
+    local kw_r, kw_g, kw_b, kw_a = unpack_color(self._keyword_color)
     local sr, sg, sb, sa = unpack_color(self._selection_color)
+    local del_r, del_g, del_b, del_a = unpack_color(self._delimiter_color)
+    local num_r, num_g, num_b, num_a = unpack_color(self._number_color)
 
     love.graphics.setColor(0.2, 0.2, 0.2)
     love.graphics.rectangle("fill", 0, 0, size_x, size_y)
@@ -204,6 +294,8 @@ function TextBufferFrame:draw(size_x, size_y)
 
     local xoffset = -self._x_offset
 
+    local syntax_enabled = self._syntax_enabled
+
     for index, line_text in self._buffer:lines(from_line, to_line) do
       local yoffset = (index - from_line - row_offset) * line_height
       if has_selection and index >= selection_from_row and index <= selection_to_row then
@@ -218,9 +310,151 @@ function TextBufferFrame:draw(size_x, size_y)
           selection_to_row,
           selection_to_column
         )
-        love.graphics.setColor(tr, tg, tb, ta)
       end
-      love.graphics.print(line_text, xoffset, yoffset)
+
+      if syntax_enabled then -- SYNTAX HIGHLIGHT
+        local keywords = self._syntax_keywords
+        local syntax_comment_line = self._syntax_comment_line
+        local delimiters = self._syntax_delimiters
+        local string_start = self._syntax_string_start
+        local string_escape = self._syntax_string_escape
+        local string_end = self._syntax_string_end
+        local should_highlight_strings = not (is_empty_or_whitespace(string_start) or is_empty_or_whitespace(string_end))
+        local include_strings_escape = not is_empty_or_whitespace(string_escape)
+        local function is_delimiter(char)
+          return delimiters:find(char, 1, true) and true or false
+        end
+
+        local font = self._font
+        local text_length = string_len(line_text)
+        local char_index = 1
+        local xoffset2 = xoffset
+        while char_index <= text_length do
+          local did_consume = false
+          local function consume_single(predicate, offset)
+            local i = char_index + (offset or 0)
+            return i <= text_length and predicate(string_sub(line_text, i, i))
+               and 1 or 0
+          end
+
+          local function char_at(offset)
+            return string_sub(line_text, char_index + offset, char_index + offset)
+          end
+
+          local function grab(count)
+            return string_sub(line_text, char_index, char_index + count - 1)
+          end
+
+          local function consume(predicate1, predicate2, offset)
+            predicate2 = predicate2 or predicate1
+            local initial_offset = offset or 0
+            offset = initial_offset
+            if char_index + offset <= text_length and predicate1(char_at(offset)) then
+              offset = offset + 1
+              while char_index + offset <= text_length and predicate2(char_at(offset)) do
+                offset = offset + 1
+              end
+              return offset - initial_offset
+            else
+              return 0
+            end
+          end
+
+          local function advance(token, count)
+            xoffset2 = xoffset2 + font:getWidth(token)
+            char_index = char_index + count
+            did_consume = did_consume or count > 0
+          end
+
+          -- consume whitespace
+          do
+            local count = consume(is_whitespace)
+            local token = grab(count)
+            advance(token, count)
+          end
+
+          -- try consume line comment
+          did_consume = not is_empty_or_whitespace(syntax_comment_line)
+                        and string.find(line_text, syntax_comment_line, char_index, true) == char_index
+          if did_consume then
+            local count = consume(function (char) return char ~= "\n" end)
+            love.graphics.setColor(tr * 0.5, tg * 0.5, tb * 0.5, ta)
+            local token = grab(count)
+            love.graphics.print(token, xoffset2, yoffset)
+            advance(token, count)
+          end
+
+          if not did_consume then
+            -- try consume strings (single-line support only)
+            if should_highlight_strings and string.find(line_text, string_start, char_index) == char_index then
+              local count = 0
+              while char_index + count <= text_length do
+                count = count + 1
+                local char = string_sub(line_text, char_index + count, char_index + count)
+                if include_strings_escape and char == string_escape then
+                  count = count + 1
+                elseif char == string_end then
+                  count = count + 1
+                  break
+                end
+              end
+              local token = grab(count)
+              love.graphics.setColor(0.5, 0.9, 0.3, 1.0)
+              love.graphics.print(token, xoffset2, yoffset)
+              advance(token, count)
+            end
+          end
+
+          if not did_consume then
+            -- try consume identifiers/keywords
+            local count = consume(is_identifier_start, is_identifier_rest)
+            local token = grab(count)
+            if keywords[token] then
+              love.graphics.setColor(kw_r, kw_g, kw_b, kw_a)
+            else
+              love.graphics.setColor(tr, tg, tb, ta)
+            end
+            love.graphics.print(token, xoffset2, yoffset)
+            advance(token, count)
+          end
+
+          if not did_consume then
+            -- try consume delimiter
+            local count = consume_single(is_delimiter)
+            love.graphics.setColor(del_r, del_g, del_b, del_a)
+            local token = grab(count)
+            love.graphics.print(token, xoffset2, yoffset)
+            advance(token, count)
+          end
+
+          if not did_consume then
+            -- try consume numbers
+            local count = consume(is_digits)
+            count = count + consume_single(function (char) return char == "." end, count)
+            count = count + consume(is_digits, is_digits, count)
+
+            local token = grab(count)
+            if token ~= "." then
+              love.graphics.setColor(num_r, num_g, num_b, num_a)
+              love.graphics.print(token, xoffset2, yoffset)
+              advance(token, count)
+            end
+          end
+
+          if not did_consume then
+            -- consume anything (single character)
+            love.graphics.setColor(tr, tg, tb, ta)
+            local count = 1
+            local token = grab(count)
+            love.graphics.print(token, xoffset2, yoffset)
+            advance(token, count)
+          end
+        end
+      else
+        love.graphics.setColor(tr, tg, tb, ta)
+        love.graphics.print(line_text, xoffset, yoffset)
+      end
+
       if show_caret and index == caret_row then
         self:_draw_caret(line_text, caret_column, xoffset, yoffset)
       end
@@ -260,11 +494,11 @@ end
 
 function TextBufferFrame:_draw_caret(line_text, column, x, y)
   local font = self._font
-
   local line_width = love.graphics.getLineWidth()
   local line_style = love.graphics.getLineStyle()
   love.graphics.setLineWidth(1)
   love.graphics.setLineStyle("rough")
+  love.graphics.setColor(unpack_color(self._text_color))
 
   local final_x = 1 + x + font:getWidth((split(line_text, column)))
   love.graphics.line(final_x, y, final_x, y + font:getHeight())
@@ -328,6 +562,8 @@ function TextBufferFrame:keypressed(key, _, _)
       buffer:split_line_at(caret:pos())
       caret:move_right()
       move = true
+    else
+      self:refresh()
     end
   elseif key == "home" then
     if should_make_selection then

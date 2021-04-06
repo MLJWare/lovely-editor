@@ -18,6 +18,8 @@ local try_invoke = pleasure.try.invoke
 local is_table = pleasure.is.table
 local is_metakind = pleasure.is.metakind
 
+---@class ShaderFrame : Frame
+---@field image ImagePacket
 local ShaderFrame = {}
 ShaderFrame.__index = ShaderFrame
 ShaderFrame._kind = ";ShaderFrame;Frame;"

@@ -19,6 +19,9 @@ local is_string = pleasure.is.string
 local is_callable = pleasure.is.callable
 local is_non_negative = pleasure.is.non_negative_number
 
+---@class EditableText
+---@field hint string hint text
+---@field text string text
 local EditableText = {
   x_pad              =  2;
   text_color         = pack_color(0, 0, 0, 1.0);
@@ -57,8 +60,9 @@ function EditableText:set_text(text)
 end
 
 function EditableText:_set_text(text)
-  if self.filter then
-    text = self.filter(text)
+  local filter = self.filter
+  if filter then
+    text = filter(text)
   end
   local old_text = self.text
   self.text = text

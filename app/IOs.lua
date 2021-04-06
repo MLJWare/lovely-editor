@@ -1,3 +1,4 @@
+---@class IOs
 local IOs = {}
 
 return setmetatable(IOs, {

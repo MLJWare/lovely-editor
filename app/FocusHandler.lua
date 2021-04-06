@@ -4,6 +4,7 @@ local try_invoke = pleasure.try.invoke
 
 local is_table = pleasure.is.table
 
+---@class FocusHandler
 local FocusHandler = {}
 FocusHandler.__index = FocusHandler
 
